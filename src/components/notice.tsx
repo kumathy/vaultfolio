@@ -1,27 +1,46 @@
+import { TbAlertTriangle, TbCircleCheck, TbInfoCircle } from "react-icons/tb";
+
 const tones = {
-  info: { label: "Note", border: "border-muted" },
-  warning: { label: "Attention", border: "border-attention" },
+  info: {
+    label: "Note",
+    Icon: TbInfoCircle,
+    box: "border-border bg-surface",
+    title: "text-muted",
+  },
+  success: {
+    label: "Done",
+    Icon: TbCircleCheck,
+    box: "border-positive/25 bg-positive-soft",
+    title: "text-positive",
+  },
+  warning: {
+    label: "Attention",
+    Icon: TbAlertTriangle,
+    box: "border-attention/25 bg-attention-soft",
+    title: "text-attention",
+  },
 } as const;
 
-// Web counterpart of the report's [!info] and [!warning] callouts.
+export type NoticeTone = keyof typeof tones;
+
+// Web counterpart of the report's Obsidian callouts ([!info], [!warning]).
 export function Notice({
   tone = "info",
   children,
 }: {
-  tone?: keyof typeof tones;
+  tone?: NoticeTone;
   children: React.ReactNode;
 }) {
-  const { label, border } = tones[tone];
+  const { label, Icon, box, title } = tones[tone];
   return (
     <div
-      className={`mt-4 border-l-2 bg-surface px-4 py-3 text-sm leading-relaxed ${border}`}
+      className={`rounded-xl border px-4 py-3 text-sm leading-relaxed ${box}`}
     >
-      <p
-        className={`font-medium ${tone === "warning" ? "text-attention" : "text-muted"}`}
-      >
+      <p className={`flex items-center gap-1.5 font-medium ${title}`}>
+        <Icon aria-hidden className="text-base" />
         {label}
       </p>
-      <div className="mt-1">{children}</div>
+      <div className="mt-1 text-foreground">{children}</div>
     </div>
   );
 }

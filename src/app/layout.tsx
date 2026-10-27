@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -12,18 +11,18 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: { default: "Vaultfolio", template: "%s · Vaultfolio" },
   description:
-    "Structured investing reports from SnapTrade brokerage data, in the browser and in Obsidian.",
+    "Monthly investing reports from SnapTrade brokerage data, written as Markdown for an Obsidian vault.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${outfit.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col animate-page-in motion-reduce:animate-none">
-          {children}
-        </div>
-        <SiteFooter />
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${outfit.variable} h-full antialiased`}
+    >
+      <body className="min-h-full">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
