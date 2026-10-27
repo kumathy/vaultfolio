@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
+/* Ledger-paper neutrals with a brass accent. Text pairs meet WCAG AA (4.5:1). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light dark;
+  --background: #f2f3ef;
+  --surface: #e9ebe5;
+  --foreground: #1d2220;
+  --muted: #5f6762;
+  --border: #cfd3cb;
+  --accent: #785a20;
+  --positive: #3d6a4f;
+  --attention: #9b4a2c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #121413;
+    --surface: #1b1e1c;
+    --foreground: #e6e8e3;
+    --muted: #959d97;
+    --border: #2a2f2c;
+    --accent: #cfae6b;
+    --positive: #86b89a;
+    --attention: #d98c6c;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-positive: var(--positive);
+  --color-attention: var(--attention);
+  --font-sans: var(--font-outfit);
+  --animate-page-in: page-in 300ms ease-out both;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+html,
+body {
+  overflow-x: clip;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--background);
+}
+
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
 }
