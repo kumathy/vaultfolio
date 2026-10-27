@@ -62,13 +62,16 @@ export function BreadcrumbView({ pathname }: { pathname: string | null }) {
 
 export function MobileLinksView({ pathname }: { pathname: string | null }) {
   return (
-    <nav aria-label="App" className="flex gap-1 lg:hidden">
+    <nav
+      aria-label="App"
+      className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none]"
+    >
       {appPages.map(({ href, label }) => (
         <Link
           key={href}
           href={href}
           aria-current={isActive(pathname, href) ? "page" : undefined}
-          className="rounded-full px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground aria-[current=page]:bg-surface aria-[current=page]:text-foreground"
+          className="shrink-0 rounded-full px-3 py-1.5 text-sm whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-foreground aria-[current=page]:bg-surface aria-[current=page]:text-foreground"
         >
           {label}
         </Link>

@@ -4,7 +4,7 @@ import {
   TbLogout,
   TbNotebook,
 } from "react-icons/tb";
-import { Logo, LogoMark } from "@/components/logo";
+import { Logo } from "@/components/logo";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Suspense } from "react";
 import {
@@ -77,28 +77,29 @@ function Topbar() {
       <div className="flex h-16 items-center justify-between gap-4 px-6 lg:px-10">
         <div className="flex min-w-0 items-center gap-3">
           <span className="lg:hidden">
-            <LogoMark />
+            <Logo href="/accounts" />
           </span>
           <span className="hidden lg:block">
             <Suspense fallback={<BreadcrumbView pathname={null} />}>
               <Breadcrumb />
             </Suspense>
           </span>
-          <Suspense fallback={<MobileLinksView pathname={null} />}>
-            <MobileLinks />
-          </Suspense>
         </div>
-        <div className="flex items-center gap-1">
-          <form method="post" action="/logout">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground"
-            >
-              <TbLogout aria-hidden className="text-base" />
-              Sign out
-            </button>
-          </form>
-        </div>
+        <form method="post" action="/logout">
+          <button
+            type="submit"
+            aria-label="Sign out"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground sm:px-3"
+          >
+            <TbLogout aria-hidden className="text-base" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </form>
+      </div>
+      <div className="border-t border-border px-4 py-2 lg:hidden">
+        <Suspense fallback={<MobileLinksView pathname={null} />}>
+          <MobileLinks />
+        </Suspense>
       </div>
     </header>
   );

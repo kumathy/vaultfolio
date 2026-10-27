@@ -23,48 +23,32 @@ export function TransfersForm({ transfers }: { transfers: TransferRow[] }) {
   }
   return (
     <form action={save}>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-sm tabular-nums">
-          <thead>
-            <tr className="text-left text-xs text-muted">
-              <th scope="col" className="px-4 py-2.5 font-medium">
-                Date
-              </th>
-              <th scope="col" className="px-4 py-2.5 font-medium">
-                Account
-              </th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                Amount
-              </th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                Count as contribution
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {transfers.map((t) => (
-              <tr key={t.id} className="border-t border-border">
-                <td className="px-4 py-2.5 whitespace-nowrap">{t.date}</td>
-                <td className="px-4 py-2.5">{t.account}</td>
-                <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                  {t.amount}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <input type="hidden" name="listed" value={t.id} />
-                  <input
-                    type="checkbox"
-                    name="contribution"
-                    value={t.id}
-                    defaultChecked={t.counted}
-                    aria-label={`Count the ${t.date} transfer of ${t.amount} as a contribution`}
-                    className="h-4 w-4 accent-[var(--accent)]"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className="divide-y divide-border rounded-xl border border-border">
+        {transfers.map((t) => (
+          <li
+            key={t.id}
+            className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="font-medium tabular-nums">{t.amount}</p>
+              <p className="text-sm text-muted">
+                {t.date} · {t.account}
+              </p>
+            </div>
+            <label className="inline-flex items-center gap-2.5 text-sm">
+              <input type="hidden" name="listed" value={t.id} />
+              <input
+                type="checkbox"
+                name="contribution"
+                value={t.id}
+                defaultChecked={t.counted}
+                className="h-4 w-4 accent-[var(--accent)]"
+              />
+              Count as contribution
+            </label>
+          </li>
+        ))}
+      </ul>
       <SaveRow state={state} pending={saving} label="Save transfers" />
     </form>
   );
