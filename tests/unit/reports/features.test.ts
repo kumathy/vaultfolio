@@ -142,6 +142,23 @@ describe("plan check", () => {
     ]);
   });
 
+  it("hides zero cash balances from holdings", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        cash: [
+          ["CAD", 0],
+          ["USD", 12.5],
+        ],
+        positions: [["XEQT", 10, 35]],
+      }),
+    ]);
+    const holdings = r.section("Holdings");
+    expect(rowWith(holdings, "$0.00")).toBeUndefined();
+    expect(rowWith(holdings, "$12.50 USD")).toBeDefined();
+    expect(rowWith(holdings, "XEQT")).toBeDefined();
+  });
+
   it("lists observed activity and notes the missing plan once", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA);
     expect(tableRow(r.markdown, "Deposits this month")).toEqual([

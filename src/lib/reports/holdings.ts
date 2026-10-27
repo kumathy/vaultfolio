@@ -53,7 +53,7 @@ export function analyzeHoldings(
         targetPercent: target(holding.symbol),
       });
     }
-    for (const cash of account.cash ?? []) {
+    for (const cash of (account.cash ?? []).filter((c) => c.cents !== 0)) {
       rows.push({
         account: name,
         symbol: "Cash",
