@@ -8,8 +8,8 @@ const securityHeaders = [
       "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
   },
   { key: "X-Frame-Options", value: "DENY" },
-  // Keeps OAuth codes in callback URLs out of Referer headers.
-  { key: "Referrer-Policy", value: "no-referrer" },
+  // Keeps OAuth codes in callback URLs out of Referer headers sent to other sites.
+  { key: "Referrer-Policy", value: "same-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   {
     key: "Permissions-Policy",
