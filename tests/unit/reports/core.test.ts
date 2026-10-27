@@ -95,6 +95,20 @@ describe("period", () => {
     ).toBe("2026-12-01T11:00:00-04:00");
   });
 
+  it("keeps whole-hour offsets when the time has seconds", () => {
+    for (const seconds of ["00", "29", "30", "45", "59"]) {
+      expect(
+        localTimestamp(
+          new Date(`2026-10-27T21:45:${seconds}.900Z`),
+          "America/Toronto",
+        ),
+      ).toBe("2026-10-27T17:45:00-04:00");
+    }
+    expect(
+      localTimestamp(new Date("2026-07-01T12:00:45Z"), "Asia/Kolkata"),
+    ).toBe("2026-07-01T17:30:00+05:30");
+  });
+
   it("does date arithmetic on calendar days", () => {
     expect(daysBetween("2026-10-01", "2026-10-27")).toBe(26);
     expect(addDays("2026-10-30", 3)).toBe("2026-11-02");

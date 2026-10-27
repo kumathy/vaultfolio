@@ -86,7 +86,9 @@ export function localTimestamp(date: Date, timeZone: string): string {
     Number(p.hour),
     Number(p.minute),
   );
-  const offsetMinutes = Math.round((asUtc - date.getTime()) / 60_000);
+  // The local parts stop at minutes, so the instant is truncated to match.
+  const minuteStart = Math.floor(date.getTime() / 60_000) * 60_000;
+  const offsetMinutes = Math.round((asUtc - minuteStart) / 60_000);
   const sign = offsetMinutes < 0 ? "-" : "+";
   const abs = Math.abs(offsetMinutes);
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:00${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
