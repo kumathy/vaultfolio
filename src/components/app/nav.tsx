@@ -12,11 +12,11 @@ export const appPages: { href: `/${string}`; label: string; Icon: IconType }[] =
     { href: "/settings", label: "Settings", Icon: TbSettings },
   ];
 
-const isActive = (pathname: string, href: string) =>
-  pathname === href || pathname.startsWith(`${href}/`);
+// `null` while the URL is not yet known (the prerendered fallback).
+const isActive = (pathname: string | null, href: string) =>
+  pathname !== null && (pathname === href || pathname.startsWith(`${href}/`));
 
-export function SidebarLinks() {
-  const pathname = usePathname();
+export function SidebarLinksView({ pathname }: { pathname: string | null }) {
   return (
     <ul className="space-y-0.5">
       {appPages.map(({ href, label, Icon }) => {
@@ -45,8 +45,7 @@ export function SidebarLinks() {
   );
 }
 
-export function Breadcrumb() {
-  const pathname = usePathname();
+export function BreadcrumbView({ pathname }: { pathname: string | null }) {
   const page = appPages.find(({ href }) => isActive(pathname, href));
   return (
     <p className="truncate text-sm text-muted">
@@ -61,8 +60,7 @@ export function Breadcrumb() {
   );
 }
 
-export function MobileLinks() {
-  const pathname = usePathname();
+export function MobileLinksView({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="App" className="flex gap-1 lg:hidden">
       {appPages.map(({ href, label }) => (
@@ -78,3 +76,7 @@ export function MobileLinks() {
     </nav>
   );
 }
+
+export const SidebarLinks = () => <SidebarLinksView pathname={usePathname()} />;
+export const Breadcrumb = () => <BreadcrumbView pathname={usePathname()} />;
+export const MobileLinks = () => <MobileLinksView pathname={usePathname()} />;

@@ -6,7 +6,15 @@ import {
 } from "react-icons/tb";
 import { Logo, LogoMark } from "@/components/logo";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
-import { Breadcrumb, MobileLinks, SidebarLinks } from "./nav";
+import { Suspense } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbView,
+  MobileLinks,
+  MobileLinksView,
+  SidebarLinks,
+  SidebarLinksView,
+} from "./nav";
 
 function SidebarGroup({
   title,
@@ -32,7 +40,9 @@ function Sidebar() {
 
       <nav aria-label="App" className="flex-1 space-y-7 px-3 py-6 text-sm">
         <SidebarGroup title="Workspace">
-          <SidebarLinks />
+          <Suspense fallback={<SidebarLinksView pathname={null} />}>
+            <SidebarLinks />
+          </Suspense>
         </SidebarGroup>
         <SidebarGroup title="SnapTrade">
           <a
@@ -70,9 +80,13 @@ function Topbar() {
             <LogoMark />
           </span>
           <span className="hidden lg:block">
-            <Breadcrumb />
+            <Suspense fallback={<BreadcrumbView pathname={null} />}>
+              <Breadcrumb />
+            </Suspense>
           </span>
-          <MobileLinks />
+          <Suspense fallback={<MobileLinksView pathname={null} />}>
+            <MobileLinks />
+          </Suspense>
         </div>
         <div className="flex items-center gap-1">
           <form method="post" action="/logout">
