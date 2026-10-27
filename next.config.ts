@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       { source: "/accounts", headers: noStore },
       { source: "/oauth/:path*", headers: noStore },
+      { source: "/reports/:path*", headers: noStore },
     ];
   },
 };
