@@ -10,17 +10,27 @@ import {
   TbFolderOpen,
   TbMarkdown,
 } from "react-icons/tb";
-import { ExampleNote, type NoteView } from "./example-note";
-import { exampleReport } from "./example-report";
+import { addMonths, parsePeriod } from "@/lib/reports/period";
+import {
+  ExampleNote,
+  type ExampleNoteData,
+  type NoteView,
+} from "./example-note";
 
-const reports = ["2026-08", "2026-09", exampleReport.fileName];
+const FOLDER = "Investing";
+
+function recentReports(current: string): string[] {
+  const period = parsePeriod(current);
+  if (!period) return [current];
+  return [-2, -1, 0].map((offset) => addMonths(period, offset).id);
+}
 
 const views: { id: NoteView; label: string; Icon: typeof TbEye }[] = [
   { id: "rendered", label: "Rendered", Icon: TbEye },
   { id: "markdown", label: "Markdown", Icon: TbMarkdown },
 ];
 
-function VaultTree() {
+function VaultTree({ current }: { current: string }) {
   return (
     <div className="hidden overflow-hidden border-r border-border bg-surface p-3 text-[13px] sm:block">
       <p className="px-2 pb-2 text-xs font-medium text-muted">Vault</p>
@@ -33,12 +43,12 @@ function VaultTree() {
         <li className="flex items-center gap-1.5 px-2 py-1 text-foreground">
           <TbChevronDown aria-hidden className="shrink-0" />
           <TbFolderOpen aria-hidden className="shrink-0" />
-          {exampleReport.folder}
+          {FOLDER}
         </li>
-        {reports.map((name) => (
+        {recentReports(current).map((name) => (
           <li
             key={name}
-            aria-current={name === exampleReport.fileName ? "page" : undefined}
+            aria-current={name === current ? "page" : undefined}
             className="ml-5 flex items-center gap-1.5 rounded-md px-2 py-1 aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent"
           >
             <TbFileText aria-hidden className="shrink-0" />
@@ -85,7 +95,7 @@ function ViewToggle({
   );
 }
 
-export function ObsidianWindow() {
+export function ObsidianWindow({ note }: { note: ExampleNoteData }) {
   const [view, setView] = useState<NoteView>("rendered");
 
   return (
@@ -106,12 +116,12 @@ export function ObsidianWindow() {
           <span aria-hidden className="h-3 w-3 rounded-full bg-[#febc2e]" />
           <span aria-hidden className="h-3 w-3 rounded-full bg-[#28c840]" />
           <span className="ml-3 truncate text-xs text-muted">
-            {exampleReport.folder} / {exampleReport.fileName}.md
+            {FOLDER} / {note.title}.md
           </span>
         </div>
         <div className="grid h-[32rem] sm:h-[36rem] sm:grid-cols-[180px_minmax(0,1fr)]">
-          <VaultTree />
-          <ExampleNote view={view} />
+          <VaultTree current={note.title} />
+          <ExampleNote view={view} note={note} />
         </div>
       </div>
     </figure>

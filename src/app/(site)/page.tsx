@@ -26,6 +26,7 @@ import { ExternalLink } from "@/components/external-link";
 import { SNAPTRADE_SITE_URL, SnapTradeLink } from "@/components/snaptrade";
 import { buttonPrimary, card, chip, container, large } from "@/components/ui";
 import { currentUserId } from "@/lib/auth/session";
+import { buildExampleReport } from "@/lib/reports/example";
 
 const OBSIDIAN_SITE_URL = "https://obsidian.md";
 
@@ -257,6 +258,8 @@ async function ClosingAction() {
 }
 
 export default function Home({ searchParams }: PageProps<"/">) {
+  const example = buildExampleReport();
+
   return (
     <main>
       <section
@@ -297,7 +300,13 @@ export default function Home({ searchParams }: PageProps<"/">) {
           </p>
         </div>
 
-        <ObsidianWindow />
+        <ObsidianWindow
+          note={{
+            title: example.fileName.replace(/\.md$/, ""),
+            document: example.document,
+            markdown: example.markdown,
+          }}
+        />
       </section>
 
       <section
