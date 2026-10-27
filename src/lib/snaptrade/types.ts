@@ -29,8 +29,62 @@ export interface Account {
     transactions?: {
       initial_sync_completed?: boolean;
       last_successful_sync?: string | null;
+      first_transaction_date?: string | null;
     };
   };
+}
+
+interface CurrencyObject {
+  code?: string;
+}
+
+// components.schemas.Balance (GET /accounts/{id}/balances)
+export interface Balance {
+  currency?: CurrencyObject | null;
+  // Can be negative in a margin account.
+  cash?: number | null;
+}
+
+// components.schemas.AccountPosition (GET /accounts/{id}/positions/all).
+// Quantities are decimal strings in this API version.
+export interface AccountPosition {
+  instrument?: {
+    kind?: string;
+    symbol?: string;
+    raw_symbol?: string;
+    description?: string | null;
+    currency?: string | null;
+  };
+  units?: string | null;
+  price?: string | null;
+  currency?: string | null;
+  cash_equivalent?: boolean | null;
+}
+
+// components.schemas.AllAccountPositionsResponse
+export interface AccountPositionsResponse {
+  results?: AccountPosition[];
+  data_freshness?: { as_of?: string | null };
+}
+
+// components.schemas.AccountUniversalActivity (GET /accounts/{id}/activities)
+export interface Activity {
+  id?: string;
+  symbol?: { symbol?: string; raw_symbol?: string } | null;
+  price?: number | null;
+  units?: number | null;
+  amount?: number | null;
+  currency?: CurrencyObject | null;
+  type?: string;
+  description?: string;
+  trade_date?: string | null;
+  settlement_date?: string | null;
+}
+
+// components.schemas.PaginatedUniversalActivity
+export interface ActivityPage {
+  data?: Activity[];
+  pagination?: { offset?: number; limit?: number; total?: number };
 }
 
 // components.schemas.BrokerageAuthorization (GET /authorizations)
