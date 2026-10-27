@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vaultfolio
 
-## Getting Started
+Vaultfolio turns SnapTrade brokerage data into structured Markdown investing reports, viewable in the browser and synced into an Obsidian vault. It is a SnapTrade OAuth app: SnapTrade Personal users grant read-only access to their accounts.
 
-First, run the development server:
+Current status: SnapTrade sign-in, account overview, sign-out and disconnect (Phase 1). A full reviewer guide covering architecture, security decisions and tradeoffs follows in Phase 5.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Requirements
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Node.js 24 or later
+- A Neon Postgres database (a separate branch for local development)
+- A SnapTrade OAuth app with these redirect URIs registered exactly:
+  - `http://127.0.0.1:3000/oauth/snaptrade/callback`
+  - `https://<deployment>/oauth/snaptrade/callback`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install dependencies: `npm install`
+2. Create `.env.local` from `.env.example` and set each value. `SESSION_SECRET` and `TOKEN_ENCRYPTION_KEY` are 32 random bytes each: `openssl rand -base64 32`.
+3. Apply the database migrations: `npm run db:migrate`
+4. Start the app: `npm run dev`, then open `http://127.0.0.1:3000`.
 
-## Learn More
+The app is served on `127.0.0.1`, not `localhost`. Cookies are host-specific, so a callback that arrives on a different host than the sign-in started from fails the state check.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Script                | Purpose                                            |
+| --------------------- | -------------------------------------------------- |
+| `npm run dev`         | Development server on 127.0.0.1:3000               |
+| `npm run build`       | Production build                                   |
+| `npm run check`       | Formatting check, lint, type check and tests       |
+| `npm test`            | Unit tests (Vitest)                                |
+| `npm run db:generate` | SQL migration from changes to `src/db/schema.ts`   |
+| `npm run db:migrate`  | Apply migrations to the database in `DATABASE_URL` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment (Vercel)
 
-## Deploy on Vercel
+- Neon is added through the Vercel Marketplace, which sets `DATABASE_URL`.
+- The remaining variables from `.env.example` are set in Project Settings → Environment Variables, with values different from local development.
+- Migrations run manually against the production database (`npm run db:migrate` with the production `DATABASE_URL`), not during the build.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Known issues
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm audit` reports moderate advisories in `esbuild` through `drizzle-kit`. The advisory affects esbuild's development server, which drizzle-kit does not start, and drizzle-kit is a development-only tool that is not deployed.
