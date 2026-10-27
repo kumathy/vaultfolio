@@ -46,6 +46,20 @@ describe("normalizeAccounts", () => {
     expect(accounts[2].total).toEqual({ amount: 250.5, currency: "USD" });
   });
 
+  it.each([
+    ["Wealthsimple Trade TFSA", "TFSA"],
+    ["Wealthsimple Trade - RRSP", "RRSP"],
+    ["wealthsimple trade: FHSA", "FHSA"],
+    ["Wealthsimple Trades TFSA", "Wealthsimple Trades TFSA"],
+    ["Wealthsimple Trade", "Wealthsimple Trade"],
+    ["Joint Cash", "Joint Cash"],
+  ])("displays account name %j as %j", (name, expected) => {
+    const [view] = normalizeAccounts([
+      { ...accountsFixture[0], name, institution_name: "Wealthsimple Trade" },
+    ]);
+    expect(view.name).toBe(expected);
+  });
+
   it("handles sparse sandbox data", () => {
     expect(accounts[3]).toMatchObject({
       name: "SnapTrade Sandbox",

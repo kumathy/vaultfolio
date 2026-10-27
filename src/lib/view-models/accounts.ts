@@ -50,6 +50,15 @@ function numberSuffix(value: unknown): string | null {
   return characters ? characters.slice(-4) : null;
 }
 
+function withoutInstitutionPrefix(name: string, institution: string): string {
+  const prefixPattern = new RegExp(
+    `^${institution.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\-–—:·|]+`,
+    "i",
+  );
+  const rest = name.replace(prefixPattern, "");
+  return rest && rest !== name ? rest : name;
+}
+
 export function toAccountView(account: Account): AccountView | null {
   const id = text(account?.id);
   if (!id) {
@@ -60,7 +69,10 @@ export function toAccountView(account: Account): AccountView | null {
     id,
     connectionId: text(account.brokerage_authorization) ?? "",
     institution,
-    name: text(account.name) ?? institution,
+    name: withoutInstitutionPrefix(
+      text(account.name) ?? institution,
+      institution,
+    ),
     numberSuffix: numberSuffix(account.number),
     type: text(account.raw_type) ?? UNCLASSIFIED,
     total: money(account.balance?.total),
