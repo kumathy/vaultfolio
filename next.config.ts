@@ -1,16 +1,15 @@
 import type { NextConfig } from "next";
 
 const securityHeaders = [
-  // Clickjacking: the app may not be embedded in a frame on any origin.
+  // frame-ancestors + X-Frame-Options prevent clickjacking.
   {
     key: "Content-Security-Policy",
     value:
       "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
   },
   { key: "X-Frame-Options", value: "DENY" },
-  // Authorization codes and other URL data are never sent in the Referer header.
+  // Keeps OAuth codes in callback URLs out of Referer headers.
   { key: "Referrer-Policy", value: "no-referrer" },
-  // MIME sniffing: responses are only interpreted as their declared type.
   { key: "X-Content-Type-Options", value: "nosniff" },
   {
     key: "Permissions-Policy",
@@ -18,7 +17,6 @@ const securityHeaders = [
   },
 ];
 
-// Financial pages are never stored by browsers or shared caches.
 const noStore = [{ key: "Cache-Control", value: "private, no-store" }];
 
 const nextConfig: NextConfig = {
