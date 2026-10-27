@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -44,6 +45,18 @@ export const snaptradeTokens = pgTable("snaptrade_tokens", {
     withTimezone: true,
   }).notNull(),
   scope: text("scope").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// User-entered settings only, validated on read and write
+// (src/lib/settings/parse.ts). No brokerage data is stored here.
+export const userSettings = pgTable("user_settings", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  settings: jsonb("settings").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
