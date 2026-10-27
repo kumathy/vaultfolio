@@ -14,3 +14,13 @@ export function redirectTo(path: `/${string}`): NextResponse {
 export function isSameOrigin(request: NextRequest): boolean {
   return request.headers.get("origin") === env.appBaseUrl;
 }
+
+export function textResponse(body: string, status: number): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "private, no-store",
+    },
+  });
+}

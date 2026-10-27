@@ -116,3 +116,13 @@ export function addMonths(period: Period, months: number): Period {
     `${Math.floor(index / 12)}-${pad((index % 12) + 1)}`,
   ) as Period;
 }
+
+// Calendar months from `from` to `to` inclusive, e.g. 2026-01 … 2026-10.
+export function periodsBetween(from: string, to: string): Period[] {
+  const start = parsePeriod(from);
+  const end = parsePeriod(to);
+  if (!start || !end || start.id > end.id) return [];
+  const periods: Period[] = [];
+  for (let p = start; p.id <= end.id; p = addMonths(p, 1)) periods.push(p);
+  return periods;
+}
