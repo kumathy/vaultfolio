@@ -113,10 +113,16 @@ export function totalsByCurrency(accounts: AccountView[]): MoneyView[] {
   const totals = new Map<string, number>();
   for (const { total } of accounts) {
     if (total) {
-      totals.set(total.currency, (totals.get(total.currency) ?? 0) + total.amount);
+      totals.set(
+        total.currency,
+        (totals.get(total.currency) ?? 0) + total.amount,
+      );
     }
   }
   return [...totals]
-    .map(([currency, amount]) => ({ currency, amount: Math.round(amount * 100) / 100 }))
+    .map(([currency, amount]) => ({
+      currency,
+      amount: Math.round(amount * 100) / 100,
+    }))
     .sort((a, b) => a.currency.localeCompare(b.currency));
 }

@@ -11,7 +11,8 @@ import {
 } from "@/lib/snaptrade/oauth";
 import type { FlowState } from "./flow-cookie";
 
-export type CallbackFailure = "state_mismatch" | "access_denied" | "login_failed";
+export type CallbackFailure =
+  "state_mismatch" | "access_denied" | "login_failed";
 
 export type CallbackResult =
   | { ok: true; identity: Identity; tokens: TokenResponse }

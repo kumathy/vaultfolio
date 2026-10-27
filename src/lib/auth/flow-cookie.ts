@@ -15,7 +15,10 @@ export interface FlowState {
 
 // Encrypted (JWE, A256GCM) rather than only signed: the code_verifier and
 // nonce are secrets until the callback completes.
-export function sealFlowState(flow: FlowState, key: Uint8Array): Promise<string> {
+export function sealFlowState(
+  flow: FlowState,
+  key: Uint8Array,
+): Promise<string> {
   return new EncryptJWT({ ...flow })
     .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
     .setIssuedAt()

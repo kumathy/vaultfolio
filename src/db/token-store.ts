@@ -43,7 +43,10 @@ const byUser = (userId: string) => eq(snaptradeTokens.userId, userId);
 
 export const dbTokenStore: TokenStore = {
   async load(userId) {
-    const [row] = await db().select().from(snaptradeTokens).where(byUser(userId));
+    const [row] = await db()
+      .select()
+      .from(snaptradeTokens)
+      .where(byUser(userId));
     return row ? unseal(row) : null;
   },
 

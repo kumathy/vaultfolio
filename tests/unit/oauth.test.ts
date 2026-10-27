@@ -208,7 +208,10 @@ describe("ID token verification", () => {
 
   it("treats a missing or false email_verified as unverified", async () => {
     const { keySet, sign } = await createSigner();
-    const unverified = await sign({ email: "a@example.com", email_verified: false });
+    const unverified = await sign({
+      email: "a@example.com",
+      email_verified: false,
+    });
     const noEmail = await sign();
 
     await expect(
@@ -266,7 +269,12 @@ describe("ID token verification", () => {
     const trusted = await createSigner("trusted");
     const attacker = await createSigner("trusted");
     await expect(
-      verifyIdToken(testConfig, await attacker.sign(), "nonce-1", trusted.keySet),
+      verifyIdToken(
+        testConfig,
+        await attacker.sign(),
+        "nonce-1",
+        trusted.keySet,
+      ),
     ).rejects.toThrow();
   });
 

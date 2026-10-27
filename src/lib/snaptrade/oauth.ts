@@ -1,11 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import {
-  createRemoteJWKSet,
-  jwtVerify,
-  type JWTVerifyGetKey,
-} from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { randomToken, safeEqual } from "@/lib/crypto/random";
 import type { OidcMetadata } from "./discovery";
 
@@ -164,11 +160,10 @@ export async function revokeRefreshToken(
   config: OAuthConfig,
   refreshToken: string,
 ): Promise<void> {
-  const response = await postForm(
-    config,
-    config.metadata.revocation_endpoint,
-    { token: refreshToken, token_type_hint: "refresh_token" },
-  );
+  const response = await postForm(config, config.metadata.revocation_endpoint, {
+    token: refreshToken,
+    token_type_hint: "refresh_token",
+  });
   if (!response.ok) {
     throw new TokenEndpointError(response.status, await errorCode(response));
   }
@@ -203,7 +198,10 @@ export async function verifyIdToken(
     requiredClaims: ["sub", "exp", "iat", "nonce"],
   });
 
-  if (typeof payload.nonce !== "string" || !safeEqual(payload.nonce, expectedNonce)) {
+  if (
+    typeof payload.nonce !== "string" ||
+    !safeEqual(payload.nonce, expectedNonce)
+  ) {
     throw new Error("ID token nonce mismatch");
   }
 

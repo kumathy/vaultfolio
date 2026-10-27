@@ -48,7 +48,10 @@ export async function findSessionUserId(
     .select({ userId: sessions.userId })
     .from(sessions)
     .where(
-      and(eq(sessions.idHash, sha256Hex(token)), gt(sessions.expiresAt, new Date())),
+      and(
+        eq(sessions.idHash, sha256Hex(token)),
+        gt(sessions.expiresAt, new Date()),
+      ),
     );
   return session?.userId ?? null;
 }
@@ -69,7 +72,9 @@ export async function requireUserId(): Promise<string> {
 }
 
 export async function deleteSession(token: string): Promise<void> {
-  await db().delete(sessions).where(eq(sessions.idHash, sha256Hex(token)));
+  await db()
+    .delete(sessions)
+    .where(eq(sessions.idHash, sha256Hex(token)));
 }
 
 export async function deleteAllSessions(userId: string): Promise<void> {

@@ -30,6 +30,10 @@ export async function GET() {
   );
 
   const response = NextResponse.redirect(url, 303);
-  response.cookies.set(FLOW_COOKIE, sealed, flowCookieOptions(env.secureCookies));
+  response.cookies.set(
+    FLOW_COOKIE,
+    sealed,
+    flowCookieOptions(env.secureCookies),
+  );
   return response;
 }

@@ -96,7 +96,10 @@ export async function getAccessToken(
     } catch (error) {
       // invalid_grant means the grant was revoked or the token already used.
       // Network and server errors keep the tokens for a later retry.
-      if (error instanceof TokenEndpointError && error.code === "invalid_grant") {
+      if (
+        error instanceof TokenEndpointError &&
+        error.code === "invalid_grant"
+      ) {
         return null;
       }
       throw error;

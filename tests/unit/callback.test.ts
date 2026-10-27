@@ -69,11 +69,22 @@ describe("completeAuthorization", () => {
   it("signs in when state, code and ID token are valid", async () => {
     const { keySet, sign } = await createSigner();
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(tokenBody({ id_token: await sign({ email: "a@example.com", email_verified: true }) })),
+      jsonResponse(
+        tokenBody({
+          id_token: await sign({
+            email: "a@example.com",
+            email_verified: true,
+          }),
+        }),
+      ),
     );
 
     const result = await completeAuthorization(
-      query({ code: "code-1", state: "state-1", iss: "https://api.snaptrade.com" }),
+      query({
+        code: "code-1",
+        state: "state-1",
+        iss: "https://api.snaptrade.com",
+      }),
       flow,
       testConfig,
       keySet,
@@ -81,7 +92,11 @@ describe("completeAuthorization", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      identity: { sub: "snaptrade-user-1", email: "a@example.com", emailVerified: true },
+      identity: {
+        sub: "snaptrade-user-1",
+        email: "a@example.com",
+        emailVerified: true,
+      },
       tokens: { accessToken: "access-1", refreshToken: "refresh-1" },
     });
     const body = fetchMock.mock.calls[0][1]?.body as URLSearchParams;
@@ -92,11 +107,14 @@ describe("completeAuthorization", () => {
     ["mismatched state", query({ code: "c", state: "state-2" }), flow],
     ["missing state", query({ code: "c" }), flow],
     ["missing flow cookie", query({ code: "c", state: "state-1" }), null],
-  ])("rejects a %s without contacting the token endpoint", async (_, params, flowState) => {
-    const result = await completeAuthorization(params, flowState, testConfig);
-    expect(result).toMatchObject({ ok: false, reason: "state_mismatch" });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
+  ])(
+    "rejects a %s without contacting the token endpoint",
+    async (_, params, flowState) => {
+      const result = await completeAuthorization(params, flowState, testConfig);
+      expect(result).toMatchObject({ ok: false, reason: "state_mismatch" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("handles consent denial without a token exchange", async () => {
     const result = await completeAuthorization(
@@ -147,7 +165,9 @@ describe("completeAuthorization", () => {
   it("rejects an ID token bound to another attempt", async () => {
     const { keySet, sign } = await createSigner();
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(tokenBody({ id_token: await sign({ nonce: "nonce-other" }) })),
+      jsonResponse(
+        tokenBody({ id_token: await sign({ nonce: "nonce-other" }) }),
+      ),
     );
     const result = await completeAuthorization(
       query({ code: "c", state: "state-1" }),
