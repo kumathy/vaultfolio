@@ -3,17 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "react-icons";
-import { TbWallet } from "react-icons/tb";
+import { TbFileText, TbSettings, TbWallet } from "react-icons/tb";
 
 export const appPages: { href: `/${string}`; label: string; Icon: IconType }[] =
-  [{ href: "/accounts", label: "Accounts", Icon: TbWallet }];
+  [
+    { href: "/accounts", label: "Accounts", Icon: TbWallet },
+    { href: "/reports", label: "Reports", Icon: TbFileText },
+    { href: "/settings", label: "Settings", Icon: TbSettings },
+  ];
+
+const isActive = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
 
 export function SidebarLinks() {
   const pathname = usePathname();
   return (
     <ul className="space-y-0.5">
       {appPages.map(({ href, label, Icon }) => {
-        const active = pathname === href;
+        const active = isActive(pathname, href);
         return (
           <li key={href}>
             <Link
@@ -40,7 +47,7 @@ export function SidebarLinks() {
 
 export function Breadcrumb() {
   const pathname = usePathname();
-  const page = appPages.find(({ href }) => href === pathname);
+  const page = appPages.find(({ href }) => isActive(pathname, href));
   return (
     <p className="truncate text-sm text-muted">
       Vaultfolio
@@ -62,7 +69,7 @@ export function MobileLinks() {
         <Link
           key={href}
           href={href}
-          aria-current={pathname === href ? "page" : undefined}
+          aria-current={isActive(pathname, href) ? "page" : undefined}
           className="rounded-full px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground aria-[current=page]:bg-surface aria-[current=page]:text-foreground"
         >
           {label}
