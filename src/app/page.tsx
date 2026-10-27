@@ -1,69 +1,148 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { Notice } from "@/components/notice";
+import { Section } from "@/components/section";
+import {
+  ExternalLink,
+  linkClass,
+  SNAPTRADE_DASHBOARD_URL,
+} from "@/components/text-link";
+import { currentUserId } from "@/lib/auth/session";
 
-export default function Home() {
+const messages: Record<string, { tone: "info" | "warning"; text: string }> = {
+  state_mismatch: {
+    tone: "warning",
+    text: "Sign-in could not be verified: the request expired or did not start in this browser. Signing in again starts a new request.",
+  },
+  access_denied: {
+    tone: "info",
+    text: "Access was not granted on SnapTrade. No account data was retrieved.",
+  },
+  login_failed: {
+    tone: "warning",
+    text: "Sign-in with SnapTrade did not complete. No account data was retrieved.",
+  },
+  reauthorize: {
+    tone: "warning",
+    text: "SnapTrade authorization expired or was revoked. Signing in again restores access.",
+  },
+  unavailable: {
+    tone: "warning",
+    text: "SnapTrade sign-in is temporarily unavailable.",
+  },
+  signed_out: { tone: "info", text: "Signed out." },
+  disconnected: {
+    tone: "info",
+    text: "SnapTrade access revoked. Stored tokens were deleted.",
+  },
+  disconnected_unconfirmed: {
+    tone: "warning",
+    text: "Stored tokens were deleted, but SnapTrade did not confirm the revocation. Access can also be removed in the SnapTrade Dashboard.",
+  },
+};
+
+const buttonClass =
+  "inline-block bg-accent px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85";
+
+function SignInLink() {
+  // A plain anchor: next/link would prefetch /login and start OAuth attempts.
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <a href="/login" className={buttonClass}>
+      Sign in with SnapTrade
+    </a>
+  );
+}
+
+async function SessionStatus({
+  searchParams,
+}: {
+  searchParams: PageProps<"/">["searchParams"];
+}) {
+  const params = await searchParams;
+  const key = [params.error, params.notice].find(
+    (value): value is string => typeof value === "string" && value in messages,
+  );
+  const message = key ? messages[key] : null;
+  const signedIn = (await currentUserId()) !== null;
+
+  return (
+    <>
+      {message && <Notice tone={message.tone}>{message.text}</Notice>}
+      <div className="mt-8">
+        {signedIn ? (
+          <Link href="/accounts" className={buttonClass}>
+            View accounts
+          </Link>
+        ) : (
+          <SignInLink />
+        )}
+      </div>
+    </>
+  );
+}
+
+export default function Home({ searchParams }: PageProps<"/">) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-6">
+      <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+        Investing reports from brokerage data
+      </h1>
+      <p className="mt-4 max-w-xl leading-relaxed text-muted">
+        Vaultfolio reads account data through SnapTrade and produces structured
+        Markdown reports: plan execution, contributions and growth,
+        registered-account room, and distributions. Reports are viewable in the
+        browser and sync into an Obsidian vault.
+      </p>
+
+      <Suspense
+        fallback={
+          <div className="mt-8">
+            <SignInLink />
+          </div>
+        }
+      >
+        <SessionStatus searchParams={searchParams} />
+      </Suspense>
+
+      <p className="mt-4 max-w-xl text-sm text-muted">
+        Requires a SnapTrade Personal account with a connected brokerage.
+        Connections are managed in the{" "}
+        <ExternalLink href={SNAPTRADE_DASHBOARD_URL}>
+          SnapTrade Dashboard
+        </ExternalLink>
+        .
+      </p>
+
+      <Section title="Access">
+        <ul className="max-w-xl space-y-3 leading-relaxed">
+          <li>
+            Sign-in happens on SnapTrade. Vaultfolio never receives brokerage
+            credentials.
+          </li>
+          <li>
+            Access is read-only. The trading permission is never requested, so
+            no order can be placed.
+          </li>
+          <li>
+            Access tokens are encrypted at rest. Brokerage data is fetched on
+            demand and not stored.
+          </li>
+          <li>
+            Access can be revoked at any time with Disconnect on the{" "}
+            <Link href="/accounts" className={linkClass}>
+              accounts page
+            </Link>{" "}
+            or in the SnapTrade Dashboard.
+          </li>
+        </ul>
+      </Section>
+
+      <Section title="Status">
+        <p className="max-w-xl leading-relaxed">
+          Available: SnapTrade sign-in and account overview. In development:
+          monthly reports, settings, Markdown download, and the Obsidian plugin.
+        </p>
+      </Section>
+    </main>
   );
 }
