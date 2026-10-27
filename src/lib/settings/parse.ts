@@ -25,6 +25,7 @@ export const TIME_ZONES = [
 
 const REGISTERED: RegisteredType[] = ["TFSA", "RRSP", "FHSA"];
 const MAX_TARGETS = 10;
+const MAX_TRANSFERS = 500;
 const MAX_DOLLARS = 10_000_000;
 
 export type FieldErrors = Record<string, string>;
@@ -154,8 +155,11 @@ export function parseTransfersForm(
   form: FormLike,
   current: ReportSettings["activityKinds"] = {},
 ): NonNullable<ReportSettings["activityKinds"]> {
-  const listed = new Set(all(form, "listed"));
-  const checked = new Set(all(form, "contribution"));
+  const validId = (id: string) => id.length > 0 && id.length <= 128;
+  const listed = new Set(
+    all(form, "listed").filter(validId).slice(0, MAX_TRANSFERS),
+  );
+  const checked = new Set(all(form, "contribution").filter(validId));
   const next = { ...current };
   for (const id of listed) {
     if (checked.has(id)) next[id] = "contribution";
