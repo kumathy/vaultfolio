@@ -1,0 +1,21 @@
+[
+  {
+    "id": "c0000000-0000-4000-8000-000000000001",
+    "name": "Connection-1",
+    "disabled": false,
+    "disabled_date": null,
+    "brokerage": { "name": "Wealthsimple", "display_name": "Wealthsimple" }
+  },
+  {
+    "id": "c0000000-0000-4000-8000-000000000002",
+    "name": "Connection-2",
+    "disabled": true,
+    "disabled_date": "2026-10-20T03:14:00.000Z",
+    "brokerage": { "name": "Questrade" }
+  },
+  {
+    "id": "c0000000-0000-4000-8000-000000000003",
+    "name": "Sandbox connection",
+    "brokerage": {}
+  }
+]

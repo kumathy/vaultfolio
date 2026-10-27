@@ -1,0 +1,77 @@
+[
+  {
+    "id": "a1f0c6de-0001-4d6a-9d1e-3f1d2c000001",
+    "brokerage_authorization": "c0000000-0000-4000-8000-000000000001",
+    "name": "TFSA",
+    "number": "HQ8KZ1234",
+    "institution_name": "Wealthsimple",
+    "created_date": "2026-01-05T14:12:00.000Z",
+    "raw_type": "TFSA",
+    "account_category": "INVESTMENT",
+    "status": "open",
+    "is_paper": false,
+    "balance": { "total": { "amount": 4312.55, "currency": "CAD" } },
+    "sync_status": {
+      "transactions": {
+        "initial_sync_completed": true,
+        "last_successful_sync": "2026-10-26"
+      },
+      "holdings": {
+        "initial_sync_completed": true,
+        "last_successful_sync": "2026-10-27 06:02:11.501223+00:00"
+      }
+    }
+  },
+  {
+    "id": "a1f0c6de-0002-4d6a-9d1e-3f1d2c000002",
+    "brokerage_authorization": "c0000000-0000-4000-8000-000000000001",
+    "name": "RRSP",
+    "number": "HQ8KZ5678",
+    "institution_name": "Wealthsimple",
+    "created_date": "2026-01-05T14:12:00.000Z",
+    "raw_type": "RRSP",
+    "account_category": "INVESTMENT",
+    "status": "open",
+    "is_paper": false,
+    "balance": { "total": { "amount": 1000.1, "currency": "CAD" } },
+    "sync_status": {
+      "holdings": {
+        "initial_sync_completed": true,
+        "last_successful_sync": "2026-10-27T06:02:11Z"
+      }
+    }
+  },
+  {
+    "id": "a1f0c6de-0003-4d6a-9d1e-3f1d2c000003",
+    "brokerage_authorization": "c0000000-0000-4000-8000-000000000002",
+    "name": "Individual Margin",
+    "number": "5310-9921",
+    "institution_name": "Questrade",
+    "created_date": "2026-02-10T09:00:00.000Z",
+    "raw_type": "Margin",
+    "is_paper": false,
+    "balance": { "total": { "amount": 250.5, "currency": "usd" } },
+    "sync_status": {}
+  },
+  {
+    "id": "a1f0c6de-0004-4d6a-9d1e-3f1d2c000004",
+    "brokerage_authorization": "c0000000-0000-4000-8000-000000000003",
+    "name": null,
+    "number": "",
+    "institution_name": "SnapTrade Sandbox",
+    "created_date": "2026-10-01T00:00:00.000Z",
+    "raw_type": null,
+    "is_paper": true,
+    "balance": { "total": null },
+    "sync_status": {
+      "holdings": { "initial_sync_completed": false }
+    }
+  },
+  {
+    "name": "Missing id",
+    "number": "0000",
+    "institution_name": "Broken",
+    "balance": {},
+    "sync_status": {}
+  }
+]
