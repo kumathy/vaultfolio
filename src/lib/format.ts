@@ -1,13 +1,17 @@
-// Always followed by the ISO code: "$" alone is ambiguous between CAD and USD.
-export function formatMoney(amount: number, currency: string): string {
-  const formatted = new Intl.NumberFormat("en-CA", {
+// Only for layouts that show the currency code next to the amount.
+export function formatAmount(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
-  return `${formatted} ${currency}`;
+}
+
+// "$" alone is ambiguous between CAD and USD.
+export function formatMoney(amount: number, currency: string): string {
+  return `${formatAmount(amount, currency)} ${currency}`;
 }
 
 // SnapTrade mixes date-only values, ISO timestamps and

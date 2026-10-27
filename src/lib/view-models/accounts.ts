@@ -120,6 +120,26 @@ export const normalizeAccounts = (raw: unknown) =>
 export const normalizeConnections = (raw: unknown) =>
   normalizeList(raw, toConnectionView);
 
+export interface InstitutionGroup {
+  institution: string;
+  accounts: AccountView[];
+}
+
+export function groupByInstitution(
+  accounts: AccountView[],
+): InstitutionGroup[] {
+  const groups = new Map<string, AccountView[]>();
+  for (const account of accounts) {
+    groups.set(account.institution, [
+      ...(groups.get(account.institution) ?? []),
+      account,
+    ]);
+  }
+  return [...groups]
+    .map(([institution, members]) => ({ institution, accounts: members }))
+    .sort((a, b) => a.institution.localeCompare(b.institution));
+}
+
 // No currency conversion: amounts are only ever summed within one currency.
 export function totalsByCurrency(accounts: AccountView[]): MoneyView[] {
   const totals = new Map<string, number>();

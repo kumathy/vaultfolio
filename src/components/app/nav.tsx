@@ -1,0 +1,73 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { IconType } from "react-icons";
+import { TbWallet } from "react-icons/tb";
+
+export const appPages: { href: `/${string}`; label: string; Icon: IconType }[] =
+  [{ href: "/accounts", label: "Accounts", Icon: TbWallet }];
+
+export function SidebarLinks() {
+  const pathname = usePathname();
+  return (
+    <ul className="space-y-0.5">
+      {appPages.map(({ href, label, Icon }) => {
+        const active = pathname === href;
+        return (
+          <li key={href}>
+            <Link
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors ${
+                active
+                  ? "bg-card font-medium text-foreground"
+                  : "text-muted hover:bg-card hover:text-foreground"
+              }`}
+            >
+              <Icon
+                aria-hidden
+                className={`text-lg ${active ? "text-accent" : ""}`}
+              />
+              {label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export function Breadcrumb() {
+  const pathname = usePathname();
+  const page = appPages.find(({ href }) => href === pathname);
+  return (
+    <p className="truncate text-sm text-muted">
+      Vaultfolio
+      {page && (
+        <>
+          <span className="px-2 text-border">/</span>
+          <span className="text-foreground">{page.label}</span>
+        </>
+      )}
+    </p>
+  );
+}
+
+export function MobileLinks() {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="App" className="flex gap-1 lg:hidden">
+      {appPages.map(({ href, label }) => (
+        <Link
+          key={href}
+          href={href}
+          aria-current={pathname === href ? "page" : undefined}
+          className="rounded-full px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground aria-[current=page]:bg-surface aria-[current=page]:text-foreground"
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}

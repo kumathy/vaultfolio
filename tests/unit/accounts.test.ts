@@ -6,6 +6,7 @@ import {
   type TokenDeps,
 } from "@/lib/snaptrade/tokens";
 import {
+  groupByInstitution,
   normalizeAccounts,
   normalizeConnections,
   totalsByCurrency,
@@ -98,6 +99,26 @@ describe("normalizeConnections", () => {
         disabledOn: null,
       },
     ]);
+  });
+});
+
+describe("groupByInstitution", () => {
+  it("groups accounts by institution in alphabetical order", () => {
+    const groups = groupByInstitution(normalizeAccounts(accountsFixture));
+    expect(
+      groups.map((group) => [
+        group.institution,
+        group.accounts.map((account) => account.name),
+      ]),
+    ).toEqual([
+      ["Questrade", ["Individual Margin"]],
+      ["SnapTrade Sandbox", ["SnapTrade Sandbox"]],
+      ["Wealthsimple", ["TFSA", "RRSP"]],
+    ]);
+  });
+
+  it("returns no groups for no accounts", () => {
+    expect(groupByInstitution([])).toEqual([]);
   });
 });
 
