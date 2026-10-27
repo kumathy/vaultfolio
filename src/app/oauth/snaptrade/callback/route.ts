@@ -1,4 +1,4 @@
-import type { NextRequest, NextResponse } from "next/server";
+import { connection, type NextRequest, type NextResponse } from "next/server";
 import { upsertUser } from "@/db/users";
 import { completeAuthorization } from "@/lib/auth/callback";
 import {
@@ -58,6 +58,9 @@ async function signIn(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function GET(request: NextRequest) {
+  // Never prerendered: each response depends on this request's code and cookies.
+  await connection();
+
   let response: NextResponse;
   try {
     response = await signIn(request);
