@@ -1,9 +1,30 @@
 import type { NextConfig } from "next";
 
+const securityHeaders = [
+  // Clickjacking: the app may not be embedded in a frame on any origin.
+  {
+    key: "Content-Security-Policy",
+    value:
+      "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+  },
+  { key: "X-Frame-Options", value: "DENY" },
+  // Authorization codes and other URL data are never sent in the Referer header.
+  { key: "Referrer-Policy", value: "no-referrer" },
+  // MIME sniffing: responses are only interpreted as their declared type.
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+];
+
+// Financial pages are never stored by browsers or shared caches.
+const noStore = [{ key: "Cache-Control", value: "private, no-store" }];
+
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  poweredByHeader: false,
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +32,13 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async headers() {
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/accounts", headers: noStore },
+      { source: "/oauth/:path*", headers: noStore },
+    ];
   },
 };
 
