@@ -2,6 +2,5 @@
 node_modules
 package-lock.json
 drizzle/meta
-src/lib/snaptrade/openapi.d.ts
 CLAUDE.md
 AGENTS.md
