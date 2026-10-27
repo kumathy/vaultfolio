@@ -1,49 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
 /* Teal UI accent; violet reserved for Obsidian contexts. Text pairs meet WCAG AA. */
 :root {
-  color-scheme: light;
-  --background: #f3f4f1;
-  --surface: #eaece7;
-  --card: #fafbf8;
-  --foreground: #182120;
-  --muted: #5a6461;
-  --border: #d6dad3;
-  --accent: #0b5f5a;
-  --accent-soft: #dcecea;
-  --accent-contrast: #f6f7f4;
-  --violet: #6a4bd6;
-  --violet-soft: #ece7fb;
-  --positive: #2c6a46;
-  --positive-soft: #e1eee5;
-  --attention: #9a4528;
-  --attention-soft: #f6e7e0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --background: #181a19;
-    --surface: #1f2120;
-    --card: #232625;
-    --foreground: #e3e6e2;
-    --muted: #9aa39f;
-    --border: #323634;
-    --accent: #57c2b9;
-    --accent-soft: #17312e;
-    --accent-contrast: #0e1716;
-    --violet: #a88bfa;
-    --violet-soft: #2a2440;
-    --positive: #7cc497;
-    --positive-soft: #1b2d22;
-    --attention: #e3926f;
-    --attention-soft: #3a2620;
-  }
-}
-
-:root[data-theme="dark"] {
   color-scheme: dark;
   --background: #181a19;
   --surface: #1f2120;
@@ -103,19 +61,6 @@ body {
 ::selection {
   background: var(--accent);
   color: var(--accent-contrast);
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 200ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
-    animation-duration: 0s !important;
-  }
 }
 
 @layer base {

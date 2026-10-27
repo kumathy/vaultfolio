@@ -5,7 +5,6 @@ import {
   TbPlugConnected,
 } from "react-icons/tb";
 import { Logo, LogoMark } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SNAPTRADE_DASHBOARD_URL } from "@/components/ui";
 import { Breadcrumb, MobileLinks, SidebarLinks } from "./nav";
 
@@ -76,7 +75,6 @@ function Topbar() {
           <MobileLinks />
         </div>
         <div className="flex items-center gap-1">
-          <ThemeToggle />
           <form method="post" action="/logout">
             <button
               type="submit"

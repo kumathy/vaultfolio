@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonPrimary, container } from "@/components/ui";
 import { currentUserId } from "@/lib/auth/session";
 
@@ -55,7 +54,6 @@ export function SiteNav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <Suspense fallback={<SignInLink className={compactButton} />}>
             <NavAction />
           </Suspense>
