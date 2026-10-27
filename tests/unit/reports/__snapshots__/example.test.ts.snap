@@ -1,0 +1,165 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`example report (XEQT TFSA, plan and room configured) > matches the approved Markdown 1`] = `
+"---
+type: investing-report
+period: 2026-10
+generated_at: 2026-10-27T09:14:00-04:00
+base_currency: CAD
+portfolio_value: 4312.55
+total_contributed: 3900.00
+net_growth: 412.55
+plan_status: on-track
+tfsa_room_remaining: 4000.00
+rrsp_room_remaining: null
+fhsa_room_remaining: null
+distributions_ttm: 25.01
+---
+
+# Investing Report — October 2026
+
+> [!summary] Summary
+> Monthly plan executed on schedule. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$4,000.00**.
+
+## Plan execution
+
+| Check             | Status   | Detail                               |
+| ----------------- | -------- | ------------------------------------ |
+| Deposit received  | On track | $300.00 on 2026-10-01                |
+| Invested per plan | On track | 9 units XEQT purchased on 2026-10-02 |
+| Uninvested cash   | On track | $4.12 (below $25.00 threshold)       |
+
+## Contributions and growth
+
+| Measure           |    Amount |
+| ----------------- | --------: |
+| Total contributed | $3,900.00 |
+| Current value     | $4,312.55 |
+| Net growth        |  +$412.55 |
+
+Net growth is current value minus total contributed. Percentage returns are not shown, since recurring contributions make them misleading.
+
+## Holdings
+
+| Account | Symbol | Units |     Value | Weight | Target |
+| ------- | ------ | ----: | --------: | -----: | -----: |
+| TFSA    | XEQT   |   115 | $4,308.43 |  99.9% | 100.0% |
+| TFSA    | Cash   |     — |     $4.12 |   0.1% |      — |
+
+## Registered account room — 2026
+
+| Account | Available at Jan 1 | Contributed YTD | Withdrawn YTD | Remaining | Projected at Dec 31 | Status   |
+| ------- | -----------------: | --------------: | ------------: | --------: | ------------------: | -------- |
+| TFSA    |          $7,000.00 |       $3,000.00 |         $0.00 | $4,000.00 |           $3,400.00 | On track |
+
+Projection assumes the scheduled $300.00 monthly contribution continues through December.
+
+## Distributions
+
+| Paid on    | Symbol | Per unit | Amount |
+| ---------- | ------ | -------: | -----: |
+| 2026-09-29 | XEQT   |  $0.1000 | $10.60 |
+| 2026-06-27 | XEQT   |  $0.0900 |  $7.20 |
+| 2026-03-27 | XEQT   |  $0.0800 |  $4.24 |
+| 2025-12-29 | XEQT   |  $0.1100 |  $2.97 |
+
+| Measure                   |  Amount |
+| ------------------------- | ------: |
+| Trailing 12 months        |  $25.01 |
+| Next 12 months (Estimate) | ~$43.70 |
+
+Estimate method: trailing-12-month distributions per unit × units currently held.
+
+> [!info] Data notes
+> Transactions are reported by the brokerage with a one-day delay.
+> Transaction history starts on 2025-10-01 (TFSA).
+> Holdings data as of 2026-10-27 08:00 EDT.
+
+---
+*Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*
+"
+`;
+
+exports[`example report (XEQT TFSA, plan and room configured) > states missing settings once and never shows zero for unknown values 1`] = `
+"---
+type: investing-report
+period: 2026-10
+generated_at: 2026-10-27T09:14:00-04:00
+base_currency: CAD
+portfolio_value: 4312.55
+total_contributed: 3900.00
+net_growth: 412.55
+plan_status: not-configured
+tfsa_room_remaining: null
+rrsp_room_remaining: null
+fhsa_room_remaining: null
+distributions_ttm: 25.01
+---
+
+# Investing Report — October 2026
+
+> [!summary] Summary
+> Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**).
+
+## Plan execution
+
+| Check                | Status         | Detail                               |
+| -------------------- | -------------- | ------------------------------------ |
+| Deposits this month  | Not configured | $300.00 on 2026-10-01                |
+| Purchases this month | Not configured | 9 units XEQT purchased on 2026-10-02 |
+| Uninvested cash      | On track       | $4.12 (below $25.00 threshold)       |
+
+> [!info] Plan execution is not evaluated: no monthly plan has been configured in Vaultfolio settings.
+
+## Contributions and growth
+
+| Measure           |    Amount |
+| ----------------- | --------: |
+| Total contributed | $3,900.00 |
+| Current value     | $4,312.55 |
+| Net growth        |  +$412.55 |
+
+Net growth is current value minus total contributed. Percentage returns are not shown, since recurring contributions make them misleading.
+
+## Holdings
+
+| Account | Symbol | Units |     Value | Weight |
+| ------- | ------ | ----: | --------: | -----: |
+| TFSA    | XEQT   |   115 | $4,308.43 |  99.9% |
+| TFSA    | Cash   |     — |     $4.12 |   0.1% |
+
+## Registered account room — 2026
+
+| Account | Contributed YTD | Withdrawn YTD | Remaining      | Status         |
+| ------- | --------------: | ------------: | -------------- | -------------- |
+| TFSA    |       $3,000.00 |         $0.00 | Not configured | Not configured |
+
+2026 annual TFSA limit, for reference: $7,000.00. Actual available room also includes unused room carried forward from previous years.
+
+> [!info] Remaining room is not calculated: starting room has not been configured in Vaultfolio settings.
+
+## Distributions
+
+| Paid on    | Symbol | Per unit | Amount |
+| ---------- | ------ | -------: | -----: |
+| 2026-09-29 | XEQT   |  $0.1000 | $10.60 |
+| 2026-06-27 | XEQT   |  $0.0900 |  $7.20 |
+| 2026-03-27 | XEQT   |  $0.0800 |  $4.24 |
+| 2025-12-29 | XEQT   |  $0.1100 |  $2.97 |
+
+| Measure                   |  Amount |
+| ------------------------- | ------: |
+| Trailing 12 months        |  $25.01 |
+| Next 12 months (Estimate) | ~$43.70 |
+
+Estimate method: trailing-12-month distributions per unit × units currently held.
+
+> [!info] Data notes
+> Transactions are reported by the brokerage with a one-day delay.
+> Transaction history starts on 2025-10-01 (TFSA).
+> Holdings data as of 2026-10-27 08:00 EDT.
+
+---
+*Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*
+"
+`;

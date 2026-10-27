@@ -5,7 +5,8 @@ export const toCents = (amount: number) => Math.round(amount * 100);
 // The ISO code is added only outside the base currency, so a single-currency
 // report reads "$4,312.55" while a USD holding reads "$250.50 USD".
 export function money(cents: number, currency: string, base: string): string {
-  const text = formatAmount(cents / 100, currency);
+  // `|| 0` turns -0 (from negating an empty sum) into 0, which formats as "$0.00".
+  const text = formatAmount((cents || 0) / 100, currency);
   return currency === base ? text : `${text} ${currency}`;
 }
 
