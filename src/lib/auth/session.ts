@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { db } from "@/db/client";
 import { sessions } from "@/db/schema";
 import { randomToken, sha256Hex } from "@/lib/crypto/random";
@@ -57,6 +58,9 @@ export async function findSessionUserId(
 }
 
 export async function currentUserId(): Promise<string | null> {
+  // Session validity depends on the current time, so the check never runs
+  // during prerendering, even when a cookie is available.
+  await connection();
   const token = (await cookies()).get(sessionCookieName())?.value;
   return findSessionUserId(token);
 }
