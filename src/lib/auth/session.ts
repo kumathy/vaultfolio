@@ -58,8 +58,6 @@ export async function findSessionUserId(
 }
 
 export async function currentUserId(): Promise<string | null> {
-  // Session validity depends on the current time, so the check never runs
-  // during prerendering, even when a cookie is available.
   await connection();
   const token = (await cookies()).get(sessionCookieName())?.value;
   return findSessionUserId(token);

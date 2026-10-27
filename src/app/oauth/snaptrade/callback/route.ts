@@ -58,7 +58,6 @@ async function signIn(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function GET(request: NextRequest) {
-  // Never prerendered: each response depends on this request's code and cookies.
   await connection();
 
   let response: NextResponse;
