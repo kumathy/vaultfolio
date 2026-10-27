@@ -1,10 +1,6 @@
-import {
-  TbAlertTriangle,
-  TbCircleCheck,
-  TbFolder,
-  TbHelpCircle,
-} from "react-icons/tb";
-import { card, chip } from "@/components/ui";
+import { TbFolder } from "react-icons/tb";
+import { SnapTradeBadge } from "@/components/snaptrade";
+import { card } from "@/components/ui";
 import { formatAmount, formatMoney } from "@/lib/format";
 import {
   groupByInstitution,
@@ -19,52 +15,44 @@ export function ConnectionChip({
   connections: ConnectionView[] | null;
 }) {
   if (connections === null) {
-    return (
-      <span className={chip}>
-        <TbHelpCircle aria-hidden className="text-sm" />
-        Connection status unavailable
-      </span>
-    );
+    return <SnapTradeBadge status="unknown" label="Status unavailable" />;
   }
   const disabled = connections.filter((c) => c.disabled).length;
   if (disabled > 0) {
     return (
-      <span
-        className={`${chip} border-attention/30 bg-attention-soft text-attention`}
-      >
-        <TbAlertTriangle aria-hidden className="text-sm" />
-        {disabled === 1
-          ? "1 connection needs attention"
-          : `${disabled} connections need attention`}
-      </span>
+      <SnapTradeBadge
+        status="attention"
+        label={
+          disabled === 1
+            ? "1 connection needs attention"
+            : `${disabled} connections need attention`
+        }
+      />
     );
   }
-  return (
-    <span
-      className={`${chip} border-positive/30 bg-positive-soft text-positive`}
-    >
-      <TbCircleCheck aria-hidden className="text-sm" />
-      SnapTrade connected
-    </span>
-  );
+  return <SnapTradeBadge status="connected" label="Connected" />;
 }
 
 function Tile({
   label,
   value,
   detail,
+  wide = false,
 }: {
   label: React.ReactNode;
   value: string;
   detail: string;
+  wide?: boolean;
 }) {
   return (
-    <div className={`${card} p-5`}>
+    <div
+      className={`${card} min-w-0 p-4 sm:p-5 ${wide ? "col-span-2 sm:col-span-1" : ""}`}
+    >
       <p className="flex items-center gap-2 text-sm text-muted">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums">
+      <p className="mt-2 truncate text-2xl font-semibold tracking-tight tabular-nums sm:mt-3 sm:text-3xl">
         {value}
       </p>
-      <p className="mt-1 text-sm text-muted">{detail}</p>
+      <p className="mt-1 text-xs text-muted sm:text-sm">{detail}</p>
     </div>
   );
 }
@@ -82,10 +70,11 @@ export function StatTiles({
   const active = connections?.filter((c) => !c.disabled).length ?? 0;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       {totals.map((total) => (
         <Tile
           key={total.currency}
+          wide
           label={
             <>
               Total value
@@ -120,8 +109,9 @@ export function StatTiles({
   );
 }
 
-const headCell = "px-5 py-3 text-left text-xs font-medium text-muted";
-const bodyCell = "border-t border-border px-5 py-4 align-middle";
+const headCell = "px-4 py-3 text-left text-xs font-medium text-muted sm:px-5";
+const bodyCell =
+  "border-t border-border px-4 py-3.5 align-middle sm:px-5 sm:py-4";
 
 function TypePill({ account }: { account: AccountView }) {
   return (
@@ -140,14 +130,14 @@ function TypePill({ account }: { account: AccountView }) {
 
 export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {groupByInstitution(accounts).map((group) => (
         <section
           key={group.institution}
           aria-label={group.institution}
           className={`${card} overflow-hidden`}
         >
-          <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-5 py-3">
+          <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 sm:px-5">
             <h3 className="flex items-center gap-2 font-medium">
               <TbFolder aria-hidden className="text-lg text-accent" />
               {group.institution}
@@ -158,7 +148,8 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                 : `${group.accounts.length} accounts`}
             </span>
           </header>
-          <table className="w-full tabular-nums">
+          {/* Fixed layout with set widths keeps columns aligned across institution cards. */}
+          <table className="w-full table-fixed tabular-nums">
             <caption className="sr-only">
               Accounts at {group.institution}
             </caption>
@@ -167,13 +158,22 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                 <th scope="col" className={headCell}>
                   Account
                 </th>
-                <th scope="col" className={`${headCell} hidden sm:table-cell`}>
+                <th
+                  scope="col"
+                  className={`${headCell} hidden w-44 sm:table-cell`}
+                >
                   Type
                 </th>
-                <th scope="col" className={`${headCell} hidden md:table-cell`}>
+                <th
+                  scope="col"
+                  className={`${headCell} hidden w-44 md:table-cell`}
+                >
                   Holdings synced
                 </th>
-                <th scope="col" className={`${headCell} text-right`}>
+                <th
+                  scope="col"
+                  className={`${headCell} w-36 text-right sm:w-48`}
+                >
                   Value
                 </th>
               </tr>
@@ -185,14 +185,21 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                   className="transition-colors hover:bg-surface/60"
                 >
                   <td className={bodyCell}>
-                    <span className="font-medium">{account.name}</span>
+                    <span className="block font-medium break-words sm:inline">
+                      {account.name}
+                    </span>
                     {account.numberSuffix && (
-                      <span className="ml-2 text-sm text-muted">
+                      <span className="hidden text-sm text-muted sm:ml-2 sm:inline">
                         ••{account.numberSuffix}
                       </span>
                     )}
-                    <span className="mt-1.5 block sm:hidden">
+                    <span className="mt-1.5 flex flex-wrap items-center gap-2 sm:hidden">
                       <TypePill account={account} />
+                      {account.numberSuffix && (
+                        <span className="text-sm text-muted">
+                          ••{account.numberSuffix}
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className={`${bodyCell} hidden sm:table-cell`}>

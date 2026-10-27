@@ -1,29 +1,23 @@
-import { TbAlertTriangle, TbCircleCheck, TbInfoCircle } from "react-icons/tb";
+import { TbAlertTriangle, TbInfoCircle } from "react-icons/tb";
 
 const tones = {
   info: {
     label: "Note",
     Icon: TbInfoCircle,
-    box: "border-border bg-surface",
+    box: "bg-surface",
     title: "text-muted",
-  },
-  success: {
-    label: "Done",
-    Icon: TbCircleCheck,
-    box: "border-positive/25 bg-positive-soft",
-    title: "text-positive",
   },
   warning: {
     label: "Attention",
     Icon: TbAlertTriangle,
-    box: "border-attention/25 bg-attention-soft",
+    box: "bg-attention-soft",
     title: "text-attention",
   },
 } as const;
 
 export type NoticeTone = keyof typeof tones;
 
-// Web counterpart of the report's Obsidian callouts ([!info], [!warning]).
+// Same shape as an Obsidian callout, the format reports use for [!info] and [!warning].
 export function Notice({
   tone = "info",
   children,
@@ -33,11 +27,9 @@ export function Notice({
 }) {
   const { label, Icon, box, title } = tones[tone];
   return (
-    <div
-      className={`rounded-xl border px-4 py-3 text-sm leading-relaxed ${box}`}
-    >
-      <p className={`flex items-center gap-1.5 font-medium ${title}`}>
-        <Icon aria-hidden className="text-base" />
+    <div className={`rounded px-6 py-3 text-sm leading-relaxed ${box}`}>
+      <p className={`flex items-center gap-2 font-semibold ${title}`}>
+        <Icon aria-hidden className="shrink-0 text-lg" />
         {label}
       </p>
       <div className="mt-1 text-foreground">{children}</div>

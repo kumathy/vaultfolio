@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { TbArrowRight } from "react-icons/tb";
 import { Logo } from "@/components/logo";
-import { buttonPrimary, container } from "@/components/ui";
+import {
+  buttonOutline,
+  buttonPrimary,
+  buttonProvider,
+  compact,
+  container,
+  large,
+} from "@/components/ui";
 import { currentUserId } from "@/lib/auth/session";
 
 const links = [
@@ -10,13 +18,28 @@ const links = [
   { href: "/#security", label: "Security" },
 ];
 
-const compactButton = buttonPrimary.replace("px-5 py-2.5", "px-4 py-2");
-
-export function SignInLink({ className = buttonPrimary }) {
-  // A plain anchor: next/link would prefetch /login and start OAuth attempts.
+// Neutral rather than accent: the accent marks Vaultfolio's own actions, and
+// this one hands off to SnapTrade. A plain anchor, because next/link would
+// prefetch /login and start OAuth attempts.
+export function SignInLink({ size = "large" }: { size?: "large" | "compact" }) {
+  if (size === "compact") {
+    return (
+      <a
+        href="/login"
+        aria-label="Sign in with SnapTrade"
+        className={compact(buttonOutline)}
+      >
+        Sign in
+      </a>
+    );
+  }
   return (
-    <a href="/login" className={className}>
+    <a href="/login" className={`group ${large(buttonProvider)}`}>
       Sign in with SnapTrade
+      <TbArrowRight
+        aria-hidden
+        className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+      />
     </a>
   );
 }
@@ -24,11 +47,11 @@ export function SignInLink({ className = buttonPrimary }) {
 async function NavAction() {
   const signedIn = (await currentUserId()) !== null;
   return signedIn ? (
-    <Link href="/accounts" className={compactButton}>
+    <Link href="/accounts" className={compact(buttonPrimary)}>
       Open accounts
     </Link>
   ) : (
-    <SignInLink className={compactButton} />
+    <SignInLink size="compact" />
   );
 }
 
@@ -54,7 +77,7 @@ export function SiteNav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Suspense fallback={<SignInLink className={compactButton} />}>
+          <Suspense fallback={<SignInLink size="compact" />}>
             <NavAction />
           </Suspense>
         </div>

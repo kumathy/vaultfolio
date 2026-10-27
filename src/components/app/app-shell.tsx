@@ -1,11 +1,11 @@
 import {
   TbArrowUpRight,
+  TbBuildingBank,
   TbLogout,
   TbNotebook,
-  TbPlugConnected,
 } from "react-icons/tb";
 import { Logo, LogoMark } from "@/components/logo";
-import { SNAPTRADE_DASHBOARD_URL } from "@/components/ui";
+import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Breadcrumb, MobileLinks, SidebarLinks } from "./nav";
 
 function SidebarGroup({
@@ -41,20 +41,20 @@ function Sidebar() {
             rel="noopener noreferrer"
             className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-muted transition-colors hover:bg-card hover:text-foreground"
           >
-            <TbPlugConnected aria-hidden className="text-lg" />
+            <TbBuildingBank aria-hidden className="text-lg" />
             Manage connections
             <TbArrowUpRight aria-hidden className="ml-auto" />
           </a>
         </SidebarGroup>
       </nav>
 
-      <div className="m-3 rounded-xl border border-violet/25 bg-violet-soft p-4 text-sm">
-        <p className="flex items-center gap-2 font-medium text-violet">
+      <div className="m-3 rounded-xl border border-accent/25 bg-accent-soft p-4 text-sm">
+        <p className="flex items-center gap-2 font-medium text-accent">
           <TbNotebook aria-hidden className="text-lg" />
           Obsidian plugin
         </p>
         <p className="mt-1.5 leading-relaxed text-muted">
-          Monthly reports sync into a vault folder. In development.
+          Monthly reports sync into a vault folder.
         </p>
       </div>
     </aside>
@@ -100,8 +100,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <footer className="border-t border-border px-6 py-5 text-xs text-muted lg:px-10">
-          Brokerage data via SnapTrade. For information only. Not financial
-          advice.
+          Brokerage data via <SnapTradeName />. For information only. Not
+          financial advice.
         </footer>
       </div>
     </div>

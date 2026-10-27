@@ -1,6 +1,6 @@
-import { TbArrowUpRight } from "react-icons/tb";
 import { LogoMark } from "@/components/logo";
-import { container, SNAPTRADE_DASHBOARD_URL } from "@/components/ui";
+import { SnapTradeLink, SnapTradeName } from "@/components/snaptrade";
+import { container } from "@/components/ui";
 
 export function SiteFooter() {
   return (
@@ -11,19 +11,11 @@ export function SiteFooter() {
         <div className="flex items-center gap-3">
           <LogoMark className="h-5 w-5" />
           <p>
-            Brokerage data via SnapTrade. For information only. Not financial
-            advice.
+            Brokerage data via <SnapTradeName />. For information only. Not
+            financial advice.
           </p>
         </div>
-        <a
-          href={SNAPTRADE_DASHBOARD_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-        >
-          SnapTrade Dashboard
-          <TbArrowUpRight aria-hidden />
-        </a>
+        <SnapTradeLink />
       </div>
     </footer>
   );
