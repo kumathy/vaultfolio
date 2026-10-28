@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { TbChevronDown } from "react-icons/tb";
 import { AccessSection } from "@/components/settings/access-section";
 import { AccountTypesForm } from "@/components/settings/account-types-form";
@@ -28,7 +28,8 @@ export const metadata: Metadata = { title: "Settings" };
 
 const TRANSFER_TYPES = new Set(["TRANSFER", "EXTERNAL_ASSET_TRANSFER_IN"]);
 
-async function SettingsContent() {
+// Shared by the setup and advanced sections, so each request loads it once.
+const loadPageData = cache(async () => {
   const userId = await requireUserId();
   const settings = await loadSettings(userId);
   const resolved = resolveSettings(settings);
@@ -76,103 +77,111 @@ async function SettingsContent() {
     )
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  return { settings, resolved, year, labelled, heldTypes, room, transfers };
+});
+
+async function ReportSetup() {
+  const { settings, year, heldTypes, room } = await loadPageData();
   return (
-    <div className="space-y-6">
-      <SettingsSection
-        id="setup"
-        title="Report setup"
-        description={
-          <>
-            Both are optional. Starting room enables remaining room and
-            over-contribution checks; it is shown in{" "}
-            <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html">
-              CRA My Account
-            </ExternalLink>{" "}
-            and cannot be retrieved automatically. The monthly target is a total
-            for the month, however often deposits are made.
-          </>
-        }
+    <SettingsSection
+      id="setup"
+      title="Report setup"
+      description={
+        <>
+          Both are optional. Starting room enables remaining room and
+          over-contribution checks; it is shown in{" "}
+          <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html">
+            CRA My Account
+          </ExternalLink>{" "}
+          and cannot be retrieved automatically. The monthly target is a total
+          for the month, however often deposits are made.
+        </>
+      }
+    >
+      <SetupForm
+        year={year}
+        types={heldTypes}
+        room={room}
+        contributionTargetCents={settings.contributionTargetCents}
+      />
+    </SettingsSection>
+  );
+}
+
+async function AdvancedSettings() {
+  const { settings, resolved, labelled, transfers } = await loadPageData();
+  return (
+    <details className="group">
+      <summary
+        className={`${card} flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 transition-colors hover:border-muted sm:px-6 [&::-webkit-details-marker]:hidden`}
       >
-        <SetupForm
-          year={year}
-          types={heldTypes}
-          room={room}
-          contributionTargetCents={settings.contributionTargetCents}
-        />
-      </SettingsSection>
-
-      <details className="group">
-        <summary
-          className={`${card} flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 transition-colors hover:border-muted sm:px-6 [&::-webkit-details-marker]:hidden`}
-        >
-          <span>
-            <span className="block font-semibold">Advanced settings</span>
-            <span className="mt-0.5 block text-sm text-muted">
-              Target allocation, account types, transfers, uninvested cash and
-              time zone.
-            </span>
+        <span>
+          <span className="block font-semibold">Advanced settings</span>
+          <span className="mt-0.5 block text-sm text-muted">
+            Target allocation, account types, transfers, uninvested cash and
+            time zone.
           </span>
-          <TbChevronDown
-            aria-hidden
-            className="shrink-0 text-lg text-muted transition-transform group-open:rotate-180 motion-reduce:transition-none"
+        </span>
+        <TbChevronDown
+          aria-hidden
+          className="shrink-0 text-lg text-muted transition-transform group-open:rotate-180 motion-reduce:transition-none"
+        />
+      </summary>
+
+      <div className="mt-6 space-y-6">
+        <SettingsSection
+          id="allocation"
+          title="Target allocation"
+          description="Adds target and weight-versus-target columns to Holdings. Useful when contributions are split across several funds."
+        >
+          <AllocationForm
+            targets={{
+              allocation: settings.allocation,
+              scopeAccountIds: settings.scopeAccountIds,
+            }}
+            accounts={labelled.map((a) => ({ id: a.id, label: a.display }))}
           />
-        </summary>
+        </SettingsSection>
 
-        <div className="mt-6 space-y-6">
+        <SettingsSection
+          id="accounts"
+          title="Account types"
+          description="Types come from the brokerage when available. A TFSA, RRSP or FHSA tag includes the account in room tracking."
+        >
+          <AccountTypesForm
+            accounts={labelled.map((a) => ({
+              id: a.id,
+              label: a.display,
+              institution: a.institution,
+              brokerageType: a.label,
+              tag: settings.accountTypes?.[a.id],
+            }))}
+          />
+        </SettingsSection>
+
+        {transfers.length > 0 && (
           <SettingsSection
-            id="allocation"
-            title="Target allocation"
-            description="Adds target and weight-versus-target columns to Holdings. Useful when contributions are split across several funds."
+            id="transfers"
+            title="Transfers into registered accounts"
+            description="Transfers from another registered account do not use new room, so they are not counted as contributions. A transfer from a non-registered account is a contribution and can be marked here."
           >
-            <AllocationForm
-              targets={{
-                allocation: settings.allocation,
-                scopeAccountIds: settings.scopeAccountIds,
-              }}
-              accounts={labelled.map((a) => ({ id: a.id, label: a.display }))}
-            />
+            <TransfersForm transfers={transfers} />
           </SettingsSection>
+        )}
 
-          <SettingsSection
-            id="accounts"
-            title="Account types"
-            description="Types come from the brokerage when available. A TFSA, RRSP or FHSA tag includes the account in room tracking."
-          >
-            <AccountTypesForm
-              accounts={labelled.map((a) => ({
-                id: a.id,
-                label: a.display,
-                institution: a.institution,
-                brokerageType: a.label,
-                tag: settings.accountTypes?.[a.id],
-              }))}
-            />
-          </SettingsSection>
-
-          {transfers.length > 0 && (
-            <SettingsSection
-              id="transfers"
-              title="Transfers into registered accounts"
-              description="Transfers from another registered account do not use new room, so they are not counted as contributions. A transfer from a non-registered account is a contribution and can be marked here."
-            >
-              <TransfersForm transfers={transfers} />
-            </SettingsSection>
-          )}
-
-          <SettingsSection
-            id="options"
-            title="Report options"
-            description="When uninvested cash is flagged, and the time zone that defines each month."
-          >
-            <OptionsForm
-              days={resolved.uninvestedCashDays}
-              thresholdCents={resolved.uninvestedCashThresholdCents}
-              timeZone={resolved.timeZone}
-            />
-          </SettingsSection>
-        </div>
-      </details>
-    </div>
+        <SettingsSection
+          id="options"
+          title="Report options"
+          description="When uninvested cash is flagged, and the time zone that defines each month."
+        >
+          <OptionsForm
+            days={resolved.uninvestedCashDays}
+            thresholdCents={resolved.uninvestedCashThresholdCents}
+            timeZone={resolved.timeZone}
+          />
+        </SettingsSection>
+      </div>
+    </details>
   );
 }
 
@@ -195,11 +204,17 @@ async function Access() {
   return <AccessSection email={await verifiedEmail(userId)} />;
 }
 
-function SettingsLoading({ count = 3 }: { count?: number }) {
+function SettingsLoading({
+  count = 1,
+  height = "h-48",
+}: {
+  count?: number;
+  height?: string;
+}) {
   return (
     <div role="status" aria-label="Loading settings" className="space-y-6">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className={`${card} h-48 animate-pulse bg-surface`} />
+        <div key={i} className={`${card} ${height} animate-pulse bg-surface`} />
       ))}
     </div>
   );
@@ -218,10 +233,13 @@ export default function SettingsPage() {
         </p>
       </div>
       <Suspense fallback={<SettingsLoading />}>
-        <SettingsContent />
+        <ReportSetup />
       </Suspense>
-      <Suspense fallback={<SettingsLoading count={1} />}>
+      <Suspense fallback={<SettingsLoading />}>
         <Obsidian />
+      </Suspense>
+      <Suspense fallback={<SettingsLoading height="h-20" />}>
+        <AdvancedSettings />
       </Suspense>
       <Suspense fallback={<AccessSection email={null} />}>
         <Access />
