@@ -1,6 +1,10 @@
+import { TbBrandGithub } from "react-icons/tb";
+import { ExternalLink } from "@/components/external-link";
 import { LogoMark } from "@/components/logo";
 import { SnapTradeLink, SnapTradeName } from "@/components/snaptrade";
 import { container } from "@/components/ui";
+
+const SOURCE_URL = "https://github.com/kumathy/vaultfolio";
 
 export function SiteFooter() {
   return (
@@ -15,7 +19,13 @@ export function SiteFooter() {
             financial advice.
           </p>
         </div>
-        <SnapTradeLink />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="inline-flex items-center gap-1.5">
+            <TbBrandGithub aria-hidden className="text-base" />
+            <ExternalLink href={SOURCE_URL}>Source code</ExternalLink>
+          </span>
+          <SnapTradeLink />
+        </div>
       </div>
     </footer>
   );
