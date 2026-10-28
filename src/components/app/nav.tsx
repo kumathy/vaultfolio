@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "react-icons";
-import { TbFileText, TbSettings, TbWallet } from "react-icons/tb";
+import {
+  TbArrowUpRight,
+  TbFileText,
+  TbSettings,
+  TbWallet,
+} from "react-icons/tb";
+import { SNAPTRADE_DASHBOARD_URL } from "@/components/snaptrade";
 
 export const appPages: { href: `/${string}`; label: string; Icon: IconType }[] =
   [
@@ -76,6 +82,19 @@ export function MobileLinksView({ pathname }: { pathname: string | null }) {
           {label}
         </Link>
       ))}
+      {/* The sidebar, with this link, is hidden on narrow screens. */}
+      <a
+        href={SNAPTRADE_DASHBOARD_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-foreground"
+      >
+        Connections
+        <TbArrowUpRight aria-hidden />
+        <span className="sr-only">
+          (SnapTrade Dashboard, opens in a new tab)
+        </span>
+      </a>
     </nav>
   );
 }
