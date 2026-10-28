@@ -29,11 +29,9 @@ function PageHeader() {
         rel="noopener noreferrer"
         className={`${compact(buttonSecondary)} self-start sm:self-auto`}
       >
-        Manage connections
+        Manage connections in SnapTrade
         <TbArrowUpRight aria-hidden />
-        <span className="sr-only">
-          (SnapTrade Dashboard, opens in a new tab)
-        </span>
+        <span className="sr-only">(opens in a new tab)</span>
       </a>
     </div>
   );
