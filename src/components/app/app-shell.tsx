@@ -2,6 +2,7 @@ import { TbArrowUpRight, TbBuildingBank, TbMenu2, TbX } from "react-icons/tb";
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { MockDataBar } from "./mock-data-bar";
 import { ObsidianSidebarStatus } from "./obsidian-status";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Suspense } from "react";
@@ -142,6 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
+        <MockDataBar />
         <main className="flex-1 px-6 py-8 animate-page-in motion-reduce:animate-none lg:px-10 lg:py-10">
           {children}
         </main>

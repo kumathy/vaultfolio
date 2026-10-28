@@ -1,5 +1,8 @@
 import "server-only";
 
+import { SnapTradeApiError } from "./errors";
+import { mockScenario } from "./mock/config";
+import { mockGet } from "./mock/server";
 import {
   getAccessToken,
   ReauthorizationRequired,
@@ -9,21 +12,7 @@ import {
 // servers[0].url in https://docs.snaptrade.com/openapi.yaml
 export const SNAPTRADE_API_BASE = "https://api.snaptrade.com";
 
-export class SnapTradeApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly path: string,
-  ) {
-    super(`SnapTrade API error: HTTP ${status} on ${path}`);
-    this.name = "SnapTradeApiError";
-  }
-
-  // https://docs.snaptrade.com/docs/ratelimiting.md: 429 once a per-minute
-  // limit (per app, or per account for Personal users) is reached.
-  get rateLimited(): boolean {
-    return this.status === 429;
-  }
-}
+export { SnapTradeApiError };
 
 // OAuth requests carry only the bearer token. clientId, consumerKey, userId,
 // userSecret, timestamp and Signature belong to the Personal and Commercial
@@ -48,6 +37,10 @@ export async function snaptradeGet<T>(
   if (url.origin !== SNAPTRADE_API_BASE) {
     throw new Error("SnapTrade API path must be relative");
   }
+
+  // Development only; see mock/config.ts.
+  const scenario = mockScenario();
+  if (scenario) return (await mockGet(scenario, url)) as T;
 
   let accessToken = await getAccessToken(deps, userId);
   let response = await send(url, accessToken);
