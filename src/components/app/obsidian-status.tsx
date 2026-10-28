@@ -48,17 +48,21 @@ async function loadStatus(): Promise<Status | null> {
   };
 }
 
-// Trailing status on the Obsidian row of the sidebar's Connections group.
+// Trailing status on the Obsidian row of the sidebar's Connections group:
+// the text, then a dot (filled when a vault is connected).
 export async function ObsidianSidebarStatus() {
   const status = await loadStatus();
   if (!status) return null;
   return (
-    <span className="flex items-center gap-1.5 whitespace-nowrap">
-      <span
-        aria-hidden
-        className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.connected ? "bg-accent" : "border border-muted"}`}
-      />
+    <span className="flex items-center gap-2.5 whitespace-nowrap">
       {status.text}
+      {/* The dot ends the row like SnapTrade's arrow: centred in a box the
+          arrow's width (0.875rem), so both markers share one column. */}
+      <span aria-hidden className="flex w-3.5 shrink-0 justify-center">
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${status.connected ? "bg-accent" : "border border-muted"}`}
+        />
+      </span>
     </span>
   );
 }
