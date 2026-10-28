@@ -268,6 +268,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
                   width={512}
                   height={512}
                   unoptimized
+                  loading="eager"
                   className="mr-[0.18em] inline-block size-[0.95em] rounded-[19.5%] align-[-0.14em] ring-1 ring-white/10"
                 />
                 <span className="text-accent">Obsidian</span>.
