@@ -200,7 +200,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     ["period", ctx.period.id],
     ["generated_at", localTimestamp(options.now, settings.timeZone)],
     ["base_currency", base],
-    // The summary's figure, so net_growth = portfolio_value - total_contributed
+    // The summary's figure, so net_growth = portfolio_value - contributed
     // even when an account is excluded from growth. Holdings alone give the
     // value only when there is no contribution history to compare.
     [
@@ -214,7 +214,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
           : null,
     ],
     [
-      "total_contributed",
+      "contributed",
       growth && growth.currency === base
         ? plainAmount(growth.netContributedCents)
         : null,
@@ -225,20 +225,17 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
         ? plainAmount(growth.growthCents!)
         : null,
     ],
-    ["contributed_this_month", plainAmount(activity.contributedCents)],
+    ["month_deposits", plainAmount(activity.contributedCents)],
     [
-      "contribution_status",
+      "target_status",
       activity.contributionStatus === "not-configured"
         ? null
         : activity.contributionStatus,
     ],
-    ["tfsa_room_remaining", roomValue("TFSA")],
-    ["rrsp_room_remaining", roomValue("RRSP")],
-    ["fhsa_room_remaining", roomValue("FHSA")],
-    [
-      "distributions_ttm",
-      distributionsKnown ? plainAmount(ttm?.cents ?? 0) : null,
-    ],
+    ["tfsa_room", roomValue("TFSA")],
+    ["rrsp_room", roomValue("RRSP")],
+    ["fhsa_room", roomValue("FHSA")],
+    ["income_ttm", distributionsKnown ? plainAmount(ttm?.cents ?? 0) : null],
   ];
   const document: ReportDocument = {
     frontmatter: frontmatter.filter(

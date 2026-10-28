@@ -28,7 +28,7 @@ describe("monthly activity", () => {
       "Contributions",
       "$0.00 of $300.00 target so far (0 deposits) — In progress",
     ]);
-    expect(r.frontmatter.contribution_status).toBe("in-progress");
+    expect(r.frontmatter.target_status).toBe("in-progress");
     expect(r.markdown).toContain(
       "Contributions this month: **$0.00** of **$300.00** target so far.",
     );
@@ -45,7 +45,7 @@ describe("monthly activity", () => {
       "Contributions",
       "$0.00 of $300.00 target (0 deposits) — Attention",
     ]);
-    expect(r.frontmatter.contribution_status).toBe("attention");
+    expect(r.frontmatter.target_status).toBe("attention");
     expect(r.markdown).toContain("> [!warning] Attention\n> Contributions:");
     expect(r.markdown).toContain(
       "Contributions below target: **$0.00** of **$300.00**.",
@@ -66,7 +66,7 @@ describe("monthly activity", () => {
       "Contributions",
       "$300.00 of $300.00 target (4 deposits) — On track",
     ]);
-    expect(weekly.frontmatter.contribution_status).toBe("on-track");
+    expect(weekly.frontmatter.target_status).toBe("on-track");
     expect(weekly.markdown).toContain(
       "Contribution target met: **$300.00** of **$300.00**.",
     );
@@ -265,7 +265,7 @@ describe("monthly activity", () => {
       "Contributions",
       "$300.00 (1 deposit)",
     ]);
-    expect(r.frontmatter).not.toHaveProperty("contribution_status");
+    expect(r.frontmatter).not.toHaveProperty("target_status");
     expect(
       r.markdown.match(/no monthly contribution target is set/g),
     ).toHaveLength(1);
@@ -320,7 +320,7 @@ describe("monthly activity", () => {
     ]);
     expect(r.frontmatter).toMatchObject({
       portfolio_value: "1052.50",
-      total_contributed: "1000.00",
+      contributed: "1000.00",
       net_growth: "52.50",
     });
     expect(r.markdown).toContain(
@@ -562,7 +562,7 @@ describe("registered account room", () => {
     expect(r.markdown).toContain(
       "> Contributions at the monthly target are projected to exceed TFSA room by $100.00 by 2026-12-31.",
     );
-    expect(r.frontmatter.contribution_status).toBe("on-track");
+    expect(r.frontmatter.target_status).toBe("on-track");
   });
 
   it("projects this month's unmet target plus each remaining month", () => {
@@ -596,7 +596,7 @@ describe("registered account room", () => {
       "Not configured",
       "Not configured",
     ]);
-    expect(r.frontmatter).not.toHaveProperty("tfsa_room_remaining");
+    expect(r.frontmatter).not.toHaveProperty("tfsa_room");
     expect(r.markdown).not.toContain("[!warning]");
   });
 
@@ -604,7 +604,7 @@ describe("registered account room", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       settings: { room: { TFSA: { year: 2025, availableCents: 6_000_00 } } },
     });
-    expect(r.frontmatter).not.toHaveProperty("tfsa_room_remaining");
+    expect(r.frontmatter).not.toHaveProperty("tfsa_room");
   });
 
   it("covers RRSP and FHSA with their reference limits and deadline", () => {
@@ -628,7 +628,7 @@ describe("registered account room", () => {
     expect(r.markdown).toContain(
       "RRSP contributions made up to 2027-03-01 can be deducted for 2026.",
     );
-    expect(r.frontmatter).not.toHaveProperty("rrsp_room_remaining");
+    expect(r.frontmatter).not.toHaveProperty("rrsp_room");
   });
 
   it("uses account tags to classify accounts", () => {
@@ -667,7 +667,7 @@ describe("distributions", () => {
     expect(r.section("Distributions")).toContain(
       "No distributions were recorded in the trailing 12 months.",
     );
-    expect(r.frontmatter.distributions_ttm).toBe("0.00");
+    expect(r.frontmatter.income_ttm).toBe("0.00");
   });
 
   it("counts a fund paid into two accounts on one day as one per-unit amount", () => {
@@ -728,7 +728,7 @@ describe("distributions", () => {
         ],
       }),
     ]);
-    expect(r.frontmatter.distributions_ttm).toBe("2.00");
+    expect(r.frontmatter.income_ttm).toBe("2.00");
   });
 });
 
@@ -742,7 +742,7 @@ describe("report-level states", () => {
       "No brokerage accounts were available for this report.",
     );
     expect(r.frontmatter).not.toHaveProperty("portfolio_value");
-    expect(r.frontmatter).not.toHaveProperty("distributions_ttm");
+    expect(r.frontmatter).not.toHaveProperty("income_ttm");
   });
 
   it("notes paper accounts and failed parts", () => {
@@ -785,7 +785,7 @@ describe("partial and mixed data", () => {
     ]);
     expect(r.frontmatter).toMatchObject({
       portfolio_value: "1100.00",
-      total_contributed: "1000.00",
+      contributed: "1000.00",
       net_growth: "100.00",
     });
     expect(r.markdown).toContain("Portfolio value: **$1,100.00**");

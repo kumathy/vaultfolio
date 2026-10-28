@@ -111,8 +111,8 @@ describe("full scenario", () => {
     const r = await mockReport("full", {
       settings: mockSettings("full", 2026),
     });
-    expect(r.frontmatter.contribution_status).toBeDefined();
-    expect(r.frontmatter.tfsa_room_remaining).toBeDefined();
+    expect(r.frontmatter.target_status).toBeDefined();
+    expect(r.frontmatter.tfsa_room).toBeDefined();
     const room = section(r.markdown, "Registered account room");
     expect(room).toContain("On track");
     expect(room).toContain("Attention");

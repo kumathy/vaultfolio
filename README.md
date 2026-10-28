@@ -32,7 +32,7 @@ Reports state facts and never recommend trades. Every setting is optional: a rep
 2. Enable **Vaultfolio** under Settings → Community plugins, then choose **Connect**.
 3. Reports appear in `Investing/` and update on startup or with **Vaultfolio: Sync now**.
 
-Each report starts with frontmatter (`portfolio_value`, `tfsa_room_remaining` and more), ready for Dataview queries.
+Each report starts with frontmatter (`portfolio_value`, `tfsa_room` and more), ready for Dataview queries.
 
 ## Good to know
 

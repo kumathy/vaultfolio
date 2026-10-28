@@ -56,7 +56,7 @@ A user who signs in and configures nothing still receives a useful report. Setti
 | Uninvested-cash threshold | Defaults to 5 days. |
 
 - Missing configuration is noted impersonally as an `info` callout (not a warning, since nothing is wrong), once per report, in one pattern: `<Result> is not calculated: no <setting> is set in Vaultfolio settings.` E.g. `> [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.`
-- Unknown frontmatter values are left out rather than written as `null` (Obsidian shows `null` as "Empty"; Dataview reads a missing key as `null`). `contribution_status` appears only when a target is set, and `<type>_room_remaining` only when starting room is known. `0` is never used for an unknown value, because it means "no room remaining."
+- Unknown frontmatter values are left out rather than written as `null` (Obsidian shows `null` as "Empty"; Dataview reads a missing key as `null`). `target_status` appears only when a target is set, and `<type>_room` only when starting room is known. `0` is never used for an unknown value, because it means "no room remaining."
 - The web dashboard may show a single dismissible "Add starting room" prompt in settings. It never blocks anything.
 
 Example room section without starting room configured:
@@ -116,12 +116,12 @@ period: 2026-10
 generated_at: 2026-10-27T09:14:00-03:00
 base_currency: CAD
 portfolio_value: 4312.55
-total_contributed: 3900.00
+contributed: 3900.00
 net_growth: 412.55
-contributed_this_month: 300.00
-contribution_status: on-track
-tfsa_room_remaining: 2100.00
-distributions_ttm: 38.20
+month_deposits: 300.00
+target_status: on-track
+tfsa_room: 2100.00
+income_ttm: 38.20
 ---
 
 # Investing Report — October 2026

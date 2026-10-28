@@ -17,12 +17,12 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
       generated_at: "2026-10-27T09:14:00-04:00",
       base_currency: "CAD",
       portfolio_value: "4312.55",
-      total_contributed: "3900.00",
+      contributed: "3900.00",
       net_growth: "412.55",
-      contributed_this_month: "300.00",
-      contribution_status: "on-track",
-      tfsa_room_remaining: "4000.00",
-      distributions_ttm: "25.01",
+      month_deposits: "300.00",
+      target_status: "on-track",
+      tfsa_room: "4000.00",
+      income_ttm: "25.01",
     });
   });
 
@@ -88,8 +88,8 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
     const bare = buildExampleReport({});
     const bareFrontmatter = Object.fromEntries(bare.document.frontmatter);
     // Unknown values are left out, never written as 0.
-    expect(bareFrontmatter).not.toHaveProperty("contribution_status");
-    expect(bareFrontmatter).not.toHaveProperty("tfsa_room_remaining");
+    expect(bareFrontmatter).not.toHaveProperty("target_status");
+    expect(bareFrontmatter).not.toHaveProperty("tfsa_room");
     expect(bare.markdown.match(/no starting room is set/g)).toHaveLength(1);
     expect(
       bare.markdown.match(/no monthly contribution target is set/g),
