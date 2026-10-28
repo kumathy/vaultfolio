@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TbChevronDown, TbChevronLeft, TbChevronRight } from "react-icons/tb";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import { ReportPreview } from "@/components/report/report-preview";
 import { card } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
@@ -48,7 +49,7 @@ function MonthPicker({
           <TbChevronLeft />
         </span>
       )}
-      <details className="group relative">
+      <DismissibleDetails className="group relative">
         <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-full border border-border bg-card px-4 text-sm font-medium transition-colors hover:border-muted [&::-webkit-details-marker]:hidden">
           {current.label}
           <TbChevronDown
@@ -57,11 +58,17 @@ function MonthPicker({
           />
         </summary>
         <div
-          className={`${card} absolute right-0 z-20 mt-2 max-h-80 w-56 overflow-y-auto p-2 sm:left-0 sm:right-auto`}
+          className={`${card} absolute left-0 z-20 mt-2 max-h-80 w-56 overflow-y-auto p-2 sm:right-0 sm:left-auto`}
         >
           {years.map((year) => (
             <div key={year} className="py-1">
-              <p className="px-2 pb-1 text-xs font-medium text-muted">{year}</p>
+              {/* The button already names the year; headings only separate several years. */}
+              {years.length > 1 && (
+                <p className="flex items-center gap-2 px-2 pb-1.5 text-xs font-medium text-muted">
+                  {year}
+                  <span aria-hidden className="h-px flex-1 bg-border" />
+                </p>
+              )}
               <ul className="grid grid-cols-3 gap-1">
                 {periods
                   .filter((p) => p.year === year)
@@ -80,7 +87,7 @@ function MonthPicker({
             </div>
           ))}
         </div>
-      </details>
+      </DismissibleDetails>
       {next ? (
         <Link
           href={`/reports/${next.id}`}
@@ -107,7 +114,7 @@ function RoomPrompt({ types }: { types: RegisteredType[] }) {
       </p>
       <div className="flex shrink-0 gap-2">
         <Link
-          href="/settings#room"
+          href="/settings#setup"
           className="inline-flex items-center rounded-full bg-accent px-4 py-2 text-sm font-medium whitespace-nowrap text-accent-contrast transition-opacity hover:opacity-90"
         >
           Add starting room

@@ -1,21 +1,24 @@
 import { TbLogout, TbPlugConnectedX } from "react-icons/tb";
-import { buttonDanger, buttonSecondary, compact } from "@/components/ui";
-
-const row =
-  "flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between";
+import { DismissibleDetails } from "@/components/dismissible-details";
+import { SnapTradeName } from "@/components/snaptrade";
+import { buttonDanger, buttonSecondary, card, compact } from "@/components/ui";
 
 // Plain forms posting to route handlers, so both work even when SnapTrade data
 // cannot be loaded.
-export function AccessActions() {
+export function AccessSection({ email }: { email: string | null }) {
   return (
-    <div className="divide-y divide-border rounded-xl border border-border">
-      <div className={row}>
-        <div>
-          <p className="font-medium">Sign out</p>
-          <p className="mt-0.5 text-sm text-muted">
-            Ends this browser session. SnapTrade access stays in place.
-          </p>
-        </div>
+    <section
+      aria-label="Account"
+      className={`${card} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
+    >
+      <div className="min-w-0">
+        <p className="font-medium">
+          Signed in with <SnapTradeName />
+        </p>
+        {email && <p className="mt-0.5 truncate text-sm text-muted">{email}</p>}
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
         <form method="post" action="/logout">
           <button
             type="submit"
@@ -25,26 +28,20 @@ export function AccessActions() {
             Sign out
           </button>
         </form>
-      </div>
 
-      <div className={row}>
-        <div>
-          <p className="font-medium">Disconnect SnapTrade</p>
-          <p className="mt-0.5 text-sm text-muted">
-            Revokes Vaultfolio’s access at SnapTrade and deletes the stored
-            tokens. Settings are kept.
-          </p>
-        </div>
-        <details className="group shrink-0 sm:text-right">
+        <DismissibleDetails className="relative">
           <summary
             className={`${compact(buttonDanger)} w-full cursor-pointer list-none sm:w-auto [&::-webkit-details-marker]:hidden`}
           >
             <TbPlugConnectedX aria-hidden />
-            Disconnect
+            Disconnect SnapTrade
           </summary>
-          <div className="mt-3 rounded bg-attention-soft px-4 py-3 text-left text-sm sm:w-72">
-            <p className="leading-relaxed">
-              Reports stop until access is granted again by signing in.
+          <div
+            className={`${card} z-20 mt-2 p-4 text-sm sm:absolute sm:right-0 sm:w-80`}
+          >
+            <p className="leading-relaxed text-muted">
+              Removes Vaultfolio’s access to brokerage data and signs out on
+              every device. Settings are kept. Signing in again reconnects.
             </p>
             <form method="post" action="/disconnect" className="mt-3">
               <button
@@ -55,8 +52,8 @@ export function AccessActions() {
               </button>
             </form>
           </div>
-        </details>
+        </DismissibleDetails>
       </div>
-    </div>
+    </section>
   );
 }

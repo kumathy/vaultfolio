@@ -1,45 +1,37 @@
 import { Notice } from "@/components/notice";
 import { SnapTradeLink, SnapTradeName } from "@/components/snaptrade";
 import { card } from "@/components/ui";
-import { formatTimestampUtc } from "@/lib/format";
+import { localDateTime } from "@/lib/reports/period";
 import type { AccountsOverview } from "@/lib/snaptrade/accounts";
 import { totalsByCurrency } from "@/lib/view-models/accounts";
-import { AccountGroups, ConnectionChip, OverviewPanel } from "./overview";
+import { AccountGroups, OverviewPanel } from "./overview";
 
-function PageHeader({ children }: { children?: React.ReactNode }) {
+function PageHeader() {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Accounts
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Brokerage accounts shared with Vaultfolio through SnapTrade.
-        </p>
-      </div>
-      {children}
+    <div>
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        Accounts
+      </h1>
+      <p className="mt-1 text-sm text-muted">
+        Brokerage accounts shared with Vaultfolio through SnapTrade.
+      </p>
     </div>
   );
 }
 
-export function AccountsView({ overview }: { overview: AccountsOverview }) {
+export function AccountsView({
+  overview,
+  timeZone,
+}: {
+  overview: AccountsOverview;
+  timeZone: string;
+}) {
   const { accounts, connections, retrievedAt } = overview;
   const disabled = connections?.filter((c) => c.disabled) ?? [];
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <PageHeader>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <ConnectionChip connections={connections} />
-          <p className="text-xs text-muted">
-            Retrieved{" "}
-            <time dateTime={retrievedAt.toISOString()}>
-              {formatTimestampUtc(retrievedAt)}
-            </time>{" "}
-            via <SnapTradeName />
-          </p>
-        </div>
-      </PageHeader>
+      <PageHeader />
 
       {(disabled.length > 0 || connections === null || accounts === null) && (
         <div className="space-y-3">
@@ -73,9 +65,12 @@ export function AccountsView({ overview }: { overview: AccountsOverview }) {
             totals={totalsByCurrency(accounts)}
           />
           <AccountGroups accounts={accounts} />
-          <p className="text-sm text-muted">
-            Values are reported by each brokerage. Amounts in different
-            currencies are not converted or combined.
+          <p className="text-xs text-muted">
+            Retrieved{" "}
+            <time dateTime={retrievedAt.toISOString()}>
+              {localDateTime(retrievedAt, timeZone)}
+            </time>{" "}
+            from <SnapTradeName />.
           </p>
         </>
       )}

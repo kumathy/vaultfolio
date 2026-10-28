@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  TbCheck,
-  TbCopy,
-  TbDownload,
-  TbEye,
-  TbFileZip,
-  TbMarkdown,
-} from "react-icons/tb";
-import { buttonSecondary, card, compact } from "@/components/ui";
+import { TbCheck, TbCopy, TbEye, TbFileZip, TbMarkdown } from "react-icons/tb";
+import { card } from "@/components/ui";
 import type { ReportDocument } from "@/lib/reports/types";
 import { MarkdownSource, ReportBody } from "./report-view";
 
@@ -19,8 +12,6 @@ const views: { id: View; label: string; Icon: typeof TbEye }[] = [
   { id: "rendered", label: "Rendered", Icon: TbEye },
   { id: "markdown", label: "Markdown", Icon: TbMarkdown },
 ];
-
-const smallButton = compact(buttonSecondary);
 
 function CopyButton({ markdown }: { markdown: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -37,13 +28,21 @@ function CopyButton({ markdown }: { markdown: string }) {
 
   return (
     <>
-      <button type="button" onClick={copy} className={smallButton}>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copy Markdown"
+        title="Copy Markdown"
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-muted transition-colors hover:bg-card hover:text-foreground"
+      >
         {state === "copied" ? (
-          <TbCheck aria-hidden className="text-accent" />
+          <TbCheck aria-hidden className="text-sm text-accent" />
         ) : (
-          <TbCopy aria-hidden />
+          <TbCopy aria-hidden className="text-sm" />
         )}
-        {state === "copied" ? "Copied" : "Copy Markdown"}
+        <span className="hidden sm:inline">
+          {state === "copied" ? "Copied" : "Copy Markdown"}
+        </span>
       </button>
       <span role="status" className="sr-only">
         {state === "copied"
@@ -71,51 +70,47 @@ export function ReportPreview({
 
   return (
     <section aria-label={`Report ${title}`} className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div
-          role="group"
-          aria-label="Report view"
-          className="inline-flex self-start rounded-full border border-border bg-card p-1"
-        >
-          {views.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={view === id}
-              aria-controls="report-content"
-              onClick={() => setView(id)}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap text-muted transition-colors hover:text-foreground aria-pressed:bg-surface aria-pressed:text-foreground"
-            >
-              <Icon aria-hidden className="text-sm" />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <CopyButton markdown={markdown} />
-          <a
-            href={`/reports/${title}/markdown?download=1`}
-            className={smallButton}
-            download
+      <div className={`${card} overflow-hidden`}>
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-surface px-3 py-2">
+          <div
+            role="group"
+            aria-label="Report view"
+            className="inline-flex rounded-full border border-border bg-card p-1"
           >
-            <TbDownload aria-hidden />
-            {title}.md
-          </a>
-          <a href={`/reports/archive/${year}`} className={smallButton} download>
-            <TbFileZip aria-hidden />
-            {year} .zip
-          </a>
+            {views.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={view === id}
+                aria-controls="report-content"
+                onClick={() => setView(id)}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap text-muted transition-colors hover:text-foreground aria-pressed:bg-surface aria-pressed:text-foreground"
+              >
+                <Icon aria-hidden className="text-sm" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <CopyButton markdown={markdown} />
+        </div>
+
+        <div id="report-content">
+          {view === "rendered" ? (
+            <ReportBody document={document} title={title} />
+          ) : (
+            <MarkdownSource markdown={markdown} />
+          )}
         </div>
       </div>
 
-      <div id="report-content" className={`${card} overflow-hidden`}>
-        {view === "rendered" ? (
-          <ReportBody document={document} title={title} />
-        ) : (
-          <MarkdownSource markdown={markdown} />
-        )}
-      </div>
+      <a
+        href={`/reports/archive/${year}`}
+        download
+        className="inline-flex items-center gap-1.5 text-sm text-muted underline-offset-4 transition-colors hover:text-foreground hover:underline"
+      >
+        <TbFileZip aria-hidden />
+        Export {year} as Markdown files (.zip)
+      </a>
     </section>
   );
 }

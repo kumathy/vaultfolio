@@ -56,28 +56,47 @@ export function parseDollars(text: string): number | null {
 export const normalizeSymbol = (text: string) => text.trim().toUpperCase();
 const SYMBOL = /^[A-Z0-9][A-Z0-9.-]{0,11}$/;
 
-export interface Targets {
+export interface Setup {
+  room: Partial<Record<RegisteredType, RoomSetting>>;
   contributionTargetCents?: number;
-  allocation?: AllocationTarget[];
-  scopeAccountIds?: string[];
 }
 
-// Both targets are optional: an empty amount and empty fund rows clear them.
-export function parseTargetsForm(
+// Starting room for the registered types the user holds, and the monthly
+// contribution target. Empty fields clear the setting.
+export function parseSetupForm(
   form: FormLike,
-  knownAccountIds: string[],
-): Parsed<Targets> {
-  const errors: FieldErrors = {};
-  const value: Targets = {};
+  year: number,
+  types: RegisteredType[],
+): Parsed<Setup> {
+  const room = parseRoomForm(form, year, types);
+  const errors: FieldErrors = room.ok ? {} : { ...room.errors };
+  const value: Setup = { room: room.ok ? room.value : {} };
 
   const amountText = field(form, "amount");
   if (amountText) {
     const cents = parseDollars(amountText);
-    if (!cents)
+    if (!cents) {
       errors.amount =
         "Enter a monthly amount greater than $0, or leave it empty.";
-    else value.contributionTargetCents = cents;
+    } else value.contributionTargetCents = cents;
   }
+  return Object.keys(errors).length > 0
+    ? { ok: false, errors }
+    : { ok: true, value };
+}
+
+export interface Allocation {
+  allocation?: AllocationTarget[];
+  scopeAccountIds?: string[];
+}
+
+// Empty fund rows are ignored; a form with none clears the allocation.
+export function parseAllocationForm(
+  form: FormLike,
+  knownAccountIds: string[],
+): Parsed<Allocation> {
+  const errors: FieldErrors = {};
+  const value: Allocation = {};
 
   const symbols = all(form, "symbol");
   const weights = all(form, "weight");
@@ -125,10 +144,11 @@ export function parseTargetsForm(
 export function parseRoomForm(
   form: FormLike,
   year: number,
+  types: RegisteredType[] = REGISTERED,
 ): Parsed<Partial<Record<RegisteredType, RoomSetting>>> {
   const errors: FieldErrors = {};
   const room: Partial<Record<RegisteredType, RoomSetting>> = {};
-  for (const type of REGISTERED) {
+  for (const type of types) {
     const text = field(form, type);
     if (!text) continue;
     const cents = parseDollars(text);

@@ -201,6 +201,42 @@ describe("monthly activity", () => {
 });
 
 describe("contributions and growth", () => {
+  it("notes missing history only when an account held money before it", () => {
+    const opened = report([
+      rawAccount({
+        id: "tfsa",
+        name: "TFSA",
+        positions: [["XEQT", 10, 35]],
+        firstTransactionDate: "2026-03-20",
+        activities: [
+          act.deposit("2026-03-20", 350),
+          act.buy("2026-03-21", "XEQT", 10, 350),
+        ],
+      }),
+    ]);
+    expect(opened.markdown).not.toContain("Transactions are not available");
+
+    const older = report([
+      rawAccount({
+        id: "tfsa",
+        name: "TFSA",
+        positions: [["XEQT", 20, 35]],
+        firstTransactionDate: "2026-03-20",
+        activities: [act.buy("2026-03-20", "XEQT", 10, 350)],
+      }),
+      rawAccount({
+        id: "rrsp",
+        name: "RRSP",
+        rawType: "RRSP",
+        positions: [["VFV", 1, 100]],
+        activities: [],
+      }),
+    ]);
+    expect(older.section("Contributions and growth")).toContain(
+      "Transactions are not available before 2026-03-20 for TFSA or for RRSP; total contributed may be understated and net growth overstated.",
+    );
+  });
+
   it("keeps currencies apart without converting", () => {
     const r = report([
       rawAccount({

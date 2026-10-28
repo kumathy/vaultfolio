@@ -124,9 +124,10 @@ export const EXAMPLE_SETTINGS: ReportSettings = {
 
 export function buildExampleReport(
   settings: ReportSettings = EXAMPLE_SETTINGS,
+  period: Period = EXAMPLE_PERIOD,
 ) {
   return buildReport(
     { accounts: normalizeAccountData(EXAMPLE_ACCOUNT_DATA, settings) },
-    { period: EXAMPLE_PERIOD, now: EXAMPLE_NOW, settings },
+    { period, now: EXAMPLE_NOW, settings },
   );
 }

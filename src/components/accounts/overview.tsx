@@ -1,5 +1,4 @@
 import { TbFolder } from "react-icons/tb";
-import { SnapTradeBadge } from "@/components/snaptrade";
 import { card } from "@/components/ui";
 import { formatAmount, formatMoney } from "@/lib/format";
 import {
@@ -8,30 +7,6 @@ import {
   type ConnectionView,
   type MoneyView,
 } from "@/lib/view-models/accounts";
-
-export function ConnectionChip({
-  connections,
-}: {
-  connections: ConnectionView[] | null;
-}) {
-  if (connections === null) {
-    return <SnapTradeBadge status="unknown" label="Status unavailable" />;
-  }
-  const disabled = connections.filter((c) => c.disabled).length;
-  if (disabled > 0) {
-    return (
-      <SnapTradeBadge
-        status="attention"
-        label={
-          disabled === 1
-            ? "1 connection needs attention"
-            : `${disabled} connections need attention`
-        }
-      />
-    );
-  }
-  return <SnapTradeBadge status="connected" label="Connected" />;
-}
 
 // Layout follows the panel's own width (container query), not the screen:
 // four columns only when each value fits in full, otherwise stacked rows.

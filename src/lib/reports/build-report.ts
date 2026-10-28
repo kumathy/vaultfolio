@@ -54,13 +54,6 @@ function dataNotes(
       );
     }
   }
-  // Totals can only count transactions SnapTrade provides.
-  const starts = accounts
-    .filter((a) => a.firstTransactionDate)
-    .map((a) => `${accountLabel(a, accounts)} from ${a.firstTransactionDate}`);
-  if (starts.length > 0) {
-    notes.push(`Earliest available transactions: ${starts.join(", ")}.`);
-  }
   if (!ctx.isCurrentPeriod) {
     notes.push(
       `Values and holdings are as of ${ctx.asOf}; historical prices are not available.`,

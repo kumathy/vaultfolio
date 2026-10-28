@@ -11,9 +11,13 @@
   --border: #323634;
   --accent: #a88bfa;
   --accent-soft: #2a2440;
+  --accent-strong: #7c5ce6;
   --accent-contrast: #15111f;
   --attention: #e3926f;
   --attention-soft: #3a2620;
+  /* SnapTrade's colours, used only on the button that hands off to SnapTrade. */
+  --snaptrade-cyan: #4fd1df;
+  --snaptrade-bronze: #c9995e;
 }
 
 @theme inline {
@@ -25,6 +29,7 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-contrast: var(--accent-contrast);
   --color-attention: var(--attention);
   --color-attention-soft: var(--attention-soft);
@@ -32,12 +37,20 @@
   --font-mono: var(--font-geist-mono);
   --animate-page-in: page-in 300ms ease-out both;
   --animate-toast-in: toast-in 250ms ease-out both;
+  --animate-rise: rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @keyframes toast-in {
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
   }
 }
 
@@ -73,5 +86,153 @@ body {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
     border-radius: 4px;
+  }
+}
+
+/* Frosted glass lit diagonally: cyan from the top-left, bronze from the
+   bottom-right. The gradient border is a masked ::after ring, so it does not
+   show through the translucent face; the hover glow is ::before because
+   gradients cannot transition. */
+.button-snaptrade {
+  --glow-cyan: color-mix(in srgb, var(--snaptrade-cyan) 16%, transparent);
+  --glow-bronze: color-mix(in srgb, var(--snaptrade-bronze) 16%, transparent);
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(70% 160% at 0% 0%, var(--glow-cyan), transparent),
+    radial-gradient(70% 160% at 100% 100%, var(--glow-bronze), transparent),
+    linear-gradient(rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02));
+  /* Top highlight, plus each colour reflecting off its own inner corner. */
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 12px 8px 18px -14px
+      color-mix(in srgb, var(--snaptrade-cyan) 45%, transparent),
+    inset -12px -8px 18px -14px
+      color-mix(in srgb, var(--snaptrade-bronze) 45%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  transition:
+    box-shadow 250ms ease-out,
+    transform 250ms ease-out;
+}
+
+.button-snaptrade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--snaptrade-cyan) 55%, transparent),
+    rgb(255 255 255 / 0.12),
+    color-mix(in srgb, var(--snaptrade-bronze) 55%, transparent)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+.button-snaptrade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(85% 190% at 0% 0%, var(--glow-cyan), transparent 75%),
+    radial-gradient(85% 190% at 100% 100%, var(--glow-bronze), transparent 75%);
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+
+.button-snaptrade:hover::before {
+  opacity: 1;
+}
+
+.button-snaptrade:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    inset 16px 10px 22px -14px
+      color-mix(in srgb, var(--snaptrade-cyan) 70%, transparent),
+    inset -16px -10px 22px -14px
+      color-mix(in srgb, var(--snaptrade-bronze) 70%, transparent),
+    -12px -6px 32px -16px var(--snaptrade-cyan),
+    12px 12px 32px -16px var(--snaptrade-bronze);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-snaptrade:hover {
+    transform: none;
+  }
+}
+
+/* Colourless counterpart of .button-snaptrade for secondary actions. */
+.button-glass {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(12px) saturate(140%);
+  transition:
+    background-color 250ms ease-out,
+    border-color 250ms ease-out,
+    box-shadow 250ms ease-out,
+    transform 250ms ease-out;
+}
+
+.button-glass:hover {
+  border-color: rgb(255 255 255 / 0.18);
+  background-color: rgb(255 255 255 / 0.04);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 8px 24px -14px rgb(255 255 255 / 0.25);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-glass:hover {
+    transform: none;
+  }
+}
+
+/* Hero background: a faint dot grid fading out downward, plus a brighter
+   violet copy revealed in a circle around the pointer (hero-backdrop.tsx). */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0.08) 1px,
+    transparent 1.6px
+  );
+  background-size: 26px 26px;
+  background-position: center top;
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
+
+.dot-grid-spot {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 70%, transparent) 1.2px,
+    transparent 1.8px
+  );
+  mask-image:
+    radial-gradient(
+      220px circle at var(--spot-x, -999px) var(--spot-y, -999px),
+      #000,
+      transparent 70%
+    ),
+    linear-gradient(to bottom, #000 50%, transparent);
+  mask-composite: intersect;
+  opacity: var(--spot-opacity, 0);
+  transition: opacity 400ms ease-out;
+}
+
+/* In-page links (e.g. "How it works") slide instead of jumping. The
+   data-scroll-behavior attribute on <html> keeps page navigations instant. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }

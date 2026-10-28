@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import type { IconType } from "react-icons";
@@ -20,13 +21,26 @@ import {
 import { ClearSearchParams } from "@/components/clear-search-params";
 import { Notice, type NoticeTone } from "@/components/notice";
 import { Toast, type ToastTone } from "@/components/toast";
+import { LogoMark } from "@/components/logo";
+import { HeroBackdrop } from "@/components/site/hero-backdrop";
 import { ObsidianWindow } from "@/components/site/obsidian-window";
-import { SignInLink } from "@/components/site/site-nav";
+import { SignInLink } from "@/components/site/sign-in-link";
 import { ExternalLink } from "@/components/external-link";
 import { SNAPTRADE_SITE_URL, SnapTradeLink } from "@/components/snaptrade";
-import { buttonPrimary, card, chip, container, large } from "@/components/ui";
+import {
+  buttonPrimary,
+  buttonGlass,
+  card,
+  container,
+  large,
+} from "@/components/ui";
 import { currentUserId } from "@/lib/auth/session";
-import { buildExampleReport } from "@/lib/reports/example";
+import {
+  buildExampleReport,
+  EXAMPLE_PERIOD,
+  EXAMPLE_SETTINGS,
+} from "@/lib/reports/example";
+import { addMonths } from "@/lib/reports/period";
 
 const OBSIDIAN_SITE_URL = "https://obsidian.md";
 
@@ -80,25 +94,23 @@ const steps: {
   title: string;
   text: string;
   Icon: IconType;
-  neutral?: boolean;
 }[] = [
   {
     label: "Step 1",
     title: "SnapTrade",
-    text: "Brokerage connections stay in SnapTrade Personal. Vaultfolio receives read-only access through OAuth, and brokerage credentials never reach it.",
+    text: "Brokerages connect to SnapTrade Personal. Vaultfolio gets read-only access through OAuth.",
     Icon: TbBuildingBank,
-    neutral: true,
   },
   {
     label: "Step 2",
     title: "Vaultfolio",
-    text: "Reports are generated on demand from live account data and rendered as Markdown. No brokerage data is stored.",
+    text: "Builds each report on demand from live account data, as Markdown.",
     Icon: TbFileAnalytics,
   },
   {
     label: "Step 3",
     title: "Obsidian",
-    text: "The plugin writes each monthly report into a vault folder, with frontmatter ready for Dataview queries.",
+    text: "The plugin syncs reports into a vault folder, with frontmatter for Dataview.",
     Icon: TbNotebook,
   },
 ];
@@ -111,25 +123,25 @@ const reportSections: {
 }[] = [
   {
     title: "Monthly activity",
-    text: "Deposits, purchases and distributions for the month, measured against an optional contribution target. Any schedule works, automatic or manual. Cash left uninvested is flagged.",
+    text: "Deposits, purchases and distributions, against an optional monthly target. Idle cash is flagged.",
     Icon: TbCalendarCheck,
     sample: ["Contributions", "On track"],
   },
   {
     title: "Contributions and growth",
-    text: "Total contributed against current value. Growth is shown in dollars, since recurring deposits make percentage returns misleading.",
+    text: "Total contributed against current value, with growth in dollars.",
     Icon: TbCoins,
     sample: ["Net growth", "+$412.55"],
   },
   {
     title: "Registered-account room",
-    text: "TFSA, RRSP and FHSA contributions tracked against starting room, with a projection to December 31.",
+    text: "TFSA, RRSP and FHSA contributions against starting room, projected to December 31.",
     Icon: TbWallet,
     sample: ["TFSA room remaining", "$2,100.00"],
   },
   {
     title: "Distributions",
-    text: "History per payment and per symbol, plus a labelled 12-month estimate from trailing distributions.",
+    text: "Every payment by symbol, plus a 12-month estimate.",
     Icon: TbReceipt2,
     sample: ["Next 12 months (Estimate)", "~$46.00"],
   },
@@ -138,7 +150,7 @@ const reportSections: {
 const safeguards: { title: string; text: string; Icon: IconType }[] = [
   {
     title: "Sign-in on SnapTrade",
-    text: "Authorization happens on SnapTrade with PKCE. Brokerage credentials never reach Vaultfolio.",
+    text: "Authorization happens on SnapTrade with PKCE. Brokerage credentials stay there.",
     Icon: TbLogin2,
   },
   {
@@ -148,12 +160,12 @@ const safeguards: { title: string; text: string; Icon: IconType }[] = [
   },
   {
     title: "Encrypted tokens",
-    text: "Access tokens are encrypted at rest with AES-256-GCM. Brokerage data is fetched on demand and never stored.",
+    text: "Tokens are encrypted at rest with AES-256-GCM. Balances and transactions are never stored.",
     Icon: TbLock,
   },
   {
     title: "Revocable",
-    text: "Disconnect revokes access at SnapTrade and deletes stored tokens. Access can also be removed in the SnapTrade Dashboard.",
+    text: "Disconnect revokes access at SnapTrade and deletes the stored tokens.",
     Icon: TbPlugConnectedX,
   },
 ];
@@ -167,23 +179,51 @@ function SectionHeading({ title, text }: { title: string; text: string }) {
   );
 }
 
-function IconBadge({
-  Icon,
-  neutral = false,
-}: {
-  Icon: IconType;
-  neutral?: boolean;
-}) {
+function IconBadge({ Icon }: { Icon: IconType }) {
   return (
-    <span
-      className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
-        neutral
-          ? "border border-border bg-surface text-foreground"
-          : "bg-accent-soft text-accent"
-      }`}
-    >
+    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-xl text-accent">
       <Icon aria-hidden />
     </span>
+  );
+}
+
+// Rendered in the signed-out form while the session is checked, so the hero
+// keeps the same layout from the first paint.
+function HeroButtons({ signedIn }: { signedIn: boolean }) {
+  return (
+    <>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+        {signedIn ? (
+          <Link href="/accounts" className={large(buttonPrimary)}>
+            Open accounts
+            <TbArrowRight aria-hidden />
+          </Link>
+        ) : (
+          <SignInLink />
+        )}
+        <a href="#how-it-works" className={`group ${large(buttonGlass)}`}>
+          How it works
+          <TbArrowDown
+            aria-hidden
+            className="text-muted transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none"
+          />
+        </a>
+      </div>
+      {!signedIn && (
+        <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted lg:justify-start">
+          {[
+            "Read-only access",
+            "Revocable at any time",
+            "No brokerage credentials shared",
+          ].map((point) => (
+            <li key={point} className="inline-flex items-center gap-1.5">
+              <TbCheck aria-hidden className="text-foreground" />
+              {point}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 
@@ -206,41 +246,11 @@ async function HeroActions({
         <Toast tone={message.tone} message={message.text} />
       )}
       {message?.display === "inline" && (
-        <div className="mt-8 max-w-xl">
+        <div className="mx-auto mt-8 max-w-xl text-left lg:mx-0">
           <Notice tone={message.tone}>{message.text}</Notice>
         </div>
       )}
-      <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-        {signedIn ? (
-          <Link href="/accounts" className={large(buttonPrimary)}>
-            Open accounts
-            <TbArrowRight aria-hidden />
-          </Link>
-        ) : (
-          <SignInLink />
-        )}
-        <a
-          href="#how-it-works"
-          className="inline-flex w-full items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-foreground sm:w-auto"
-        >
-          How it works
-          <TbArrowDown aria-hidden />
-        </a>
-      </div>
-      {!signedIn && (
-        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
-          {[
-            "Read-only access",
-            "Revocable at any time",
-            "No brokerage credentials shared",
-          ].map((point) => (
-            <li key={point} className="inline-flex items-center gap-1.5">
-              <TbCheck aria-hidden className="text-foreground" />
-              {point}
-            </li>
-          ))}
-        </ul>
-      )}
+      <HeroButtons signedIn={signedIn} />
     </>
   );
 }
@@ -258,159 +268,174 @@ async function ClosingAction() {
 }
 
 export default function Home({ searchParams }: PageProps<"/">) {
-  const example = buildExampleReport();
-
   return (
     <main>
-      <section
-        className={`${container} grid items-center gap-12 pt-10 pb-14 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:py-24`}
-      >
-        <div>
-          <p className={chip}>
-            SnapTrade OAuth app
-            <span className="text-border">/</span>
-            Obsidian plugin
-          </p>
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl xl:text-6xl">
-            Brokerage accounts, written into an{" "}
-            <span className="text-accent">Obsidian vault</span>.
-          </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
-            Vaultfolio connects to brokerage accounts through{" "}
-            <ExternalLink href={SNAPTRADE_SITE_URL}>SnapTrade</ExternalLink> and
-            produces monthly Markdown reports on investing activity,
-            contributions, registered-account room and distributions. Reports
-            read in the browser and sync into{" "}
-            <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
-          </p>
+      <div className="relative isolate overflow-hidden">
+        <HeroBackdrop />
+        <section
+          className={`${container} grid items-center gap-12 pt-14 pb-14 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:py-24`}
+        >
+          {/* Centred while the hero is a single column; left-aligned beside the
+            example window. */}
+          <div className="text-center lg:text-left">
+            <p className="mb-8 flex animate-rise motion-reduce:animate-none [animation-delay:0ms] items-center justify-center gap-3 lg:justify-start">
+              <LogoMark className="h-11 w-11" />
+              <span className="text-2xl font-semibold tracking-tight">
+                Vaultfolio
+              </span>
+            </p>
+            <h1 className="animate-rise motion-reduce:animate-none [animation-delay:80ms] text-4xl font-semibold tracking-tight text-balance sm:text-5xl xl:text-6xl">
+              Monthly investing reports, in{" "}
+              {/* Obsidian's app icon, exported unmodified from obsidian.md. */}
+              <span className="whitespace-nowrap">
+                <Image
+                  src="/brand/obsidian-icon.svg"
+                  alt=""
+                  width={512}
+                  height={512}
+                  unoptimized
+                  className="mr-[0.18em] inline-block size-[0.95em] rounded-[19.5%] align-[-0.14em] ring-1 ring-white/10"
+                />
+                <span className="text-accent">Obsidian</span>.
+              </span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:160ms] text-lg leading-relaxed text-muted lg:mx-0">
+              Brokerage data from{" "}
+              <ExternalLink href={SNAPTRADE_SITE_URL}>SnapTrade</ExternalLink>,
+              turned into a factual report on contributions, registered room and
+              distributions. Read it in the browser or in{" "}
+              <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
+            </p>
 
-          <Suspense
-            fallback={
-              <div className="mt-8 flex flex-wrap gap-3">
-                <SignInLink />
-              </div>
-            }
-          >
-            <HeroActions searchParams={searchParams} />
-          </Suspense>
+            <div className="animate-rise motion-reduce:animate-none [animation-delay:240ms]">
+              <Suspense fallback={<HeroButtons signedIn={false} />}>
+                <HeroActions searchParams={searchParams} />
+              </Suspense>
+            </div>
 
-          <p className="mt-6 max-w-xl text-sm text-muted">
-            Requires a SnapTrade Personal account with a connected brokerage,
-            managed in the <SnapTradeLink />.
-          </p>
-        </div>
+            <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:320ms] text-sm text-muted lg:mx-0">
+              Requires a SnapTrade Personal account with a connected brokerage,
+              managed in the <SnapTradeLink />.
+            </p>
+          </div>
 
-        <ObsidianWindow
-          note={{
-            title: example.fileName.replace(/\.md$/, ""),
-            document: example.document,
-            markdown: example.markdown,
-          }}
-        />
-      </section>
+          <div className="min-w-0 animate-rise motion-reduce:animate-none [animation-delay:200ms]">
+            <ObsidianWindow
+              notes={[-2, -1, 0].map((offset) => {
+                const report = buildExampleReport(
+                  EXAMPLE_SETTINGS,
+                  addMonths(EXAMPLE_PERIOD, offset),
+                );
+                return {
+                  title: report.fileName.replace(/\.md$/, ""),
+                  document: report.document,
+                  markdown: report.markdown,
+                };
+              })}
+            />
+          </div>
+        </section>
+      </div>
 
-      <section
-        id="how-it-works"
-        className="scroll-mt-16 border-y border-border bg-surface"
-      >
-        <div className={`${container} py-14 md:py-20`}>
+      {/* Rises in on load, just after the hero, then stays still. */}
+      <div className="animate-rise motion-reduce:animate-none [animation-delay:400ms]">
+        <section
+          id="how-it-works"
+          className="border-y border-border bg-surface"
+        >
+          <div className={`${container} py-14 md:py-20`}>
+            <SectionHeading
+              title="How it works"
+              text="Vaultfolio is a SnapTrade OAuth app with an Obsidian plugin. Each part has one job."
+            />
+            <ol className="grid gap-8 md:grid-cols-3">
+              {steps.map((step, index) => (
+                <li key={step.title} className={`${card} relative p-6`}>
+                  <IconBadge Icon={step.Icon} />
+                  <p className="mt-5 text-sm text-muted">{step.label}</p>
+                  <h3 className="mt-1 text-lg font-semibold">{step.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted">{step.text}</p>
+                  {/* Centred in the 2rem gap: half the gap plus half the arrow. */}
+                  {index < steps.length - 1 && (
+                    <TbArrowRight
+                      aria-hidden
+                      className="absolute -bottom-6.5 left-1/2 h-5 w-5 -translate-x-1/2 rotate-90 text-muted md:top-1/2 md:-right-6.5 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2 md:rotate-0"
+                    />
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section id="reports" className={`${container} py-14 md:py-20`}>
           <SectionHeading
-            title="How it works"
-            text="Three systems, each with one job. Brokerage access stays with SnapTrade, report logic lives in Vaultfolio, and notes live in the vault."
+            title="What each report contains"
+            text="Facts only, never trade recommendations. Every setting is optional."
           />
-          <ol className="grid gap-4 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step.title} className={`${card} relative p-6`}>
-                <IconBadge Icon={step.Icon} neutral={step.neutral} />
-                <p className="mt-5 text-sm text-muted">{step.label}</p>
-                <h3 className="mt-1 text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 leading-relaxed text-muted">{step.text}</p>
-                {index < steps.length - 1 && (
-                  <TbArrowRight
-                    aria-hidden
-                    className="absolute -bottom-[1.1rem] left-1/2 z-10 h-7 w-7 -translate-x-1/2 rotate-90 rounded-full border border-border bg-card p-1 text-muted md:top-1/2 md:-right-[1.1rem] md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2 md:rotate-0"
-                  />
-                )}
-              </li>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {reportSections.map((section) => (
+              <article
+                key={section.title}
+                className={`${card} flex flex-col p-6 transition-colors hover:border-muted`}
+              >
+                <IconBadge Icon={section.Icon} />
+                <h3 className="mt-5 text-lg font-semibold">{section.title}</h3>
+                <p className="mt-2 flex-1 leading-relaxed text-muted">
+                  {section.text}
+                </p>
+                <p className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2 text-sm tabular-nums">
+                  <span className="text-muted">{section.sample[0]}</span>
+                  <span className="font-medium">{section.sample[1]}</span>
+                </p>
+              </article>
             ))}
-          </ol>
-        </div>
-      </section>
-
-      <section
-        id="reports"
-        className={`${container} scroll-mt-16 py-14 md:py-20`}
-      >
-        <SectionHeading
-          title="What each report contains"
-          text="Reports state facts and never recommend a trade. Every setting is optional: missing configuration is noted in the report rather than blocking it."
-        />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {reportSections.map((section) => (
-            <article
-              key={section.title}
-              className={`${card} flex flex-col p-6 transition-colors hover:border-muted`}
-            >
-              <IconBadge Icon={section.Icon} />
-              <h3 className="mt-5 text-lg font-semibold">{section.title}</h3>
-              <p className="mt-2 flex-1 leading-relaxed text-muted">
-                {section.text}
-              </p>
-              <p className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2 text-sm tabular-nums">
-                <span className="text-muted">{section.sample[0]}</span>
-                <span className="font-medium">{section.sample[1]}</span>
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section
-        id="security"
-        className="scroll-mt-16 border-t border-border bg-surface"
-      >
-        <div
-          className={`${container} grid gap-10 py-14 md:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]`}
-        >
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight">
-              Access and data handling
-            </h2>
-            <p className="mt-3 leading-relaxed text-muted">
-              Vaultfolio is a SnapTrade OAuth app with read-only scope. The
-              client secret and all tokens stay on the server.
-            </p>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {safeguards.map((item) => (
-              <li key={item.title} className={`${card} p-6`}>
-                <IconBadge Icon={item.Icon} />
-                <h3 className="mt-5 font-semibold">{item.title}</h3>
-                <p className="mt-2 leading-relaxed text-muted">{item.text}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+        </section>
 
-      <section className={`${container} py-14 md:py-20`}>
-        <div
-          className={`${card} flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between lg:p-10`}
-        >
-          <div className="max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              A report for every month, in the vault
-            </h2>
-            <p className="mt-2 leading-relaxed text-muted">
-              Sign in with SnapTrade and the first report is generated from
-              current account data. Settings add detail but are never required.
-            </p>
+        <section id="security" className="border-t border-border bg-surface">
+          <div
+            className={`${container} grid gap-10 py-14 md:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]`}
+          >
+            <div>
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Access and data handling
+              </h2>
+              <p className="mt-3 leading-relaxed text-muted">
+                The client secret and all tokens stay on the server.
+              </p>
+            </div>
+            <ul className="grid gap-4 sm:grid-cols-2">
+              {safeguards.map((item) => (
+                <li key={item.title} className={`${card} p-6`}>
+                  <IconBadge Icon={item.Icon} />
+                  <h3 className="mt-5 font-semibold">{item.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted">{item.text}</p>
+                </li>
+              ))}
+            </ul>
           </div>
-          <Suspense fallback={<SignInLink />}>
-            <ClosingAction />
-          </Suspense>
-        </div>
-      </section>
+        </section>
+
+        <section className={`${container} py-14 md:py-20`}>
+          <div
+            className={`${card} flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between lg:p-10`}
+          >
+            <div className="max-w-2xl">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                A report for every month, in the vault
+              </h2>
+              <p className="mt-2 leading-relaxed text-muted">
+                Sign in with SnapTrade to generate the first report. No setup
+                required.
+              </p>
+            </div>
+            <Suspense fallback={<SignInLink />}>
+              <ClosingAction />
+            </Suspense>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

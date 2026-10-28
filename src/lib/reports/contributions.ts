@@ -5,7 +5,7 @@ import {
   type Context,
 } from "./context";
 import { money, signedMoney } from "./money";
-import type { Block, ReportAccount } from "./types";
+import type { Activity, Block, ReportAccount } from "./types";
 
 export interface ContributionTotals {
   currency: string;
@@ -21,6 +21,29 @@ export interface ContributionsResult {
   rows: ContributionTotals[];
   excludedAccounts: string[];
   assetTransfersWithoutValue: number;
+  // Accounts that held money before their earliest available transaction.
+  incompleteHistory: { account: string; since: string | null }[];
+}
+
+// An account opened within the available history starts with money coming in.
+// Any other first transaction (a purchase, distribution or withdrawal) means it
+// held money before the history SnapTrade provides.
+function startsWithFunding(
+  activities: Activity[],
+  value: Map<string, number>,
+): boolean {
+  if (activities.length === 0) {
+    return [...value.values()].every((cents) => cents === 0);
+  }
+  const first = activities.reduce(
+    (min, a) => (a.date < min ? a.date : min),
+    activities[0].date,
+  );
+  return activities.some(
+    (a) =>
+      a.date === first &&
+      (a.kind === "contribution" || a.kind === "transfer_in"),
+  );
 }
 
 // Growth compares current value with net money put in. Cash transfers count as
@@ -49,6 +72,7 @@ export function analyzeContributions(
   };
 
   const excludedAccounts: string[] = [];
+  const incompleteHistory: ContributionsResult["incompleteHistory"] = [];
   let assetTransfersWithoutValue = 0;
 
   for (const account of accounts) {
@@ -58,6 +82,12 @@ export function analyzeContributions(
       continue;
     }
     for (const [currency, cents] of value) entry(currency).valueCents += cents;
+    if (!startsWithFunding(account.activities, value)) {
+      incompleteHistory.push({
+        account: accountLabel(account, accounts),
+        since: account.firstTransactionDate,
+      });
+    }
 
     for (const activity of account.activities) {
       if (activity.date > ctx.asOf) continue;
@@ -92,7 +122,12 @@ export function analyzeContributions(
     },
   );
 
-  return { rows, excludedAccounts, assetTransfersWithoutValue };
+  return {
+    rows,
+    excludedAccounts,
+    assetTransfersWithoutValue,
+    incompleteHistory,
+  };
 }
 
 export function renderContributions(
@@ -160,6 +195,24 @@ export function renderContributions(
         label,
         ...result.rows.map(format),
       ]),
+    },
+    ...historyLine(result.incompleteHistory),
+  ];
+}
+
+function historyLine(
+  incomplete: ContributionsResult["incompleteHistory"],
+): Block[] {
+  if (incomplete.length === 0) return [];
+  const parts = incomplete.map(({ account, since }) =>
+    since ? `before ${since} for ${account}` : `for ${account}`,
+  );
+  return [
+    {
+      kind: "paragraph",
+      text: [
+        `Transactions are not available ${parts.join(" or ")}; total contributed may be understated and net growth overstated.`,
+      ],
     },
   ];
 }

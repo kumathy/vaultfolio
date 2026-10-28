@@ -5,12 +5,12 @@ import type { FormState } from "@/components/settings/form-kit";
 import { loadSettings, updateSettings } from "@/db/settings";
 import { requireUserId } from "@/lib/auth/session";
 import { localDate } from "@/lib/reports/period";
-import { resolveSettings } from "@/lib/reports/types";
+import { resolveSettings, type RegisteredType } from "@/lib/reports/types";
 import {
   parseAccountTypesForm,
   parseOptionsForm,
-  parseRoomForm,
-  parseTargetsForm,
+  parseAllocationForm,
+  parseSetupForm,
   parseTransfersForm,
   type StoredSettings,
 } from "@/lib/settings/parse";
@@ -44,48 +44,62 @@ const saved = (message = "Saved"): FormState => {
   return { status: "saved", message };
 };
 
-// Saving replaces all three fields, so an emptied field clears that target.
-function withoutTargets(s: StoredSettings): StoredSettings {
-  const next = { ...s };
-  delete next.contributionTargetCents;
-  delete next.allocation;
-  delete next.scopeAccountIds;
-  return next;
-}
+const REGISTERED: RegisteredType[] = ["TFSA", "RRSP", "FHSA"];
 
-export async function saveTargets(
-  _: FormState,
-  form: FormData,
-): Promise<FormState> {
-  const userId = await requireUserId();
-  const ids = await accountIds(userId);
-  if (!ids) return unavailable;
-  const parsed = parseTargetsForm(form, ids);
-  if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  await updateSettings(userId, (s) => ({
-    ...withoutTargets(s),
-    ...parsed.value,
-  }));
-  return saved("Targets saved");
-}
-
-export async function clearTargets(): Promise<FormState> {
-  const userId = await requireUserId();
-  await updateSettings(userId, withoutTargets);
-  return saved("Targets cleared");
-}
-
-export async function saveRoom(
+export async function saveSetup(
   _: FormState,
   form: FormData,
 ): Promise<FormState> {
   const userId = await requireUserId();
   const { timeZone } = resolveSettings(await loadSettings(userId));
   const year = Number(localDate(new Date(), timeZone).slice(0, 4));
-  const parsed = parseRoomForm(form, year);
+  // Only the room fields shown on the form are replaced.
+  const shown = REGISTERED.filter((type) => form.get(type) !== null);
+  const parsed = parseSetupForm(form, year, shown);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  await updateSettings(userId, (s) => ({ ...s, room: parsed.value }));
-  return saved("Starting room saved");
+  await updateSettings(userId, (s) => {
+    const room = { ...s.room };
+    for (const type of shown) delete room[type];
+    const next: StoredSettings = {
+      ...s,
+      room: { ...room, ...parsed.value.room },
+    };
+    delete next.contributionTargetCents;
+    if (parsed.value.contributionTargetCents !== undefined) {
+      next.contributionTargetCents = parsed.value.contributionTargetCents;
+    }
+    return next;
+  });
+  return saved("Report setup saved");
+}
+
+function withoutAllocation(s: StoredSettings): StoredSettings {
+  const next = { ...s };
+  delete next.allocation;
+  delete next.scopeAccountIds;
+  return next;
+}
+
+export async function saveAllocation(
+  _: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const userId = await requireUserId();
+  const ids = await accountIds(userId);
+  if (!ids) return unavailable;
+  const parsed = parseAllocationForm(form, ids);
+  if (!parsed.ok) return { status: "error", errors: parsed.errors };
+  await updateSettings(userId, (s) => ({
+    ...withoutAllocation(s),
+    ...parsed.value,
+  }));
+  return saved("Allocation saved");
+}
+
+export async function clearAllocation(): Promise<FormState> {
+  const userId = await requireUserId();
+  await updateSettings(userId, withoutAllocation);
+  return saved("Allocation cleared");
 }
 
 export async function saveAccountTypes(

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatIsoDate, formatMoney, formatTimestampUtc } from "@/lib/format";
+import { formatIsoDate, formatMoney } from "@/lib/format";
 import { loadAccountsOverview } from "@/lib/snaptrade/accounts";
 import {
   ReauthorizationRequired,
@@ -150,12 +150,6 @@ describe("format", () => {
     );
     expect(formatIsoDate(null)).toBeNull();
     expect(formatIsoDate("yesterday")).toBeNull();
-  });
-
-  it("formats retrieval time in UTC", () => {
-    expect(formatTimestampUtc(new Date("2026-10-27T12:14:59Z"))).toBe(
-      "2026-10-27 12:14 UTC",
-    );
   });
 });
 

@@ -2,9 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { TbPlus, TbTrash } from "react-icons/tb";
-import { clearTargets, saveTargets } from "@/app/(app)/settings/actions";
+import { clearAllocation, saveAllocation } from "@/app/(app)/settings/actions";
 import { compact, buttonSecondary } from "@/components/ui";
-import type { Targets } from "@/lib/settings/parse";
+import type { Allocation } from "@/lib/settings/parse";
 import {
   FieldError,
   idle,
@@ -16,15 +16,15 @@ import {
 
 const MAX_FUNDS = 10;
 
-export function TargetsForm({
+export function AllocationForm({
   targets,
   accounts,
 }: {
-  targets: Targets;
+  targets: Allocation;
   accounts: { id: string; label: string }[];
 }) {
-  const [state, save, saving] = useActionState(saveTargets, idle);
-  const [cleared, clear, clearing] = useActionState(clearTargets, idle);
+  const [state, save, saving] = useActionState(saveAllocation, idle);
+  const [cleared, clear, clearing] = useActionState(clearAllocation, idle);
   const [funds, setFunds] = useState(
     targets.allocation?.map((t) => ({
       symbol: t.symbol,
@@ -33,43 +33,14 @@ export function TargetsForm({
   );
   const total = funds.reduce((sum, f) => sum + (Number(f.weight) || 0), 0);
   const anyWeight = funds.some((f) => f.weight.trim() !== "");
-  const configured =
-    targets.contributionTargetCents !== undefined ||
-    targets.allocation !== undefined;
+  const configured = targets.allocation !== undefined;
   const shown = cleared.status === "saved" ? cleared : state;
 
   return (
     <form action={save} className="space-y-5">
-      <div className="max-w-xs">
-        <label htmlFor="amount" className={labelClass}>
-          Monthly contribution target (CAD)
-        </label>
-        <p id="amount-hint" className="mt-1 text-sm text-muted">
-          Total per month, however often deposits are made.
-        </p>
-        <input
-          id="amount"
-          name="amount"
-          inputMode="decimal"
-          placeholder="300.00"
-          aria-describedby="amount-hint"
-          defaultValue={
-            targets.contributionTargetCents !== undefined
-              ? (targets.contributionTargetCents / 100).toFixed(2)
-              : ""
-          }
-          className={`${inputClass} mt-1.5`}
-          {...invalid(state, "amount")}
-        />
-        <FieldError state={state} name="amount" />
-      </div>
-
       <fieldset>
-        <legend className={labelClass}>Target allocation</legend>
-        <p className="mt-1 text-sm text-muted">
-          Adds target and weight columns to Holdings. Empty rows are ignored.
-        </p>
-        <div className="mt-2 max-w-lg space-y-2">
+        <legend className="sr-only">Funds and target weights</legend>
+        <div className="max-w-lg space-y-2">
           {funds.map((fund, i) => (
             <div key={i}>
               <div className="flex items-center gap-2">
@@ -155,7 +126,9 @@ export function TargetsForm({
 
       {accounts.length > 1 && (
         <fieldset>
-          <legend className={labelClass}>Accounts the targets apply to</legend>
+          <legend className={labelClass}>
+            Accounts the contribution target and allocation apply to
+          </legend>
           <p className="mt-1 text-sm text-muted">
             None selected means all accounts.
           </p>
@@ -181,7 +154,7 @@ export function TargetsForm({
         </fieldset>
       )}
 
-      <SaveRow state={shown} pending={saving} label="Save targets">
+      <SaveRow state={shown} pending={saving} label="Save allocation">
         {configured && (
           <button
             type="submit"
@@ -189,7 +162,7 @@ export function TargetsForm({
             disabled={clearing}
             className="inline-flex items-center rounded-full px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
-            Clear targets
+            Clear allocation
           </button>
         )}
       </SaveRow>

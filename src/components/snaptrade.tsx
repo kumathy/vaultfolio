@@ -20,31 +20,3 @@ export function SnapTradeName() {
     </span>
   );
 }
-
-const statuses = {
-  connected: { dot: "bg-foreground", text: "text-muted" },
-  attention: { dot: "bg-attention", text: "text-attention" },
-  unknown: { dot: "bg-muted", text: "text-muted" },
-} as const;
-
-export function SnapTradeBadge({
-  status,
-  label,
-}: {
-  status: keyof typeof statuses;
-  label: string;
-}) {
-  const { dot, text } = statuses[status];
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
-      <SnapTradeName />
-      <span aria-hidden className="text-border">
-        |
-      </span>
-      <span className={`inline-flex items-center gap-1.5 ${text}`}>
-        <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-        {label}
-      </span>
-    </span>
-  );
-}

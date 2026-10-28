@@ -3,7 +3,8 @@ import {
   parseAccountTypesForm,
   parseDollars,
   parseOptionsForm,
-  parseTargetsForm,
+  parseAllocationForm,
+  parseSetupForm,
   parseRoomForm,
   parseStoredSettings,
   parseTransfersForm,
@@ -35,14 +36,63 @@ describe("parseDollars", () => {
   );
 });
 
-describe("parseTargetsForm", () => {
+describe("parseSetupForm", () => {
+  it("reads room for the shown types and the monthly target", () => {
+    expect(
+      parseSetupForm(
+        form([
+          ["TFSA", "7,000"],
+          ["amount", "$300"],
+        ]),
+        2026,
+        ["TFSA"],
+      ),
+    ).toEqual({
+      ok: true,
+      value: {
+        room: { TFSA: { year: 2026, availableCents: 700000 } },
+        contributionTargetCents: 30000,
+      },
+    });
+  });
+
+  it("treats every field as optional and ignores types not shown", () => {
+    expect(
+      parseSetupForm(
+        form([
+          ["TFSA", ""],
+          ["RRSP", "5000"],
+          ["amount", ""],
+        ]),
+        2026,
+        ["TFSA"],
+      ),
+    ).toEqual({ ok: true, value: { room: {} } });
+  });
+
+  it("reports room and amount errors together", () => {
+    const result = parseSetupForm(
+      form([
+        ["TFSA", "seven"],
+        ["amount", "0"],
+      ]),
+      2026,
+      ["TFSA"],
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(Object.keys(result.errors).sort()).toEqual(["TFSA", "amount"]);
+    }
+  });
+});
+
+describe("parseAllocationForm", () => {
   const accounts = ["tfsa", "rrsp"];
 
-  it("accepts a contribution target and allocation, normalizing symbols", () => {
+  it("accepts an allocation, normalizing symbols", () => {
     expect(
-      parseTargetsForm(
+      parseAllocationForm(
         form([
-          ["amount", "300"],
           ["symbol", " xeqt "],
           ["weight", "100"],
         ]),
@@ -50,45 +100,38 @@ describe("parseTargetsForm", () => {
       ),
     ).toEqual({
       ok: true,
-      value: {
-        contributionTargetCents: 30000,
-        allocation: [{ symbol: "XEQT", weightPercent: 100 }],
-      },
+      value: { allocation: [{ symbol: "XEQT", weightPercent: 100 }] },
     });
   });
 
-  it("treats every part as optional", () => {
+  it("clears the allocation when every row is empty", () => {
     expect(
-      parseTargetsForm(
+      parseAllocationForm(
         form([
-          ["amount", ""],
           ["symbol", ""],
           ["weight", ""],
         ]),
         accounts,
       ),
     ).toEqual({ ok: true, value: {} });
-    expect(parseTargetsForm(form([["amount", "250"]]), accounts)).toEqual({
-      ok: true,
-      value: { contributionTargetCents: 25000 },
-    });
   });
 
   it("keeps known accounts only and ignores empty fund rows", () => {
-    const result = parseTargetsForm(
-      form([
-        ["symbol", "XEQT"],
-        ["weight", "70"],
-        ["symbol", "VFV"],
-        ["weight", "30"],
-        ["symbol", ""],
-        ["weight", ""],
-        ["account", "tfsa"],
-        ["account", "someone-else"],
-      ]),
-      accounts,
-    );
-    expect(result).toEqual({
+    expect(
+      parseAllocationForm(
+        form([
+          ["symbol", "XEQT"],
+          ["weight", "70"],
+          ["symbol", "VFV"],
+          ["weight", "30"],
+          ["symbol", ""],
+          ["weight", ""],
+          ["account", "tfsa"],
+          ["account", "someone-else"],
+        ]),
+        accounts,
+      ),
+    ).toEqual({
       ok: true,
       value: {
         allocation: [
@@ -101,9 +144,8 @@ describe("parseTargetsForm", () => {
   });
 
   it("reports each invalid field", () => {
-    const result = parseTargetsForm(
+    const result = parseAllocationForm(
       form([
-        ["amount", "0"],
         ["symbol", "XE QT"],
         ["weight", "150"],
       ]),
@@ -113,7 +155,6 @@ describe("parseTargetsForm", () => {
     if (!result.ok) {
       expect(Object.keys(result.errors).sort()).toEqual([
         "allocation",
-        "amount",
         "symbol.0",
         "weight.0",
       ]);
@@ -122,7 +163,7 @@ describe("parseTargetsForm", () => {
 
   it("requires weights to total 100% and funds to be unique", () => {
     expect(
-      parseTargetsForm(
+      parseAllocationForm(
         form([
           ["symbol", "XEQT"],
           ["weight", "60"],
@@ -136,7 +177,7 @@ describe("parseTargetsForm", () => {
       errors: { allocation: "Weights add up to 90%; they need to total 100%." },
     });
     expect(
-      parseTargetsForm(
+      parseAllocationForm(
         form([
           ["symbol", "XEQT"],
           ["weight", "50"],

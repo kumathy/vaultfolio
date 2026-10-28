@@ -10,7 +10,6 @@ import {
   TbFolderOpen,
   TbMarkdown,
 } from "react-icons/tb";
-import { addMonths, parsePeriod } from "@/lib/reports/period";
 import {
   ExampleNote,
   type ExampleNoteData,
@@ -19,18 +18,20 @@ import {
 
 const FOLDER = "Investing";
 
-function recentReports(current: string): string[] {
-  const period = parsePeriod(current);
-  if (!period) return [current];
-  return [-2, -1, 0].map((offset) => addMonths(period, offset).id);
-}
-
 const views: { id: NoteView; label: string; Icon: typeof TbEye }[] = [
   { id: "rendered", label: "Rendered", Icon: TbEye },
   { id: "markdown", label: "Markdown", Icon: TbMarkdown },
 ];
 
-function VaultTree({ current }: { current: string }) {
+function VaultTree({
+  notes,
+  current,
+  onSelect,
+}: {
+  notes: string[];
+  current: string;
+  onSelect: (title: string) => void;
+}) {
   return (
     <div className="hidden overflow-hidden border-r border-border bg-surface p-3 text-[13px] sm:block">
       <p className="px-2 pb-2 text-xs font-medium text-muted">Vault</p>
@@ -45,14 +46,18 @@ function VaultTree({ current }: { current: string }) {
           <TbFolderOpen aria-hidden className="shrink-0" />
           {FOLDER}
         </li>
-        {recentReports(current).map((name) => (
-          <li
-            key={name}
-            aria-current={name === current ? "page" : undefined}
-            className="ml-5 flex items-center gap-1.5 rounded-md px-2 py-1 aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent"
-          >
-            <TbFileText aria-hidden className="shrink-0" />
-            {name}
+        {notes.map((title) => (
+          <li key={title} className="ml-5">
+            <button
+              type="button"
+              onClick={() => onSelect(title)}
+              aria-current={title === current ? "page" : undefined}
+              aria-controls="example-note"
+              className="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-left transition-colors hover:bg-card hover:text-foreground aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent"
+            >
+              <TbFileText aria-hidden className="shrink-0" />
+              {title}
+            </button>
           </li>
         ))}
         <li className="flex items-center gap-1.5 px-2 py-1">
@@ -95,8 +100,11 @@ function ViewToggle({
   );
 }
 
-export function ObsidianWindow({ note }: { note: ExampleNoteData }) {
+// Notes oldest first; the newest opens by default.
+export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
   const [view, setView] = useState<NoteView>("rendered");
+  const [title, setTitle] = useState(notes[notes.length - 1].title);
+  const note = notes.find((n) => n.title === title) ?? notes[notes.length - 1];
 
   return (
     <figure
@@ -120,7 +128,11 @@ export function ObsidianWindow({ note }: { note: ExampleNoteData }) {
           </span>
         </div>
         <div className="grid h-[32rem] sm:h-[36rem] sm:grid-cols-[180px_minmax(0,1fr)]">
-          <VaultTree current={note.title} />
+          <VaultTree
+            notes={notes.map((n) => n.title)}
+            current={note.title}
+            onSelect={setTitle}
+          />
           <ExampleNote view={view} note={note} />
         </div>
       </div>

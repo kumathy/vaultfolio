@@ -174,9 +174,6 @@ Projection assumes the $300.00 monthly contribution target is met through Decemb
 
 Estimate: distributions per unit over the past 12 months, multiplied by units held today.
 
-> [!info] Data notes
-> Earliest available transactions: TFSA (WS) from 2025-10-01.
-
 ---
 *Data retrieved 2026-10-27 09:14 ADT via SnapTrade. For information only. Not financial advice.*
 ```
@@ -186,7 +183,7 @@ Estimate: distributions per unit over the past 12 months, multiplied by units he
 ```
 Obsidian plugin  ──(plugin token)──▶  Web app (Next.js on Vercel)  ──(OAuth access token)──▶  SnapTrade API
                                             │
-                                            └──▶ Web dashboard (report preview + .md download)
+                                            └──▶ Web dashboard (report preview, copy, year export)
 ```
 
 - **Only the web app holds SnapTrade tokens and the client secret.**
@@ -328,7 +325,7 @@ Stop after each phase for review.
 3. **Web dashboard:**
    - Settings: starting room, account tags, contribution target and allocation.
    - Report preview.
-   - `.md` download, single file and zip.
+   - Copy Markdown, plus a year export as a zip of `.md` files.
 4. **Obsidian plugin** and pairing flow.
 5. **README for reviewers:** purpose, architecture, security decisions, tradeoffs, and planned improvements.
 

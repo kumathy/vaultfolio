@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { AccessActions } from "@/components/settings/access-section";
+import { TbChevronDown } from "react-icons/tb";
+import { AccessSection } from "@/components/settings/access-section";
 import { AccountTypesForm } from "@/components/settings/account-types-form";
+import { AllocationForm } from "@/components/settings/allocation-form";
 import { SettingsSection } from "@/components/settings/form-kit";
 import { OptionsForm } from "@/components/settings/options-form";
-import { RoomForm } from "@/components/settings/room-form";
-import { TargetsForm } from "@/components/settings/targets-form";
+import { SetupForm } from "@/components/settings/setup-form";
 import { TransfersForm } from "@/components/settings/transfers-form";
 import { ExternalLink } from "@/components/external-link";
 import { card } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
+import { verifiedEmail } from "@/db/users";
 import { deleteAllSessions, requireUserId } from "@/lib/auth/session";
 import { accountLabel } from "@/lib/reports/context";
 import { money } from "@/lib/reports/money";
@@ -43,6 +45,9 @@ async function SettingsContent() {
     ...a,
     display: accountLabel(a, accounts),
   }));
+  const heldTypes = (["TFSA", "RRSP", "FHSA"] as const).filter((type) =>
+    accounts.some((a) => a.registeredType === type),
+  );
   const room: Partial<Record<RegisteredType, number>> = {};
   for (const [type, entry] of Object.entries(settings.room ?? {})) {
     if (entry && entry.year === year)
@@ -72,74 +77,106 @@ async function SettingsContent() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        id="targets"
-        title="Targets"
-        description="A monthly contribution total and a target allocation. Both are optional and work with any deposit schedule, automatic or manual. The contribution target is also used to project registered room through December."
-      >
-        <TargetsForm
-          targets={{
-            contributionTargetCents: settings.contributionTargetCents,
-            allocation: settings.allocation,
-            scopeAccountIds: settings.scopeAccountIds,
-          }}
-          accounts={labelled.map((a) => ({ id: a.id, label: a.display }))}
-        />
-      </SettingsSection>
-
-      <SettingsSection
-        id="room"
-        title={`Starting room — ${year}`}
+        id="setup"
+        title="Report setup"
         description={
           <>
-            Room available at the start of the year, as shown in{" "}
+            Both are optional. Starting room enables remaining room and
+            over-contribution checks; it is shown in{" "}
             <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html">
               CRA My Account
-            </ExternalLink>
-            . It cannot be retrieved automatically. Reports subtract
-            contributions made since January 1.
+            </ExternalLink>{" "}
+            and cannot be retrieved automatically. The monthly target is a total
+            for the month, however often deposits are made.
           </>
         }
       >
-        <RoomForm year={year} room={room} />
-      </SettingsSection>
-
-      <SettingsSection
-        id="accounts"
-        title="Account types"
-        description="Types come from the brokerage when available. A TFSA, RRSP or FHSA tag includes the account in room tracking."
-      >
-        <AccountTypesForm
-          accounts={labelled.map((a) => ({
-            id: a.id,
-            label: a.display,
-            institution: a.institution,
-            brokerageType: a.label,
-            tag: settings.accountTypes?.[a.id],
-          }))}
+        <SetupForm
+          year={year}
+          types={heldTypes}
+          room={room}
+          contributionTargetCents={settings.contributionTargetCents}
         />
       </SettingsSection>
 
-      <SettingsSection
-        id="transfers"
-        title="Transfers into registered accounts"
-        description="Transfers from another registered account do not use new room, so they are not counted as contributions. A transfer from a non-registered account is a contribution and can be marked here."
-      >
-        <TransfersForm transfers={transfers} />
-      </SettingsSection>
+      <details className="group">
+        <summary
+          className={`${card} flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 transition-colors hover:border-muted sm:px-6 [&::-webkit-details-marker]:hidden`}
+        >
+          <span>
+            <span className="block font-semibold">Advanced settings</span>
+            <span className="mt-0.5 block text-sm text-muted">
+              Target allocation, account types, transfers, idle cash and time
+              zone.
+            </span>
+          </span>
+          <TbChevronDown
+            aria-hidden
+            className="shrink-0 text-lg text-muted transition-transform group-open:rotate-180 motion-reduce:transition-none"
+          />
+        </summary>
 
-      <SettingsSection
-        id="options"
-        title="Report options"
-        description="When idle cash is flagged, and the time zone that defines each month."
-      >
-        <OptionsForm
-          days={resolved.uninvestedCashDays}
-          thresholdCents={resolved.uninvestedCashThresholdCents}
-          timeZone={resolved.timeZone}
-        />
-      </SettingsSection>
+        <div className="mt-6 space-y-6">
+          <SettingsSection
+            id="allocation"
+            title="Target allocation"
+            description="Adds target and weight-versus-target columns to Holdings. Useful when contributions are split across several funds."
+          >
+            <AllocationForm
+              targets={{
+                allocation: settings.allocation,
+                scopeAccountIds: settings.scopeAccountIds,
+              }}
+              accounts={labelled.map((a) => ({ id: a.id, label: a.display }))}
+            />
+          </SettingsSection>
+
+          <SettingsSection
+            id="accounts"
+            title="Account types"
+            description="Types come from the brokerage when available. A TFSA, RRSP or FHSA tag includes the account in room tracking."
+          >
+            <AccountTypesForm
+              accounts={labelled.map((a) => ({
+                id: a.id,
+                label: a.display,
+                institution: a.institution,
+                brokerageType: a.label,
+                tag: settings.accountTypes?.[a.id],
+              }))}
+            />
+          </SettingsSection>
+
+          {transfers.length > 0 && (
+            <SettingsSection
+              id="transfers"
+              title="Transfers into registered accounts"
+              description="Transfers from another registered account do not use new room, so they are not counted as contributions. A transfer from a non-registered account is a contribution and can be marked here."
+            >
+              <TransfersForm transfers={transfers} />
+            </SettingsSection>
+          )}
+
+          <SettingsSection
+            id="options"
+            title="Report options"
+            description="When idle cash is flagged, and the time zone that defines each month."
+          >
+            <OptionsForm
+              days={resolved.uninvestedCashDays}
+              thresholdCents={resolved.uninvestedCashThresholdCents}
+              timeZone={resolved.timeZone}
+            />
+          </SettingsSection>
+        </div>
+      </details>
     </div>
   );
+}
+
+async function Access() {
+  const userId = await requireUserId();
+  return <AccessSection email={await verifiedEmail(userId)} />;
 }
 
 function SettingsLoading() {
@@ -167,13 +204,9 @@ export default function SettingsPage() {
       <Suspense fallback={<SettingsLoading />}>
         <SettingsContent />
       </Suspense>
-      <SettingsSection
-        id="access"
-        title="Access"
-        description="This browser session and Vaultfolio’s access to SnapTrade."
-      >
-        <AccessActions />
-      </SettingsSection>
+      <Suspense fallback={<AccessSection email={null} />}>
+        <Access />
+      </Suspense>
     </div>
   );
 }
