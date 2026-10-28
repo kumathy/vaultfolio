@@ -11,6 +11,19 @@ import { PairForm } from "./pair-form";
 
 export const metadata: Metadata = { title: "Connect Obsidian" };
 
+// Signed-in users return to the app, everyone else to the landing page.
+function HomeLogo({ href }: { href: "/" | "/accounts" }) {
+  return (
+    <Link
+      href={href}
+      aria-label="Vaultfolio home"
+      className="mb-6 inline-block rounded-xl"
+    >
+      <LogoMark className="h-11 w-11" />
+    </Link>
+  );
+}
+
 function BackLink({ href }: { href: "/" | "/settings#obsidian" }) {
   return (
     <Link
@@ -35,10 +48,14 @@ async function PairContent({
   searchParams: PageProps<"/pair">["searchParams"];
 }) {
   const { challenge } = await searchParams;
+  const signedIn = (await currentUserId()) !== null;
+  const logo = <HomeLogo href={signedIn ? "/accounts" : "/"} />;
+  const back = <BackLink href={signedIn ? "/settings#obsidian" : "/"} />;
 
   if (!isChallenge(challenge)) {
     return (
       <>
+        {logo}
         <h1 className="text-2xl font-semibold tracking-tight">
           Start from Obsidian
         </h1>
@@ -46,14 +63,14 @@ async function PairContent({
           Pairing begins in the Vaultfolio plugin: Settings → Vaultfolio →
           Connect. That opens this page with a one-time link.
         </p>
-        <BackLink href="/" />
+        {back}
       </>
     );
   }
 
-  const signedIn = (await currentUserId()) !== null;
   return (
     <>
+      {logo}
       <h1 className="text-2xl font-semibold tracking-tight">
         Connect an Obsidian vault
       </h1>
@@ -78,7 +95,7 @@ async function PairContent({
           />
         )}
       </div>
-      <BackLink href={signedIn ? "/settings#obsidian" : "/"} />
+      {back}
     </>
   );
 }
@@ -87,15 +104,13 @@ export default function PairPage({ searchParams }: PageProps<"/pair">) {
   return (
     <main className={`${container} flex justify-center py-16 sm:py-24`}>
       <div className={`${card} w-full max-w-lg p-6 sm:p-8`}>
-        <Link
-          href="/"
-          aria-label="Vaultfolio home"
-          className="mb-6 inline-block rounded-xl"
-        >
-          <LogoMark className="h-11 w-11" />
-        </Link>
         <Suspense
-          fallback={<div className="h-48 animate-pulse rounded bg-surface" />}
+          fallback={
+            <>
+              <HomeLogo href="/" />
+              <div className="h-48 animate-pulse rounded bg-surface" />
+            </>
+          }
         >
           <PairContent searchParams={searchParams} />
         </Suspense>
