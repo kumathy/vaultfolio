@@ -209,6 +209,72 @@ body {
   }
 }
 
+/* Phone menu (app-shell.tsx): a popover drawer that slides in from the left
+   over a dimming scrim. Below lg, the closed drawer stays rendered, off-screen
+   and `visibility: hidden` (so it cannot be seen, clicked, focused or read),
+   instead of the popover default `display: none`, so opening and closing are
+   plain transitions in every browser.
+
+   The scrim is an element of its own rather than the popover's ::backdrop,
+   which some browsers remove the moment a popover closes: it fades out on
+   close, and an interrupted fade reverses instead of restarting. While the
+   menu is open it catches taps, which close the menu without reaching the
+   page beneath. */
+.menu-drawer::backdrop {
+  background: transparent;
+}
+
+.menu-scrim {
+  display: none;
+}
+
+@media (width < 64rem) {
+  .menu-drawer {
+    display: flex;
+    z-index: 50;
+  }
+
+  .menu-drawer:not(:popover-open) {
+    visibility: hidden;
+    transform: translateX(-100%);
+  }
+
+  .menu-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgb(0 0 0 / 0.5);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .menu-drawer:popover-open + .menu-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Each state's transition applies when entering it: opening eases out,
+   closing eases in. Visibility switches at the end of the slide-out. */
+@media (width < 64rem) and (prefers-reduced-motion: no-preference) {
+  .menu-drawer {
+    transition:
+      transform 120ms ease-in,
+      visibility 120ms;
+  }
+
+  .menu-scrim {
+    transition: opacity 120ms ease-in;
+  }
+
+  .menu-drawer:popover-open,
+  .menu-drawer:popover-open + .menu-scrim {
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+}
+
 /* Faint dot grid, plus a brighter violet copy revealed in a circle around the
    pointer (dot-backdrop.tsx). --dot-fade is the mask shared by both layers. */
 .dot-backdrop {

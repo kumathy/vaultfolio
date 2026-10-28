@@ -39,74 +39,78 @@ function SidebarGroup({
 // Escape, outside-tap dismissal and stacking without extra code.
 function Sidebar() {
   return (
-    <aside
-      id={MENU_ID}
-      popover="auto"
-      aria-label="Menu"
-      className="fixed inset-y-0 right-auto left-0 m-0 h-dvh w-72 max-w-[85vw] flex-col border-0 border-r border-border bg-surface p-0 text-foreground backdrop:bg-black/50 [&:popover-open]:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0"
-    >
-      <CloseMenuOnLinkClick menuId={MENU_ID} />
-      <div className="flex h-16 items-center justify-between border-b border-border px-5">
-        <Logo href="/accounts" />
-        <button
-          type="button"
-          popoverTarget={MENU_ID}
-          popoverTargetAction="hide"
-          aria-label="Close menu"
-          className="-mr-2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-card hover:text-foreground lg:hidden"
-        >
-          <TbX aria-hidden className="text-lg" />
-        </button>
-      </div>
+    <>
+      <aside
+        id={MENU_ID}
+        popover="auto"
+        aria-label="Menu"
+        className="menu-drawer fixed inset-y-0 right-auto left-0 m-0 h-dvh w-72 max-w-[85vw] flex-col border-0 border-r border-border bg-surface p-0 text-foreground [&:popover-open]:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0"
+      >
+        <CloseMenuOnLinkClick menuId={MENU_ID} />
+        <div className="flex h-16 items-center justify-between border-b border-border px-5">
+          <Logo href="/accounts" />
+          <button
+            type="button"
+            popoverTarget={MENU_ID}
+            popoverTargetAction="hide"
+            aria-label="Close menu"
+            className="-mr-2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-card hover:text-foreground lg:hidden"
+          >
+            <TbX aria-hidden className="text-lg" />
+          </button>
+        </div>
 
-      <nav aria-label="App" className="flex-1 space-y-7 px-3 py-6 text-sm">
-        <SidebarGroup title="Workspace">
-          <Suspense fallback={<SidebarLinksView pathname={null} />}>
-            <SidebarLinks />
-          </Suspense>
-        </SidebarGroup>
-        {/* One line per service, like the links above, each ending in a
+        <nav aria-label="App" className="flex-1 space-y-7 px-3 py-6 text-sm">
+          <SidebarGroup title="Workspace">
+            <Suspense fallback={<SidebarLinksView pathname={null} />}>
+              <SidebarLinks />
+            </Suspense>
+          </SidebarGroup>
+          {/* One line per service, like the links above, each ending in a
             trailing indicator: ↗ for SnapTrade, sync status for Obsidian. */}
-        <SidebarGroup title="Connections">
-          <ul className="space-y-0.5">
-            <li>
-              <a
-                href={SNAPTRADE_DASHBOARD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={connectionRow}
-              >
-                <TbBuildingBank aria-hidden className="shrink-0 text-lg" />
-                SnapTrade
-                <TbArrowUpRight aria-hidden className="ml-auto shrink-0" />
-                <span className="sr-only">
-                  (manage brokerages, opens in a new tab)
-                </span>
-              </a>
-            </li>
-            <li>
-              <Link href="/settings#obsidian" className={connectionRow}>
-                {/* Obsidian's logomark, unmodified, from obsidian.md/brand. */}
-                <Image
-                  src="/brand/obsidian-logo.svg"
-                  alt=""
-                  width={18}
-                  height={18}
-                  unoptimized
-                  className="shrink-0"
-                />
-                Obsidian
-                <span className="ml-auto text-xs">
-                  <Suspense fallback={null}>
-                    <ObsidianSidebarStatus />
-                  </Suspense>
-                </span>
-              </Link>
-            </li>
-          </ul>
-        </SidebarGroup>
-      </nav>
-    </aside>
+          <SidebarGroup title="Connections">
+            <ul className="space-y-0.5">
+              <li>
+                <a
+                  href={SNAPTRADE_DASHBOARD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={connectionRow}
+                >
+                  <TbBuildingBank aria-hidden className="shrink-0 text-lg" />
+                  SnapTrade
+                  <TbArrowUpRight aria-hidden className="ml-auto shrink-0" />
+                  <span className="sr-only">
+                    (manage brokerages, opens in a new tab)
+                  </span>
+                </a>
+              </li>
+              <li>
+                <Link href="/settings#obsidian" className={connectionRow}>
+                  {/* Obsidian's logomark, unmodified, from obsidian.md/brand. */}
+                  <Image
+                    src="/brand/obsidian-logo.svg"
+                    alt=""
+                    width={18}
+                    height={18}
+                    unoptimized
+                    className="shrink-0"
+                  />
+                  Obsidian
+                  <span className="ml-auto text-xs">
+                    <Suspense fallback={null}>
+                      <ObsidianSidebarStatus />
+                    </Suspense>
+                  </span>
+                </Link>
+              </li>
+            </ul>
+          </SidebarGroup>
+        </nav>
+      </aside>
+      {/* Dims the page behind the open phone menu (globals.css). */}
+      <div aria-hidden className="menu-scrim" />
+    </>
   );
 }
 
