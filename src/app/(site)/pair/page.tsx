@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
-import { TbCheck } from "react-icons/tb";
+import { TbArrowLeft, TbCheck } from "react-icons/tb";
 import { LogoMark } from "@/components/logo";
 import { SignInLink } from "@/components/site/sign-in-link";
 import { card, container } from "@/components/ui";
@@ -9,6 +10,18 @@ import { currentUserId } from "@/lib/auth/session";
 import { PairForm } from "./pair-form";
 
 export const metadata: Metadata = { title: "Connect Obsidian" };
+
+function BackLink({ href }: { href: "/" | "/settings#obsidian" }) {
+  return (
+    <Link
+      href={href}
+      className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+    >
+      <TbArrowLeft aria-hidden />
+      Back to Vaultfolio
+    </Link>
+  );
+}
 
 const access = [
   "Reads the monthly reports only",
@@ -33,6 +46,7 @@ async function PairContent({
           Pairing begins in the Vaultfolio plugin: Settings → Vaultfolio →
           Connect. That opens this page with a one-time link.
         </p>
+        <BackLink href="/" />
       </>
     );
   }
@@ -64,6 +78,7 @@ async function PairContent({
           />
         )}
       </div>
+      <BackLink href={signedIn ? "/settings#obsidian" : "/"} />
     </>
   );
 }
@@ -72,7 +87,13 @@ export default function PairPage({ searchParams }: PageProps<"/pair">) {
   return (
     <main className={`${container} flex justify-center py-16 sm:py-24`}>
       <div className={`${card} w-full max-w-lg p-6 sm:p-8`}>
-        <LogoMark className="mb-6 h-11 w-11" />
+        <Link
+          href="/"
+          aria-label="Vaultfolio home"
+          className="mb-6 inline-block rounded-xl"
+        >
+          <LogoMark className="h-11 w-11" />
+        </Link>
         <Suspense
           fallback={<div className="h-48 animate-pulse rounded bg-surface" />}
         >
