@@ -113,9 +113,9 @@ export function OverviewPanel({
   );
 }
 
-const headCell = "px-4 py-3 text-left text-xs font-medium text-muted sm:px-5";
-const bodyCell =
-  "border-t border-border px-4 py-3.5 align-middle sm:px-5 sm:py-4";
+// Side padding matches the overview panel, so values line up down the page.
+const headCell = "px-5 py-3 text-left text-xs font-medium text-muted";
+const bodyCell = "border-t border-border px-5 py-3.5 align-middle sm:py-4";
 
 function TypePill({ account }: { account: AccountView }) {
   return (
@@ -141,7 +141,7 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
           aria-label={group.institution}
           className={`${card} overflow-hidden`}
         >
-          <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 sm:px-5">
+          <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-5 py-3">
             <h3 className="flex items-center gap-2 font-medium">
               <TbFolder aria-hidden className="text-lg text-accent" />
               {group.institution}
@@ -174,9 +174,10 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                 >
                   Holdings synced
                 </th>
+                {/* Wide enough for "$123,456.78 CAD" with room to spare. */}
                 <th
                   scope="col"
-                  className={`${headCell} w-36 text-right sm:w-48`}
+                  className={`${headCell} w-44 text-right sm:w-48`}
                 >
                   Value
                 </th>
