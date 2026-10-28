@@ -6,18 +6,19 @@ import { resolveSettings } from "@/lib/reports/types";
 
 interface Status {
   connected: boolean;
-  label: string;
-  detail: string;
+  text: string;
 }
 
 // "today" and "yesterday" read faster in the interface; reports keep ISO dates.
 function syncedLabel(date: Date, now: Date, timeZone: string): string {
   const day = localDate(date, timeZone);
-  if (day === localDate(now, timeZone)) return "Last synced today";
+  if (day === localDate(now, timeZone)) return "synced today";
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  if (day === localDate(yesterday, timeZone)) return "Last synced yesterday";
-  return `Last synced ${day}`;
+  if (day === localDate(yesterday, timeZone)) return "synced yesterday";
+  return `synced ${day}`;
 }
+
+const capitalize = (text: string) => text[0].toUpperCase() + text.slice(1);
 
 async function loadStatus(): Promise<Status | null> {
   const userId = await currentUserId();
@@ -26,45 +27,34 @@ async function loadStatus(): Promise<Status | null> {
     listPluginTokens(userId),
     loadSettings(userId),
   ]);
-  if (vaults.length === 0) {
-    return {
-      connected: false,
-      label: "Not connected",
-      detail: "Download and connect",
-    };
-  }
+  if (vaults.length === 0) return { connected: false, text: "Not connected" };
   const lastSync = vaults
     .map((v) => v.lastUsedAt)
     .filter((d): d is Date => d !== null)
     .sort((a, b) => b.getTime() - a.getTime())[0];
+  const synced = lastSync
+    ? syncedLabel(lastSync, new Date(), resolveSettings(settings).timeZone)
+    : "not synced yet";
   return {
     connected: true,
-    label:
-      vaults.length === 1 ? "Connected" : `${vaults.length} vaults connected`,
-    detail: lastSync
-      ? syncedLabel(lastSync, new Date(), resolveSettings(settings).timeZone)
-      : "Not synced yet",
+    text:
+      vaults.length === 1
+        ? capitalize(synced)
+        : `${vaults.length} vaults · ${synced}`,
   };
 }
 
-const Dot = ({ connected }: { connected: boolean }) => (
-  <span
-    aria-hidden
-    className={`h-1.5 w-1.5 shrink-0 rounded-full ${connected ? "bg-accent" : "bg-muted"}`}
-  />
-);
-
-// Two lines inside the sidebar's Obsidian card.
+// One status line under Obsidian in the sidebar's Connections group.
 export async function ObsidianSidebarStatus() {
   const status = await loadStatus();
   if (!status) return null;
   return (
-    <>
-      <span className="mt-2 flex items-center gap-2 text-foreground">
-        <Dot connected={status.connected} />
-        {status.label}
-      </span>
-      <span className="mt-0.5 block pl-3.5 text-muted">{status.detail}</span>
-    </>
+    <span className="flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.connected ? "bg-accent" : "border border-muted"}`}
+      />
+      {status.text}
+    </span>
   );
 }

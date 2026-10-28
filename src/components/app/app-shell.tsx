@@ -1,10 +1,5 @@
-import {
-  TbArrowUpRight,
-  TbBuildingBank,
-  TbMenu2,
-  TbNotebook,
-  TbX,
-} from "react-icons/tb";
+import { TbArrowUpRight, TbBuildingBank, TbMenu2, TbX } from "react-icons/tb";
+import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ObsidianSidebarStatus } from "./obsidian-status";
@@ -19,6 +14,9 @@ import {
 } from "./nav";
 
 const MENU_ID = "app-menu";
+
+const connectionRow =
+  "flex items-start gap-2.5 rounded-lg px-3 py-2 text-muted transition-colors hover:bg-card hover:text-foreground";
 
 function SidebarGroup({
   title,
@@ -66,33 +64,52 @@ function Sidebar() {
             <SidebarLinks />
           </Suspense>
         </SidebarGroup>
-        <SidebarGroup title="SnapTrade">
-          <a
-            href={SNAPTRADE_DASHBOARD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-muted transition-colors hover:bg-card hover:text-foreground"
-          >
-            <TbBuildingBank aria-hidden className="text-lg" />
-            Manage connections
-            <TbArrowUpRight aria-hidden className="ml-auto" />
-          </a>
+        <SidebarGroup title="Connections">
+          <ul className="space-y-0.5">
+            <li>
+              <a
+                href={SNAPTRADE_DASHBOARD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={connectionRow}
+              >
+                <TbBuildingBank
+                  aria-hidden
+                  className="mt-0.5 shrink-0 text-lg"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block">SnapTrade</span>
+                  <span className="block text-xs">Manage brokerages</span>
+                </span>
+                <TbArrowUpRight aria-hidden className="mt-1 shrink-0" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            </li>
+            <li>
+              <Link href="/settings#obsidian" className={connectionRow}>
+                {/* Obsidian's app icon, exported unmodified from obsidian.md. */}
+                <Image
+                  src="/brand/obsidian-icon.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                  unoptimized
+                  className="mt-0.5 shrink-0"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block">Obsidian</span>
+                  <span className="block text-xs">
+                    {/* Reserves the line so the row does not resize. */}
+                    <Suspense fallback={<span className="block h-4" />}>
+                      <ObsidianSidebarStatus />
+                    </Suspense>
+                  </span>
+                </span>
+              </Link>
+            </li>
+          </ul>
         </SidebarGroup>
       </nav>
-
-      <Link
-        href="/settings#obsidian"
-        className="m-3 block rounded-xl border border-accent/25 bg-accent-soft p-4 text-sm transition-colors hover:border-accent/50"
-      >
-        <span className="flex items-center gap-2 font-medium text-accent">
-          <TbNotebook aria-hidden className="text-lg" />
-          Obsidian
-        </span>
-        {/* Reserves the two status lines so the card does not resize. */}
-        <Suspense fallback={<span className="mt-2 block h-10" aria-hidden />}>
-          <ObsidianSidebarStatus />
-        </Suspense>
-      </Link>
     </aside>
   );
 }
