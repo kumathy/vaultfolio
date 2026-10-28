@@ -1,11 +1,7 @@
 import { TbArrowUpRight, TbBuildingBank, TbNotebook } from "react-icons/tb";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { listPluginTokens } from "@/db/plugin";
-import { loadSettings } from "@/db/settings";
-import { currentUserId } from "@/lib/auth/session";
-import { localDate } from "@/lib/reports/period";
-import { resolveSettings } from "@/lib/reports/types";
+import { ObsidianSidebarStatus } from "./obsidian-status";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Suspense } from "react";
 import {
@@ -30,24 +26,6 @@ function SidebarGroup({
       {children}
     </div>
   );
-}
-
-async function ObsidianStatus() {
-  const userId = await currentUserId();
-  if (!userId) return "Monthly reports sync into a vault folder.";
-  const [vaults, settings] = await Promise.all([
-    listPluginTokens(userId),
-    loadSettings(userId),
-  ]);
-  if (vaults.length === 0) return "Not connected. Set up the plugin.";
-  const lastSync = vaults
-    .map((v) => v.lastUsedAt)
-    .filter((d): d is Date => d !== null)
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  const count = `${vaults.length} vault${vaults.length === 1 ? "" : "s"} connected`;
-  return lastSync
-    ? `${count} · synced ${localDate(lastSync, resolveSettings(settings).timeZone)}`
-    : `${count} · not synced yet`;
 }
 
 function Sidebar() {
@@ -81,15 +59,14 @@ function Sidebar() {
         href="/settings#obsidian"
         className="m-3 block rounded-xl border border-accent/25 bg-accent-soft p-4 text-sm transition-colors hover:border-accent/50"
       >
-        <p className="flex items-center gap-2 font-medium text-accent">
+        <span className="flex items-center gap-2 font-medium text-accent">
           <TbNotebook aria-hidden className="text-lg" />
-          Obsidian plugin
-        </p>
-        <p className="mt-1.5 leading-relaxed text-muted">
-          <Suspense fallback="Monthly reports sync into a vault folder.">
-            <ObsidianStatus />
-          </Suspense>
-        </p>
+          Obsidian
+        </span>
+        {/* Reserves the two status lines so the card does not resize. */}
+        <Suspense fallback={<span className="mt-2 block h-10" aria-hidden />}>
+          <ObsidianSidebarStatus />
+        </Suspense>
       </Link>
     </aside>
   );
