@@ -52,7 +52,7 @@ export function Toast({
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 sm:justify-end sm:p-6"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 sm:p-6"
     >
       {ready && open && (
         <div className="pointer-events-auto flex w-full max-w-sm animate-toast-in items-start gap-3 rounded-2xl border border-border bg-card py-3 pr-3 pl-4 text-sm motion-reduce:animate-none">
