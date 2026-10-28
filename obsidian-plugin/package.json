@@ -2,6 +2,7 @@
   "name": "vaultfolio-obsidian",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Obsidian plugin for Vaultfolio: syncs monthly investing reports into a vault.",
   "main": "main.js",
   "scripts": {

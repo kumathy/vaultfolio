@@ -1,43 +1,59 @@
-# Vaultfolio
+<p align="center">
+  <img src="src/app/icon.svg" width="88" alt="Vaultfolio logo">
+</p>
 
-Vaultfolio turns SnapTrade brokerage data into structured Markdown investing reports, viewable in the browser and synced into an Obsidian vault. It is a SnapTrade OAuth app: SnapTrade Personal users grant read-only access to their accounts.
+<h1 align="center">Vaultfolio</h1>
 
-Current status: SnapTrade sign-in, account overview, sign-out and disconnect (Phase 1). A full reviewer guide covering architecture, security decisions and tradeoffs follows in Phase 5.
+<p align="center">
+  <strong>Your investments, one Markdown note a month.</strong><br>
+  Brokerage data from <a href="https://snaptrade.com">SnapTrade</a>, turned into a clear monthly report in Markdown. Read it in the browser or sync it into <a href="https://obsidian.md">Obsidian</a>.
+</p>
 
-## Requirements
+![Vaultfolio landing page with an example report open in an Obsidian window](docs/images/landing.png)
 
-- Node.js 24 or later
-- A Neon Postgres database (a separate branch for local development)
-- A SnapTrade OAuth app with these redirect URIs registered exactly:
-  - `http://127.0.0.1:3000/oauth/snaptrade/callback`
-  - `https://<deployment>/oauth/snaptrade/callback`
+## What each report covers
 
-## Local setup
+- **This month:** deposits, purchases and distributions, plus progress toward a monthly contribution target.
+- **Growth:** total contributed against current value, in dollars.
+- **TFSA, RRSP and FHSA room:** contributions this year, room remaining, and a warning before going over.
+- **Distributions:** every payment over the past year, and an estimate for the next.
 
-1. Install dependencies: `npm install`
-2. Create `.env.local` from `.env.example` and set each value. `SESSION_SECRET` and `TOKEN_ENCRYPTION_KEY` are 32 random bytes each: `openssl rand -base64 32`.
-3. Apply the database migrations: `npm run db:migrate`
-4. Start the app: `npm run dev`, then open `http://127.0.0.1:3000`.
+Reports state facts and never recommend trades. Every setting is optional: a report is complete from the first sign-in, and settings only add detail.
 
-The app is served on `127.0.0.1`, not `localhost`. Cookies are host-specific, so a callback that arrives on a different host than the sign-in started from fails the state check.
+## Get started
 
-## Scripts
+1. Open [Vaultfolio](https://DEPLOYMENT.vercel.app) and choose **Sign in with SnapTrade**.
+2. Approve read-only access in SnapTrade. A SnapTrade Personal account with at least one connected brokerage is needed; every connected brokerage is included.
+3. Open **Reports**. Each month can be copied as Markdown, or a whole year downloaded as a zip.
 
-| Script                | Purpose                                            |
-| --------------------- | -------------------------------------------------- |
-| `npm run dev`         | Development server on 127.0.0.1:3000               |
-| `npm run build`       | Production build                                   |
-| `npm run check`       | Formatting check, lint, type check and tests       |
-| `npm test`            | Unit tests (Vitest)                                |
-| `npm run db:generate` | SQL migration from changes to `src/db/schema.ts`   |
-| `npm run db:migrate`  | Apply migrations to the database in `DATABASE_URL` |
+## Obsidian
 
-## Deployment (Vercel)
+1. Download the plugin from Vaultfolio and unzip it into the vault's `.obsidian/plugins/` folder.
+2. Enable **Vaultfolio** under Settings → Community plugins, then choose **Connect**.
+3. Reports appear in `Investing/` and update on startup or with **Vaultfolio: Sync now**.
 
-- Neon is added through the Vercel Marketplace, which sets `DATABASE_URL`.
-- The remaining variables from `.env.example` are set in Project Settings → Environment Variables, with values different from local development.
-- Migrations run manually against the production database (`npm run db:migrate` with the production `DATABASE_URL`), not during the build.
+Each report starts with frontmatter (`portfolio_value`, `tfsa_room_remaining` and more), ready for Dataview queries.
 
-## Known issues
+## Good to know
 
-- `npm audit` reports moderate advisories in `esbuild` through `drizzle-kit`. The advisory affects esbuild's development server, which drizzle-kit does not start, and drizzle-kit is a development-only tool that is not deployed.
+- **Read-only.** Vaultfolio cannot place trades, and brokerage passwords never reach it.
+- **Nothing stored.** Reports are built on request from live data. [SECURITY.md](SECURITY.md) covers how access is protected.
+- **No currency conversion.** Amounts in different currencies are kept separate rather than converted.
+- **One day behind.** SnapTrade syncs transactions once a day, so the latest day may not appear yet.
+
+## Run it locally
+
+Requires Node.js 24, a Postgres database (Neon) and a SnapTrade OAuth app with `http://127.0.0.1:3000/oauth/snaptrade/callback` registered.
+
+```bash
+npm install
+cp .env.example .env.local   # then fill in each value
+npm run db:migrate
+npm run dev                  # http://127.0.0.1:3000
+```
+
+Use `127.0.0.1`, not `localhost`, so the sign-in cookie matches the callback. `npm run check` runs formatting, lint, type checking and tests. Setting `VAULTFOLIO_MOCK_DATA=full` in `.env.local` replaces SnapTrade data with generated accounts for testing (also `us`, `sandbox` or `empty`); production builds ignore it.
+
+---
+
+<p align="center"><sub>Open source under the <a href="LICENSE">MIT License</a>. For information only. Not financial advice.</sub></p>

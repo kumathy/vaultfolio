@@ -6,7 +6,6 @@ import {
   TbArrowRight,
   TbBuildingBank,
   TbCalendarCheck,
-  TbCheck,
   TbCoins,
   TbEyeCheck,
   TbFileAnalytics,
@@ -186,30 +185,16 @@ function IconBadge({ Icon }: { Icon: IconType }) {
 // app), so the actions are always the signed-out ones.
 function HeroButtons() {
   return (
-    <>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-        <SignInLink />
-        <a href="#how-it-works" className={`group ${large(buttonGlass)}`}>
-          How it works
-          <TbArrowDown
-            aria-hidden
-            className="text-muted transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none"
-          />
-        </a>
-      </div>
-      <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted lg:justify-start">
-        {[
-          "Read-only access",
-          "Revocable at any time",
-          "No brokerage credentials shared",
-        ].map((point) => (
-          <li key={point} className="inline-flex items-center gap-1.5">
-            <TbCheck aria-hidden className="text-foreground" />
-            {point}
-          </li>
-        ))}
-      </ul>
-    </>
+    <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+      <SignInLink />
+      <a href="#how-it-works" className={`group ${large(buttonGlass)}`}>
+        How it works
+        <TbArrowDown
+          aria-hidden
+          className="text-muted transition-transform group-hover:translate-y-0.5 motion-reduce:transition-none"
+        />
+      </a>
+    </div>
   );
 }
 
@@ -258,7 +243,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
                 Vaultfolio
               </span>
             </p>
-            <h1 className="animate-rise motion-reduce:animate-none [animation-delay:80ms] text-4xl font-semibold tracking-tight text-balance sm:text-5xl xl:text-6xl">
+            <h1 className="animate-rise motion-reduce:animate-none [animation-delay:80ms] text-4xl font-semibold tracking-tight text-balance sm:text-5xl xl:text-[3.5rem]">
               Monthly investing reports, in{" "}
               {/* Obsidian's app icon, exported unmodified from obsidian.md. */}
               <span className="whitespace-nowrap">
@@ -269,7 +254,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
                   height={512}
                   unoptimized
                   loading="eager"
-                  className="mr-[0.18em] inline-block size-[0.95em] rounded-[19.5%] align-[-0.14em] ring-1 ring-white/10"
+                  className="mr-[0.28em] ml-[0.1em] inline-block size-[0.95em] rounded-[19.5%] align-[-0.14em] ring-1 ring-white/10"
                 />
                 <span className="text-accent">Obsidian</span>.
               </span>
@@ -277,8 +262,8 @@ export default function Home({ searchParams }: PageProps<"/">) {
             <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:160ms] text-lg leading-relaxed text-muted lg:mx-0">
               Brokerage data from{" "}
               <ExternalLink href={SNAPTRADE_SITE_URL}>SnapTrade</ExternalLink>,
-              turned into a factual report on contributions, registered room and
-              distributions. Read it in the browser or in{" "}
+              turned into a Markdown report on contributions, registered room
+              and distributions. Read it in the browser or in{" "}
               <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
             </p>
 
@@ -290,8 +275,8 @@ export default function Home({ searchParams }: PageProps<"/">) {
             </div>
 
             <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:320ms] text-sm text-muted lg:mx-0">
-              Requires a SnapTrade Personal account with a connected brokerage,
-              managed in the <SnapTradeLink />.
+              Read-only access through a SnapTrade Personal account, with
+              brokerages connected in the <SnapTradeLink />.
             </p>
           </div>
 
