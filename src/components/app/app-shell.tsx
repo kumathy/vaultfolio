@@ -1,6 +1,6 @@
 import { TbArrowUpRight, TbBuildingBank, TbMenu2, TbX } from "react-icons/tb";
-import Image from "next/image";
 import Link from "next/link";
+import { SiObsidian } from "react-icons/si";
 import { Logo } from "@/components/logo";
 import { ObsidianSidebarStatus } from "./obsidian-status";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
@@ -87,14 +87,11 @@ function Sidebar() {
             </li>
             <li>
               <Link href="/settings#obsidian" className={connectionRow}>
-                {/* Obsidian's app icon, exported unmodified from obsidian.md. */}
-                <Image
-                  src="/brand/obsidian-icon.svg"
-                  alt=""
-                  width={18}
-                  height={18}
-                  unoptimized
-                  className="mt-0.5 shrink-0"
+                {/* Obsidian's logomark in one colour, white, as its brand
+                    guidelines allow for single-colour use. */}
+                <SiObsidian
+                  aria-hidden
+                  className="mt-0.5 shrink-0 text-lg text-foreground"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block">Obsidian</span>
