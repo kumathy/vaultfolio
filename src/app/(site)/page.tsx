@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import type { IconType } from "react-icons";
 import {
@@ -28,14 +27,7 @@ import { ObsidianWindow } from "@/components/site/obsidian-window";
 import { SignInLink } from "@/components/site/sign-in-link";
 import { ExternalLink } from "@/components/external-link";
 import { SNAPTRADE_SITE_URL, SnapTradeLink } from "@/components/snaptrade";
-import {
-  buttonPrimary,
-  buttonGlass,
-  card,
-  container,
-  large,
-} from "@/components/ui";
-import { currentUserId } from "@/lib/auth/session";
+import { buttonGlass, card, container, large } from "@/components/ui";
 import {
   buildExampleReport,
   EXAMPLE_PERIOD,
@@ -190,20 +182,13 @@ function IconBadge({ Icon }: { Icon: IconType }) {
   );
 }
 
-// Rendered in the signed-out form while the session is checked, so the hero
-// keeps the same layout from the first paint.
-function HeroButtons({ signedIn }: { signedIn: boolean }) {
+// Signed-in visitors never reach this page (src/proxy.ts sends them to the
+// app), so the actions are always the signed-out ones.
+function HeroButtons() {
   return (
     <>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-        {signedIn ? (
-          <Link href="/accounts" className={large(buttonPrimary)}>
-            Open accounts
-            <TbArrowRight aria-hidden />
-          </Link>
-        ) : (
-          <SignInLink />
-        )}
+        <SignInLink />
         <a href="#how-it-works" className={`group ${large(buttonGlass)}`}>
           How it works
           <TbArrowDown
@@ -212,25 +197,24 @@ function HeroButtons({ signedIn }: { signedIn: boolean }) {
           />
         </a>
       </div>
-      {!signedIn && (
-        <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted lg:justify-start">
-          {[
-            "Read-only access",
-            "Revocable at any time",
-            "No brokerage credentials shared",
-          ].map((point) => (
-            <li key={point} className="inline-flex items-center gap-1.5">
-              <TbCheck aria-hidden className="text-foreground" />
-              {point}
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted lg:justify-start">
+        {[
+          "Read-only access",
+          "Revocable at any time",
+          "No brokerage credentials shared",
+        ].map((point) => (
+          <li key={point} className="inline-flex items-center gap-1.5">
+            <TbCheck aria-hidden className="text-foreground" />
+            {point}
+          </li>
+        ))}
+      </ul>
     </>
   );
 }
 
-async function HeroActions({
+// Sign-in errors and notices arrive as ?error= or ?notice= after a redirect.
+async function HeroMessage({
   searchParams,
 }: {
   searchParams: PageProps<"/">["searchParams"];
@@ -240,33 +224,20 @@ async function HeroActions({
     (value): value is string => typeof value === "string" && value in messages,
   );
   const message = key ? messages[key] : null;
-  const signedIn = (await currentUserId()) !== null;
+  if (!message) return null;
 
   return (
     <>
-      {message && <ClearSearchParams keys="error,notice" />}
-      {message?.display === "toast" && (
+      <ClearSearchParams keys="error,notice" />
+      {message.display === "toast" && (
         <Toast tone={message.tone} message={message.text} />
       )}
-      {message?.display === "inline" && (
+      {message.display === "inline" && (
         <div className="mx-auto mt-8 max-w-xl text-left lg:mx-0">
           <Notice tone={message.tone}>{message.text}</Notice>
         </div>
       )}
-      <HeroButtons signedIn={signedIn} />
     </>
-  );
-}
-
-async function ClosingAction() {
-  const signedIn = (await currentUserId()) !== null;
-  return signedIn ? (
-    <Link href="/accounts" className={large(buttonPrimary)}>
-      Open accounts
-      <TbArrowRight aria-hidden />
-    </Link>
-  ) : (
-    <SignInLink />
   );
 }
 
@@ -311,9 +282,10 @@ export default function Home({ searchParams }: PageProps<"/">) {
             </p>
 
             <div className="animate-rise motion-reduce:animate-none [animation-delay:240ms]">
-              <Suspense fallback={<HeroButtons signedIn={false} />}>
-                <HeroActions searchParams={searchParams} />
+              <Suspense fallback={null}>
+                <HeroMessage searchParams={searchParams} />
               </Suspense>
+              <HeroButtons />
             </div>
 
             <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:320ms] text-sm text-muted lg:mx-0">
@@ -434,9 +406,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
                 required.
               </p>
             </div>
-            <Suspense fallback={<SignInLink />}>
-              <ClosingAction />
-            </Suspense>
+            <SignInLink />
           </div>
         </section>
       </div>

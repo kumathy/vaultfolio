@@ -8,8 +8,12 @@ export async function proxy(request: NextRequest) {
   const token = request.cookies.get(sessionCookieName())?.value;
   // Checked against the database, not just the cookie's presence: an expired
   // cookie would otherwise loop between / and the app's own sign-in redirect.
-  if (token && (await findSessionUserId(token))) {
-    return NextResponse.redirect(new URL("/accounts", request.url));
+  try {
+    if (token && (await findSessionUserId(token))) {
+      return NextResponse.redirect(new URL("/accounts", request.url));
+    }
+  } catch {
+    // Fails open: the landing page is shown rather than an error.
   }
   return NextResponse.next();
 }
