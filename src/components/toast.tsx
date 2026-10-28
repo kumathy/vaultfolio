@@ -6,6 +6,8 @@ import { TbX } from "react-icons/tb";
 import { tones, type Tone } from "./tones";
 
 const DURATION_MS = 5000;
+// Matches --animate-toast-out in globals.css.
+const EXIT_MS = 200;
 
 export type ToastTone = Tone;
 
@@ -24,7 +26,10 @@ export function Toast({
     () => true,
     () => false,
   );
-  const [open, setOpen] = useState(true);
+  // "leaving" plays the exit animation before the toast is removed.
+  const [phase, setPhase] = useState<"open" | "leaving" | "closed">("open");
+  const close = () =>
+    setPhase((current) => (current === "open" ? "leaving" : current));
   // Screen readers announce changes to a live region, not the content it
   // appears with, so the message is added a frame after the region.
   const [ready, setReady] = useState(false);
@@ -37,12 +42,20 @@ export function Toast({
     const frame = window.requestAnimationFrame(() => setReady(true));
     const timer = persistent
       ? undefined
-      : window.setTimeout(() => setOpen(false), DURATION_MS);
+      : window.setTimeout(close, DURATION_MS);
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timer);
     };
   }, [persistent]);
+
+  // A timer rather than animationend, which never fires when reduced motion
+  // turns the animation off.
+  useEffect(() => {
+    if (phase !== "leaving") return;
+    const timer = window.setTimeout(() => setPhase("closed"), EXIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
 
   const { Icon, icon, label } = tones[tone];
   if (!mounted) return null;
@@ -56,8 +69,10 @@ export function Toast({
       aria-live={persistent ? "assertive" : "polite"}
       className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 sm:p-6"
     >
-      {ready && open && (
-        <div className="pointer-events-auto flex w-full max-w-sm animate-toast-in items-start gap-3 rounded-2xl border border-border bg-card py-3 pr-3 pl-4 text-sm motion-reduce:animate-none">
+      {ready && phase !== "closed" && (
+        <div
+          className={`pointer-events-auto flex w-full max-w-sm ${phase === "leaving" ? "animate-toast-out" : "animate-toast-in"} items-start gap-3 rounded-2xl border border-border bg-card py-3 pr-3 pl-4 text-sm motion-reduce:animate-none`}
+        >
           {Icon && (
             <Icon aria-hidden className={`mt-0.5 shrink-0 text-lg ${icon}`} />
           )}
@@ -67,7 +82,7 @@ export function Toast({
           </p>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={close}
             aria-label="Dismiss notification"
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
