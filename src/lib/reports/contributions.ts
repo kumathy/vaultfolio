@@ -161,11 +161,5 @@ export function renderContributions(
         ...result.rows.map(format),
       ]),
     },
-    {
-      kind: "paragraph",
-      text: [
-        "Net growth is current value minus total contributed. Percentage returns are not shown, since recurring contributions make them misleading.",
-      ],
-    },
   ];
 }

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`example report (XEQT TFSA, plan and room configured) > matches the approved Markdown 1`] = `
+exports[`example report (XEQT TFSA, targets and room configured) > matches the approved Markdown 1`] = `
 "---
 type: investing-report
 period: 2026-10
@@ -9,7 +9,7 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
-plan_status: on-track
+contribution_status: on-track
 tfsa_room_remaining: 4000.00
 rrsp_room_remaining: null
 fhsa_room_remaining: null
@@ -19,15 +19,16 @@ distributions_ttm: 25.01
 # Investing Report — October 2026
 
 > [!summary] Summary
-> Monthly plan executed on schedule. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$4,000.00**.
+> Contribution target met: **$300.00** of **$300.00**. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$4,000.00**.
 
-## Plan execution
+## Monthly activity
 
-| Check             | Status   | Detail                               |
-| ----------------- | -------- | ------------------------------------ |
-| Deposit received  | On track | $300.00 on 2026-10-01                |
-| Invested per plan | On track | 9 units XEQT purchased on 2026-10-02 |
-| Uninvested cash   | On track | $4.12 (below $25.00 threshold)       |
+| Activity        | Status   | Detail                                |
+| --------------- | -------- | ------------------------------------- |
+| Contributions   | On track | $300.00 of $300.00 target (1 deposit) |
+| Purchases       | —        | 9 units XEQT ($336.29)                |
+| Distributions   | —        | None recorded                         |
+| Uninvested cash | On track | $4.12 (below $25.00 threshold)        |
 
 ## Contributions and growth
 
@@ -36,8 +37,6 @@ distributions_ttm: 25.01
 | Total contributed | $3,900.00 |
 | Current value     | $4,312.55 |
 | Net growth        |  +$412.55 |
-
-Net growth is current value minus total contributed. Percentage returns are not shown, since recurring contributions make them misleading.
 
 ## Holdings
 
@@ -52,7 +51,7 @@ Net growth is current value minus total contributed. Percentage returns are not 
 | ------- | -----------------: | --------------: | ------------: | --------: | ------------------: | -------- |
 | TFSA    |          $7,000.00 |       $3,000.00 |         $0.00 | $4,000.00 |           $3,400.00 | On track |
 
-Projection assumes the scheduled $300.00 monthly contribution continues through December.
+Projection assumes the $300.00 monthly contribution target is met through December.
 
 ## Distributions
 
@@ -68,19 +67,17 @@ Projection assumes the scheduled $300.00 monthly contribution continues through 
 | Trailing 12 months        |  $25.01 |
 | Next 12 months (Estimate) | ~$43.70 |
 
-Estimate method: trailing-12-month distributions per unit × units currently held.
+Estimate: distributions per unit over the past 12 months, multiplied by units held today.
 
 > [!info] Data notes
-> Transactions are reported by the brokerage with a one-day delay.
-> Transaction history starts on 2025-10-01 (TFSA).
-> Holdings data as of 2026-10-27 08:00 EDT.
+> Earliest available transactions: TFSA from 2025-10-01.
 
 ---
 *Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*
 "
 `;
 
-exports[`example report (XEQT TFSA, plan and room configured) > states missing settings once and never shows zero for unknown values 1`] = `
+exports[`example report (XEQT TFSA, targets and room configured) > states missing settings once and never shows zero for unknown values 1`] = `
 "---
 type: investing-report
 period: 2026-10
@@ -89,7 +86,7 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
-plan_status: not-configured
+contribution_status: not-configured
 tfsa_room_remaining: null
 rrsp_room_remaining: null
 fhsa_room_remaining: null
@@ -101,15 +98,16 @@ distributions_ttm: 25.01
 > [!summary] Summary
 > Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**).
 
-## Plan execution
+## Monthly activity
 
-| Check                | Status         | Detail                               |
-| -------------------- | -------------- | ------------------------------------ |
-| Deposits this month  | Not configured | $300.00 on 2026-10-01                |
-| Purchases this month | Not configured | 9 units XEQT purchased on 2026-10-02 |
-| Uninvested cash      | On track       | $4.12 (below $25.00 threshold)       |
+| Activity        | Status         | Detail                         |
+| --------------- | -------------- | ------------------------------ |
+| Contributions   | Not configured | $300.00 (1 deposit)            |
+| Purchases       | —              | 9 units XEQT ($336.29)         |
+| Distributions   | —              | None recorded                  |
+| Uninvested cash | On track       | $4.12 (below $25.00 threshold) |
 
-> [!info] Plan execution is not evaluated: no monthly plan has been configured in Vaultfolio settings.
+> [!info] Contribution progress is not calculated: no monthly contribution target is set in Vaultfolio settings.
 
 ## Contributions and growth
 
@@ -118,8 +116,6 @@ distributions_ttm: 25.01
 | Total contributed | $3,900.00 |
 | Current value     | $4,312.55 |
 | Net growth        |  +$412.55 |
-
-Net growth is current value minus total contributed. Percentage returns are not shown, since recurring contributions make them misleading.
 
 ## Holdings
 
@@ -134,9 +130,9 @@ Net growth is current value minus total contributed. Percentage returns are not 
 | ------- | --------------: | ------------: | -------------- | -------------- |
 | TFSA    |       $3,000.00 |         $0.00 | Not configured | Not configured |
 
-2026 annual TFSA limit, for reference: $7,000.00. Actual available room also includes unused room carried forward from previous years.
+2026 annual limit: TFSA $7,000.00.
 
-> [!info] Remaining room is not calculated: starting room has not been configured in Vaultfolio settings.
+> [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.
 
 ## Distributions
 
@@ -152,12 +148,10 @@ Net growth is current value minus total contributed. Percentage returns are not 
 | Trailing 12 months        |  $25.01 |
 | Next 12 months (Estimate) | ~$43.70 |
 
-Estimate method: trailing-12-month distributions per unit × units currently held.
+Estimate: distributions per unit over the past 12 months, multiplied by units held today.
 
 > [!info] Data notes
-> Transactions are reported by the brokerage with a one-day delay.
-> Transaction history starts on 2025-10-01 (TFSA).
-> Holdings data as of 2026-10-27 08:00 EDT.
+> Earliest available transactions: TFSA from 2025-10-01.
 
 ---
 *Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*

@@ -110,10 +110,10 @@ const reportSections: {
   sample: [string, string];
 }[] = [
   {
-    title: "Plan check",
-    text: "Confirms the monthly deposit arrived and was invested in the plan’s holdings, and flags cash left uninvested.",
+    title: "Monthly activity",
+    text: "Deposits, purchases and distributions for the month, measured against an optional contribution target. Any schedule works, automatic or manual. Cash left uninvested is flagged.",
     Icon: TbCalendarCheck,
-    sample: ["Deposit received", "On track"],
+    sample: ["Contributions", "On track"],
   },
   {
     title: "Contributions and growth",
@@ -278,9 +278,9 @@ export default function Home({ searchParams }: PageProps<"/">) {
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
             Vaultfolio connects to brokerage accounts through{" "}
             <ExternalLink href={SNAPTRADE_SITE_URL}>SnapTrade</ExternalLink> and
-            produces monthly Markdown reports on plan execution, contributions,
-            registered-account room and distributions. Reports read in the
-            browser and sync into{" "}
+            produces monthly Markdown reports on investing activity,
+            contributions, registered-account room and distributions. Reports
+            read in the browser and sync into{" "}
             <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
           </p>
 

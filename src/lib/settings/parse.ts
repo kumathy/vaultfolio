@@ -1,5 +1,5 @@
 import type {
-  PlanSettings,
+  AllocationTarget,
   RegisteredType,
   ReportSettings,
   RoomSetting,
@@ -56,24 +56,32 @@ export function parseDollars(text: string): number | null {
 export const normalizeSymbol = (text: string) => text.trim().toUpperCase();
 const SYMBOL = /^[A-Z0-9][A-Z0-9.-]{0,11}$/;
 
-export function parsePlanForm(
+export interface Targets {
+  contributionTargetCents?: number;
+  allocation?: AllocationTarget[];
+  scopeAccountIds?: string[];
+}
+
+// Both targets are optional: an empty amount and empty fund rows clear them.
+export function parseTargetsForm(
   form: FormLike,
   knownAccountIds: string[],
-): Parsed<PlanSettings> {
+): Parsed<Targets> {
   const errors: FieldErrors = {};
+  const value: Targets = {};
 
-  const monthlyAmountCents = parseDollars(field(form, "amount"));
-  if (!monthlyAmountCents)
-    errors.amount = "Enter a monthly amount greater than $0.";
-
-  const day = Number(field(form, "day"));
-  if (!Number.isInteger(day) || day < 1 || day > 28) {
-    errors.day = "Choose a day from 1 to 28.";
+  const amountText = field(form, "amount");
+  if (amountText) {
+    const cents = parseDollars(amountText);
+    if (!cents)
+      errors.amount =
+        "Enter a monthly amount greater than $0, or leave it empty.";
+    else value.contributionTargetCents = cents;
   }
 
   const symbols = all(form, "symbol");
   const weights = all(form, "weight");
-  const targets: PlanSettings["targets"] = [];
+  const allocation: AllocationTarget[] = [];
   symbols.forEach((raw, i) => {
     const symbol = normalizeSymbol(raw);
     const weightText = weights[i] ?? "";
@@ -85,33 +93,33 @@ export function parsePlanForm(
     if (!/^\d+(\.\d{1,2})?$/.test(weightText) || weight <= 0 || weight > 100) {
       errors[`weight.${i}`] = "Use a weight above 0 and up to 100.";
     }
-    targets.push({ symbol, weightPercent: weight });
+    allocation.push({ symbol, weightPercent: weight });
   });
-  if (targets.length === 0) errors.targets = "Add at least one fund.";
-  if (targets.length > MAX_TARGETS)
-    errors.targets = `Use at most ${MAX_TARGETS} funds.`;
-  if (new Set(targets.map((t) => t.symbol)).size !== targets.length) {
-    errors.targets = "Each fund can appear once.";
+  if (allocation.length > MAX_TARGETS) {
+    errors.allocation = `Use at most ${MAX_TARGETS} funds.`;
+  } else if (
+    new Set(allocation.map((t) => t.symbol)).size !== allocation.length
+  ) {
+    errors.allocation = "Each fund can appear once.";
+  } else if (allocation.length > 0) {
+    const total = allocation.reduce(
+      (sum, t) => sum + (t.weightPercent || 0),
+      0,
+    );
+    if (Math.abs(total - 100) > 0.001) {
+      errors.allocation = `Weights add up to ${Math.round(total * 100) / 100}%; they need to total 100%.`;
+    }
   }
-  const total = targets.reduce((sum, t) => sum + (t.weightPercent || 0), 0);
-  if (!errors.targets && Math.abs(total - 100) > 0.001) {
-    errors.targets = `Weights add up to ${Math.round(total * 100) / 100}%; they need to total 100%.`;
-  }
+  if (allocation.length > 0) value.allocation = allocation;
 
   const accountIds = all(form, "account").filter((id) =>
     knownAccountIds.includes(id),
   );
+  if (accountIds.length > 0) value.scopeAccountIds = accountIds;
 
-  if (Object.keys(errors).length > 0) return { ok: false, errors };
-  return {
-    ok: true,
-    value: {
-      monthlyAmountCents: monthlyAmountCents!,
-      contributionDay: day,
-      targets,
-      ...(accountIds.length > 0 ? { accountIds } : {}),
-    },
-  };
+  return Object.keys(errors).length > 0
+    ? { ok: false, errors }
+    : { ok: true, value };
 }
 
 export function parseRoomForm(
@@ -228,19 +236,13 @@ export function parseStoredSettings(raw: unknown): StoredSettings {
     settings.uninvestedCashThresholdCents = raw.uninvestedCashThresholdCents;
   }
 
-  const plan = raw.plan;
-  if (
-    isRecord(plan) &&
-    isCents(plan.monthlyAmountCents) &&
-    plan.monthlyAmountCents > 0 &&
-    typeof plan.contributionDay === "number" &&
-    Number.isInteger(plan.contributionDay) &&
-    plan.contributionDay >= 1 &&
-    plan.contributionDay <= 28 &&
-    Array.isArray(plan.targets)
-  ) {
-    const targets = plan.targets.filter(
-      (t): t is { symbol: string; weightPercent: number } =>
+  const target = raw.contributionTargetCents;
+  if (isCents(target) && target > 0) settings.contributionTargetCents = target;
+
+  const allocation = raw.allocation;
+  if (Array.isArray(allocation)) {
+    const valid = allocation.filter(
+      (t): t is AllocationTarget =>
         isRecord(t) &&
         typeof t.symbol === "string" &&
         SYMBOL.test(t.symbol) &&
@@ -248,20 +250,20 @@ export function parseStoredSettings(raw: unknown): StoredSettings {
         t.weightPercent > 0 &&
         t.weightPercent <= 100,
     );
-    const accountIds = Array.isArray(plan.accountIds)
-      ? plan.accountIds.filter((id): id is string => typeof id === "string")
-      : [];
-    if (targets.length > 0) {
-      settings.plan = {
-        monthlyAmountCents: plan.monthlyAmountCents,
-        contributionDay: plan.contributionDay,
-        targets: targets.map(({ symbol, weightPercent }) => ({
-          symbol,
-          weightPercent,
-        })),
-        ...(accountIds.length > 0 ? { accountIds } : {}),
-      };
+    if (valid.length > 0) {
+      settings.allocation = valid.map(({ symbol, weightPercent }) => ({
+        symbol,
+        weightPercent,
+      }));
     }
+  }
+
+  const scope = raw.scopeAccountIds;
+  if (Array.isArray(scope)) {
+    const ids = scope.filter(
+      (id): id is string => typeof id === "string" && id.length <= 128,
+    );
+    if (ids.length > 0) settings.scopeAccountIds = ids;
   }
 
   if (isRecord(raw.room)) {

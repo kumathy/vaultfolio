@@ -2,9 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { TbPlus, TbTrash } from "react-icons/tb";
-import { removePlan, savePlan } from "@/app/(app)/settings/actions";
+import { clearTargets, saveTargets } from "@/app/(app)/settings/actions";
 import { compact, buttonSecondary } from "@/components/ui";
-import type { PlanSettings } from "@/lib/reports/types";
+import type { Targets } from "@/lib/settings/parse";
 import {
   FieldError,
   idle,
@@ -16,67 +16,60 @@ import {
 
 const MAX_FUNDS = 10;
 
-export function PlanForm({
-  plan,
+export function TargetsForm({
+  targets,
   accounts,
 }: {
-  plan: PlanSettings | undefined;
+  targets: Targets;
   accounts: { id: string; label: string }[];
 }) {
-  const [state, save, saving] = useActionState(savePlan, idle);
-  const [removed, remove, removing] = useActionState(removePlan, idle);
-  // XEQT 100% is a starting suggestion in the form only; reports never assume it.
+  const [state, save, saving] = useActionState(saveTargets, idle);
+  const [cleared, clear, clearing] = useActionState(clearTargets, idle);
   const [funds, setFunds] = useState(
-    plan?.targets.map((t) => ({
+    targets.allocation?.map((t) => ({
       symbol: t.symbol,
       weight: String(t.weightPercent),
-    })) ?? [{ symbol: "XEQT", weight: "100" }],
+    })) ?? [{ symbol: "", weight: "" }],
   );
   const total = funds.reduce((sum, f) => sum + (Number(f.weight) || 0), 0);
-  const shown = removed.status === "saved" ? removed : state;
+  const anyWeight = funds.some((f) => f.weight.trim() !== "");
+  const configured =
+    targets.contributionTargetCents !== undefined ||
+    targets.allocation !== undefined;
+  const shown = cleared.status === "saved" ? cleared : state;
 
   return (
     <form action={save} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="amount" className={labelClass}>
-            Monthly amount (CAD)
-          </label>
-          <input
-            id="amount"
-            name="amount"
-            inputMode="decimal"
-            placeholder="300.00"
-            defaultValue={
-              plan ? (plan.monthlyAmountCents / 100).toFixed(2) : ""
-            }
-            className={`${inputClass} mt-1.5`}
-            {...invalid(state, "amount")}
-          />
-          <FieldError state={state} name="amount" />
-        </div>
-        <div>
-          <label htmlFor="day" className={labelClass}>
-            Contribution day of the month
-          </label>
-          <input
-            id="day"
-            name="day"
-            type="number"
-            min={1}
-            max={28}
-            placeholder="1"
-            defaultValue={plan?.contributionDay ?? 1}
-            className={`${inputClass} mt-1.5`}
-            {...invalid(state, "day")}
-          />
-          <FieldError state={state} name="day" />
-        </div>
+      <div className="max-w-xs">
+        <label htmlFor="amount" className={labelClass}>
+          Monthly contribution target (CAD)
+        </label>
+        <p id="amount-hint" className="mt-1 text-sm text-muted">
+          Total per month, however often deposits are made.
+        </p>
+        <input
+          id="amount"
+          name="amount"
+          inputMode="decimal"
+          placeholder="300.00"
+          aria-describedby="amount-hint"
+          defaultValue={
+            targets.contributionTargetCents !== undefined
+              ? (targets.contributionTargetCents / 100).toFixed(2)
+              : ""
+          }
+          className={`${inputClass} mt-1.5`}
+          {...invalid(state, "amount")}
+        />
+        <FieldError state={state} name="amount" />
       </div>
 
       <fieldset>
-        <legend className={labelClass}>Funds and target weights</legend>
-        <div className="mt-2 space-y-2">
+        <legend className={labelClass}>Target allocation</legend>
+        <p className="mt-1 text-sm text-muted">
+          Adds target and weight columns to Holdings. Empty rows are ignored.
+        </p>
+        <div className="mt-2 max-w-lg space-y-2">
           {funds.map((fund, i) => (
             <div key={i}>
               <div className="flex items-center gap-2">
@@ -121,8 +114,13 @@ export function PlanForm({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFunds(funds.filter((_, j) => j !== i))}
-                  disabled={funds.length === 1}
+                  onClick={() =>
+                    setFunds(
+                      funds.length === 1
+                        ? [{ symbol: "", weight: "" }]
+                        : funds.filter((_, j) => j !== i),
+                    )
+                  }
                   aria-label={`Remove fund ${i + 1}`}
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-40"
                 >
@@ -134,7 +132,7 @@ export function PlanForm({
             </div>
           ))}
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-3 flex max-w-lg flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setFunds([...funds, { symbol: "", weight: "" }])}
@@ -144,18 +142,20 @@ export function PlanForm({
             <TbPlus aria-hidden />
             Add fund
           </button>
-          <p
-            className={`text-sm tabular-nums ${Math.abs(total - 100) < 0.001 ? "text-muted" : "text-attention"}`}
-          >
-            Total {Math.round(total * 100) / 100}%
-          </p>
+          {anyWeight && (
+            <p
+              className={`text-sm tabular-nums ${Math.abs(total - 100) < 0.001 ? "text-muted" : "text-attention"}`}
+            >
+              Total {Math.round(total * 100) / 100}%
+            </p>
+          )}
         </div>
-        <FieldError state={state} name="targets" />
+        <FieldError state={state} name="allocation" />
       </fieldset>
 
       {accounts.length > 1 && (
         <fieldset>
-          <legend className={labelClass}>Accounts the plan applies to</legend>
+          <legend className={labelClass}>Accounts the targets apply to</legend>
           <p className="mt-1 text-sm text-muted">
             None selected means all accounts.
           </p>
@@ -170,7 +170,7 @@ export function PlanForm({
                   name="account"
                   value={account.id}
                   defaultChecked={
-                    plan?.accountIds?.includes(account.id) ?? false
+                    targets.scopeAccountIds?.includes(account.id) ?? false
                   }
                   className="h-4 w-4 accent-[var(--accent)]"
                 />
@@ -181,15 +181,15 @@ export function PlanForm({
         </fieldset>
       )}
 
-      <SaveRow state={shown} pending={saving} label="Save plan">
-        {plan && (
+      <SaveRow state={shown} pending={saving} label="Save targets">
+        {configured && (
           <button
             type="submit"
-            formAction={remove}
-            disabled={removing}
+            formAction={clear}
+            disabled={clearing}
             className="inline-flex items-center rounded-full px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
           >
-            Remove plan
+            Clear targets
           </button>
         )}
       </SaveRow>

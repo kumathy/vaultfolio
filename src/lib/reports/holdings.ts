@@ -28,14 +28,14 @@ export function analyzeHoldings(
   accounts: ReportAccount[],
   ctx: Context,
 ): HoldingsResult {
-  const plan = ctx.settings.plan;
+  const allocation = ctx.settings.allocation;
   const rows: HoldingRow[] = [];
 
   for (const account of accounts) {
     const name = accountLabel(account, accounts);
     const target = (symbol: string) =>
-      plan && inScope(account, ctx.settings)
-        ? (plan.targets.find((t) => symbolsMatch(symbol, t.symbol))
+      allocation && inScope(account, ctx.settings)
+        ? (allocation.find((t) => symbolsMatch(symbol, t.symbol))
             ?.weightPercent ?? 0)
         : null;
 
@@ -91,7 +91,7 @@ export function analyzeHoldings(
       currency,
       cents: totalsByCurrency.get(currency) ?? 0,
     })),
-    showTargets: plan !== undefined,
+    showTargets: allocation !== undefined,
   };
 }
 

@@ -1,7 +1,6 @@
 import { limitsFor } from "@/lib/limits";
-import { accountLabel, inScope, type Context } from "./context";
+import { accountLabel, inScope, notConfigured, type Context } from "./context";
 import { money, sumBy } from "./money";
-import { daysInMonth, isoDate } from "./period";
 import type { Block, RegisteredType, ReportAccount, Status } from "./types";
 
 const TYPES: RegisteredType[] = ["TFSA", "RRSP", "FHSA"];
@@ -28,24 +27,32 @@ export interface RoomResult {
   warnings: string[];
 }
 
-function remainingScheduledDeposits(ctx: Context, day: number): number {
-  const { year } = ctx.period;
-  let count = 0;
-  for (let month = ctx.period.month; month <= 12; month++) {
-    const due = isoDate(year, month, Math.min(day, daysInMonth(year, month)));
-    if (due > ctx.evalDate) count += 1;
-  }
-  return count;
-}
-
 export function analyzeRoom(
   accounts: ReportAccount[],
   ctx: Context,
 ): RoomResult {
   const { year } = ctx.period;
   const start = `${year}-01-01`;
-  const plan = ctx.settings.plan;
-  const planAccounts = accounts.filter((a) => inScope(a, ctx.settings));
+  const target = ctx.settings.contributionTargetCents;
+  const scoped = accounts.filter((a) => inScope(a, ctx.settings));
+  // Contributions still expected this year: this month's shortfall plus the
+  // target for each remaining month.
+  const thisMonth = sumBy(
+    scoped
+      .flatMap((a) => a.activities ?? [])
+      .filter(
+        (a) =>
+          a.kind === "contribution" &&
+          a.currency === ROOM_CURRENCY &&
+          a.date >= ctx.period.start &&
+          a.date <= ctx.evalDate,
+      ),
+    (a) => a.amountCents,
+  );
+  const expectedCents =
+    target === undefined
+      ? 0
+      : Math.max(0, target - thisMonth) + target * (12 - ctx.period.month);
   const missingAccounts: string[] = [];
   const warnings: string[] = [];
   let otherCurrencyContributions = 0;
@@ -87,16 +94,14 @@ export function analyzeRoom(
     const remainingCents =
       availableCents === null ? null : availableCents - contributedCents;
 
-    // A projection is only meaningful when every plan account is this type.
+    // A projection is only meaningful when every targeted account is this type.
     const projects =
-      plan !== undefined &&
-      planAccounts.length > 0 &&
-      planAccounts.every((a) => a.registeredType === type);
+      target !== undefined &&
+      scoped.length > 0 &&
+      scoped.every((a) => a.registeredType === type);
     const projectedCents =
       remainingCents !== null && projects
-        ? remainingCents -
-          remainingScheduledDeposits(ctx, plan.contributionDay) *
-            plan.monthlyAmountCents
+        ? remainingCents - expectedCents
         : null;
 
     let status: Status = "Not configured";
@@ -110,7 +115,7 @@ export function analyzeRoom(
       } else if (projectedCents !== null && projectedCents < 0) {
         status = "Attention";
         warnings.push(
-          `Scheduled contributions are projected to exceed ${type} room by ${money(-projectedCents, ROOM_CURRENCY, ROOM_CURRENCY)} by ${year}-12-31.`,
+          `Contributions at the monthly target are projected to exceed ${type} room by ${money(-projectedCents, ROOM_CURRENCY, ROOM_CURRENCY)} by ${year}-12-31.`,
         );
       }
     }
@@ -132,7 +137,7 @@ export function analyzeRoom(
   return {
     year,
     rows,
-    scheduledMonthlyCents: plan ? plan.monthlyAmountCents : null,
+    scheduledMonthlyCents: target ?? null,
     otherCurrencyContributions,
     missingAccounts,
     warnings,
@@ -201,21 +206,22 @@ export function renderRoom(result: RoomResult, ctx: Context): Block[] {
 
   const notes: string[] = [];
   const limits = limitsFor(result.year);
-  for (const row of result.rows) {
-    if (row.availableCents !== null || !limits) continue;
-    if (row.type === "TFSA") {
-      notes.push(
-        `${result.year} annual TFSA limit, for reference: ${cad(limits.tfsaAnnualCents)}. Actual available room also includes unused room carried forward from previous years.`,
-      );
-    } else if (row.type === "RRSP") {
-      notes.push(
-        `${result.year} RRSP maximum, for reference: ${cad(limits.rrspMaximumCents)}. The deduction limit on the latest notice of assessment applies.`,
-      );
-    } else {
-      notes.push(
-        `${result.year} FHSA annual limit, for reference: ${cad(limits.fhsaAnnualCents)} (lifetime limit ${cad(limits.fhsaLifetimeCents)}).`,
-      );
-    }
+  // Reference limits only for accounts without starting room configured.
+  const reference = limits
+    ? result.rows
+        .filter((row) => row.availableCents === null)
+        .map((row) =>
+          row.type === "TFSA"
+            ? `TFSA ${cad(limits.tfsaAnnualCents)}`
+            : row.type === "RRSP"
+              ? `RRSP ${cad(limits.rrspMaximumCents)} maximum`
+              : `FHSA ${cad(limits.fhsaAnnualCents)} (${cad(limits.fhsaLifetimeCents)} lifetime)`,
+        )
+    : [];
+  if (reference.length > 0) {
+    notes.push(
+      `${result.year} annual ${reference.length === 1 ? "limit" : "limits"}: ${reference.join("; ")}.`,
+    );
   }
   if (limits && result.rows.some((r) => r.type === "RRSP")) {
     notes.push(
@@ -235,7 +241,7 @@ export function renderRoom(result: RoomResult, ctx: Context): Block[] {
   }
   if (anyProjection && result.scheduledMonthlyCents !== null) {
     notes.push(
-      `Projection assumes the scheduled ${money(result.scheduledMonthlyCents, base, base)} monthly contribution continues through December.`,
+      `Projection assumes the ${money(result.scheduledMonthlyCents, base, base)} monthly contribution target is met through December.`,
     );
   }
   if (result.otherCurrencyContributions > 0) {
@@ -253,13 +259,7 @@ export function renderRoom(result: RoomResult, ctx: Context): Block[] {
   );
 
   if (result.rows.some((r) => r.availableCents === null)) {
-    blocks.push({
-      kind: "callout",
-      callout: "info",
-      title:
-        "Remaining room is not calculated: starting room has not been configured in Vaultfolio settings.",
-      lines: [],
-    });
+    blocks.push(notConfigured("Remaining room", "starting room"));
   }
   return blocks;
 }

@@ -3,7 +3,7 @@ import {
   parseAccountTypesForm,
   parseDollars,
   parseOptionsForm,
-  parsePlanForm,
+  parseTargetsForm,
   parseRoomForm,
   parseStoredSettings,
   parseTransfersForm,
@@ -35,34 +35,48 @@ describe("parseDollars", () => {
   );
 });
 
-describe("parsePlanForm", () => {
+describe("parseTargetsForm", () => {
   const accounts = ["tfsa", "rrsp"];
 
-  it("accepts a single-fund plan and normalizes symbols", () => {
-    const result = parsePlanForm(
-      form([
-        ["amount", "300"],
-        ["day", "1"],
-        ["symbol", " xeqt "],
-        ["weight", "100"],
-      ]),
-      accounts,
-    );
-    expect(result).toEqual({
+  it("accepts a contribution target and allocation, normalizing symbols", () => {
+    expect(
+      parseTargetsForm(
+        form([
+          ["amount", "300"],
+          ["symbol", " xeqt "],
+          ["weight", "100"],
+        ]),
+        accounts,
+      ),
+    ).toEqual({
       ok: true,
       value: {
-        monthlyAmountCents: 30000,
-        contributionDay: 1,
-        targets: [{ symbol: "XEQT", weightPercent: 100 }],
+        contributionTargetCents: 30000,
+        allocation: [{ symbol: "XEQT", weightPercent: 100 }],
       },
     });
   });
 
+  it("treats every part as optional", () => {
+    expect(
+      parseTargetsForm(
+        form([
+          ["amount", ""],
+          ["symbol", ""],
+          ["weight", ""],
+        ]),
+        accounts,
+      ),
+    ).toEqual({ ok: true, value: {} });
+    expect(parseTargetsForm(form([["amount", "250"]]), accounts)).toEqual({
+      ok: true,
+      value: { contributionTargetCents: 25000 },
+    });
+  });
+
   it("keeps known accounts only and ignores empty fund rows", () => {
-    const result = parsePlanForm(
+    const result = parseTargetsForm(
       form([
-        ["amount", "1000"],
-        ["day", "15"],
         ["symbol", "XEQT"],
         ["weight", "70"],
         ["symbol", "VFV"],
@@ -74,23 +88,22 @@ describe("parsePlanForm", () => {
       ]),
       accounts,
     );
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       ok: true,
       value: {
-        targets: [
+        allocation: [
           { symbol: "XEQT", weightPercent: 70 },
           { symbol: "VFV", weightPercent: 30 },
         ],
-        accountIds: ["tfsa"],
+        scopeAccountIds: ["tfsa"],
       },
     });
   });
 
   it("reports each invalid field", () => {
-    const result = parsePlanForm(
+    const result = parseTargetsForm(
       form([
         ["amount", "0"],
-        ["day", "31"],
         ["symbol", "XE QT"],
         ["weight", "150"],
       ]),
@@ -99,45 +112,42 @@ describe("parsePlanForm", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(Object.keys(result.errors).sort()).toEqual([
+        "allocation",
         "amount",
-        "day",
         "symbol.0",
-        "targets",
         "weight.0",
       ]);
     }
   });
 
   it("requires weights to total 100% and funds to be unique", () => {
-    const short = parsePlanForm(
-      form([
-        ["amount", "100"],
-        ["day", "1"],
-        ["symbol", "XEQT"],
-        ["weight", "60"],
-        ["symbol", "VFV"],
-        ["weight", "30"],
-      ]),
-      accounts,
-    );
-    expect(short).toMatchObject({
+    expect(
+      parseTargetsForm(
+        form([
+          ["symbol", "XEQT"],
+          ["weight", "60"],
+          ["symbol", "VFV"],
+          ["weight", "30"],
+        ]),
+        accounts,
+      ),
+    ).toMatchObject({
       ok: false,
-      errors: { targets: "Weights add up to 90%; they need to total 100%." },
+      errors: { allocation: "Weights add up to 90%; they need to total 100%." },
     });
-    const duplicate = parsePlanForm(
-      form([
-        ["amount", "100"],
-        ["day", "1"],
-        ["symbol", "XEQT"],
-        ["weight", "50"],
-        ["symbol", "xeqt"],
-        ["weight", "50"],
-      ]),
-      accounts,
-    );
-    expect(duplicate).toMatchObject({
+    expect(
+      parseTargetsForm(
+        form([
+          ["symbol", "XEQT"],
+          ["weight", "50"],
+          ["symbol", "xeqt"],
+          ["weight", "50"],
+        ]),
+        accounts,
+      ),
+    ).toMatchObject({
       ok: false,
-      errors: { targets: "Each fund can appear once." },
+      errors: { allocation: "Each fund can appear once." },
     });
   });
 });
@@ -247,12 +257,9 @@ describe("parseStoredSettings", () => {
       timeZone: "America/Toronto",
       uninvestedCashDays: 5,
       uninvestedCashThresholdCents: 2500,
-      plan: {
-        monthlyAmountCents: 30000,
-        contributionDay: 1,
-        targets: [{ symbol: "XEQT", weightPercent: 100 }],
-        accountIds: ["tfsa"],
-      },
+      contributionTargetCents: 30000,
+      allocation: [{ symbol: "XEQT", weightPercent: 100 }],
+      scopeAccountIds: ["tfsa"],
       room: { TFSA: { year: 2026, availableCents: 700000 } },
       accountTypes: { a: "TFSA" as const, b: null },
       activityKinds: { t1: "contribution" as const },
@@ -268,7 +275,9 @@ describe("parseStoredSettings", () => {
       parseStoredSettings({
         timeZone: "Mars/Olympus",
         uninvestedCashDays: 1.5,
-        plan: { monthlyAmountCents: -5, contributionDay: 1, targets: [] },
+        contributionTargetCents: -5,
+        allocation: [{ symbol: "BAD SYMBOL", weightPercent: 100 }],
+        scopeAccountIds: "tfsa",
         room: {
           TFSA: { year: 2026, availableCents: "lots" },
           RRSP: { year: 2026, availableCents: 100 },

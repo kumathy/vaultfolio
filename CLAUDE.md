@@ -34,9 +34,9 @@ A beginner investor making automatic monthly contributions to an all-in-one ETF 
 - **Generic by design.** No ticker symbol is hard-coded in logic.
 
 ### MVP features
-1. **Plan check.** Confirms this month's deposit arrived and was invested in the plan's holdings. Flags cash left uninvested for more than N days (configurable, default 5).
+1. **Monthly activity.** Deposits, purchases by symbol, and distributions for the month. Investing styles differ (daily, weekly, biweekly, monthly, or manual), so no schedule or deposit day is assumed. An optional monthly contribution target is compared with the month's total deposits: **In progress** while the month is open, **Attention** only once it has ended below target. Flags cash left uninvested for more than N days (configurable, default 5).
 2. **Contributions and growth.** Total contributed versus current value, where growth = current value − total contributions. Percentage returns are avoided because recurring deposits make them misleading.
-3. **Registered-account room tracking (TFSA, RRSP, FHSA).** Starting room is entered by the user (from CRA My Account, which cannot be fetched) and is optional. The app tracks contributions from that point, shows remaining room, and projects whether scheduled contributions will exceed it before December 31. Rules:
+3. **Registered-account room tracking (TFSA, RRSP, FHSA).** Starting room is entered by the user (from CRA My Account, which cannot be fetched) and is optional. The app tracks contributions from that point, shows remaining room, and projects whether contributions at the monthly target will exceed it before December 31. Rules:
    - TFSA withdrawals are added back to room on **January 1 of the following year**, not immediately.
    - FHSA: $8,000 per year and $40,000 lifetime. Room accumulates only once the account is opened, and the deadline follows the calendar year.
    - RRSP: user-entered deduction limit, with a deadline about 60 days into the following year.
@@ -50,12 +50,13 @@ A user who signs in and configures nothing still receives a useful report. Setti
 | Setting not provided | Report behaviour |
 | --- | --- |
 | Starting contribution room | Shows contributions and withdrawals year-to-date per registered account, plus that year's annual limit for reference. Remaining room, projection, and over-contribution status show **Not configured**. No warnings are raised, since over-contribution cannot be determined without starting room. |
-| Plan (amount, day, target holdings) | Lists deposits and purchases observed this month. Plan execution status shows **Not configured**. Target and weight-versus-target columns are omitted. |
+| Contribution target | Lists deposits, purchases, and distributions observed this month. Contribution status shows **Not configured**. Room projection is omitted. |
+| Target allocation | Target and weight-versus-target columns are omitted from Holdings. |
 | Account type tags | Uses the account type reported by the brokerage when available. Otherwise the account is labelled "Unclassified" and excluded from the room section. |
 | Uninvested-cash threshold | Defaults to 5 days. |
 
-- Missing configuration is noted impersonally, once per report, e.g. `> [!info] Remaining room is not calculated: starting room has not been configured in Vaultfolio settings.`
-- Unknown frontmatter values are `null` (e.g. `tfsa_room_remaining: null`, `plan_status: not-configured`). `0` is never used for an unknown value, because it means "no room remaining."
+- Missing configuration is noted impersonally as an `info` callout (not a warning, since nothing is wrong), once per report, in one pattern: `<Result> is not calculated: no <setting> is set in Vaultfolio settings.` E.g. `> [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.`
+- Unknown frontmatter values are `null` (e.g. `tfsa_room_remaining: null`, `contribution_status: not-configured`). `0` is never used for an unknown value, because it means "no room remaining."
 - The web dashboard may show a single dismissible "Add starting room" prompt in settings. It never blocks anything.
 
 Example room section without starting room configured:
@@ -67,22 +68,22 @@ Example room section without starting room configured:
 | ------- | --------------: | ------------: | -------------- | -------------- |
 | TFSA    |       $4,900.00 |         $0.00 | Not configured | Not configured |
 
-2026 annual TFSA limit, for reference: $7,000.00. Actual available room also includes unused room carried forward from previous years.
+2026 annual limit: TFSA $7,000.00.
 
-> [!info] Remaining room is not calculated: starting room has not been configured in Vaultfolio settings.
+> [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.
 ```
 
 ### Holdings and currency handling
-- The plan lives in user settings: monthly amount, contribution day, and holdings with target weights (default: `XEQT 100%`).
+- Targets live in user settings, all optional: a monthly contribution total (any deposit frequency), a target allocation by symbol, and the accounts they apply to.
 - Calculations run per symbol and per account, then roll up.
 - Amounts are grouped and subtotalled by currency. No currency conversion in the MVP, because there is no FX data source and an incorrect conversion is worse than none.
 - Test fixtures cover: a single all-in-one fund (XEQT), two funds (XEQT + VFV), a USD-denominated position, an individual stock, and a cash-only account.
 
 ### Post-MVP features
 Built only after the MVP is complete and tested.
-- Consistency record: consecutive months the plan executed, including how many had negative portfolio returns. Presented as a statistic, not praise.
+- Consistency record: consecutive months the contribution target was met, including how many had negative portfolio returns. Presented as a statistic, not praise.
 - Fee estimate in dollars: fund MER × average balance. MERs are user-entered per symbol (e.g. XEQT 0.20%), since SnapTrade does not provide them.
-- Allocation drift: current versus target weights for multi-fund plans. Read-only; never places orders.
+- Allocation drift: current versus target weights for multi-fund allocations. Read-only; never places orders.
 - Individual-stock views: concentration and per-position gain or loss. Before designing this, check whether positions include an average purchase price.
 - Currency-converted totals, once a reliable FX source is available.
 - Calendar notes: January 1 TFSA room, RRSP deadline, FHSA December 31.
@@ -95,11 +96,11 @@ Built only after the MVP is complete and tested.
 Reports read as a professional financial statement.
 - **No reader address.** Never use "you", "your", "we", "I", or "let's". Write "TFSA room remaining: $2,100.00", not "You have $2,100 left".
 - Neutral and factual: no exclamation marks, emoji, encouragement, or advice.
-- Status labels: **On track**, **Attention**, **Not applicable**, **Not configured**.
+- Status labels: **On track**, **In progress**, **Attention**, **Not applicable**, **Not configured**.
 - Structure: a summary callout first, then short sections in a fixed order, tables for figures, and one idea per line.
 - Numbers use two decimals and thousands separators, with right-aligned numeric columns. Include a currency code when an account isn't in the report's base currency. Dates use ISO format (2026-10-02).
 - Estimates are labelled "Estimate" and state their method in one line.
-- `> [!warning]` callouts flag items needing attention. `> [!info]` callouts note data caveats, such as one-day transaction delays or an account that failed to load.
+- `> [!warning]` callouts flag items needing attention. `> [!info]` callouts note data caveats that affect the figures, such as limited transaction history or an account that failed to load. Self-evident definitions and general knowledge are left out.
 - Footer: retrieval time, source (SnapTrade), and "For information only. Not financial advice."
 - The web dashboard renders the same Markdown, so the same rules apply there.
 
@@ -117,7 +118,7 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
-plan_status: on-track
+contribution_status: on-track
 tfsa_room_remaining: 2100.00
 distributions_ttm: 38.20
 ---
@@ -125,15 +126,16 @@ distributions_ttm: 38.20
 # Investing Report — October 2026
 
 > [!summary] Summary
-> Monthly plan executed on schedule. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$2,100.00**.
+> Contribution target met: **$300.00** of **$300.00**. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$2,100.00**.
 
-## Plan execution
+## Monthly activity
 
-| Check               | Status   | Detail                                   |
-| ------------------- | -------- | ---------------------------------------- |
-| Deposit received    | On track | $300.00 on 2026-10-01                    |
-| Invested per plan   | On track | 9 units XEQT purchased on 2026-10-02     |
-| Uninvested cash     | On track | $4.12 (below $25.00 threshold)           |
+| Activity        | Status   | Detail                                |
+| --------------- | -------- | ------------------------------------- |
+| Contributions   | On track | $300.00 of $300.00 target (1 deposit) |
+| Purchases       | —        | 9 units XEQT ($336.29)                |
+| Distributions   | —        | None recorded                         |
+| Uninvested cash | On track | $4.12 (below $25.00 threshold)        |
 
 ## Contributions and growth
 
@@ -156,7 +158,7 @@ distributions_ttm: 38.20
 | ------- | -----------------: | --------------: | --------: | ------------------: | -------- |
 | TFSA    |          $7,000.00 |       $4,900.00 | $2,100.00 |           $1,500.00 | On track |
 
-Projection assumes the scheduled $300.00 monthly contribution continues through December.
+Projection assumes the $300.00 monthly contribution target is met through December.
 
 ## Distributions
 
@@ -170,10 +172,10 @@ Projection assumes the scheduled $300.00 monthly contribution continues through 
 | Trailing 12 months               |  $38.20 |
 | Next 12 months (Estimate)        | ~$46.00 |
 
-Estimate method: trailing-12-month distributions per unit × units currently held.
+Estimate: distributions per unit over the past 12 months, multiplied by units held today.
 
 > [!info] Data notes
-> Transactions are reported by the brokerage with a one-day delay.
+> Earliest available transactions: TFSA (WS) from 2025-10-01.
 
 ---
 *Data retrieved 2026-10-27 09:14 ADT via SnapTrade. For information only. Not financial advice.*
@@ -308,9 +310,9 @@ Requirements:
 
 - **Report engine:** report generation in `src/lib/reports/` is pure functions, unit tested with fixtures. Edge cases:
   - Data shape: no accounts, cash-only account, multiple funds, mixed currencies, individual stocks, zero distributions.
-  - Plan behaviour: missed month, uninvested cash.
+  - Contribution target: open month in progress, shortfall after month end, several deposits per month, uninvested cash.
   - Room tracking: TFSA withdrawal followed by re-contribution the next year, transfer-in versus contribution, over-contribution projection.
-  - Settings: none configured, starting room missing with plan set, plan missing with starting room set.
+  - Settings: none configured, starting room missing with a target set, target missing with starting room set.
 - **Style guard:** a test fails if report Markdown contains reader-addressing words ("you", "your", "we") or exclamation marks.
 - **OAuth:** mismatched state, consent denied, expired code, refresh-token rotation, forced 401, and revocation.
 
@@ -324,7 +326,7 @@ Stop after each phase for review.
    - Deploy to Vercel. This phase alone is a valid submission.
 2. **Report engine:** pure functions and tests for MVP features 1–4, using fixtures first and real data second.
 3. **Web dashboard:**
-   - Settings: starting room, account tags, plan amount and day.
+   - Settings: starting room, account tags, contribution target and allocation.
    - Report preview.
    - `.md` download, single file and zip.
 4. **Obsidian plugin** and pairing flow.

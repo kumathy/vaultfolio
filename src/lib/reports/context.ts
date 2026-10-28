@@ -1,5 +1,5 @@
 import { localDate, type Period } from "./period";
-import type { ReportAccount, ResolvedSettings } from "./types";
+import type { Block, ReportAccount, ResolvedSettings } from "./types";
 
 export interface Context {
   period: Period;
@@ -58,7 +58,7 @@ export function accountValue(
 }
 
 export function inScope(account: ReportAccount, settings: ResolvedSettings) {
-  const ids = settings.plan?.accountIds;
+  const ids = settings.scopeAccountIds;
   return !ids || ids.length === 0 || ids.includes(account.id);
 }
 
@@ -71,3 +71,11 @@ export function orderCurrencies(currencies: Iterable<string>, base: string) {
     a === base ? -1 : b === base ? 1 : a.localeCompare(b),
   );
 }
+
+// One sentence pattern for every optional setting that is missing.
+export const notConfigured = (result: string, setting: string): Block => ({
+  kind: "callout",
+  callout: "info",
+  title: `${result} is not calculated: no ${setting} is set in Vaultfolio settings.`,
+  lines: [],
+});

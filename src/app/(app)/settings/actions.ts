@@ -9,9 +9,10 @@ import { resolveSettings } from "@/lib/reports/types";
 import {
   parseAccountTypesForm,
   parseOptionsForm,
-  parsePlanForm,
   parseRoomForm,
+  parseTargetsForm,
   parseTransfersForm,
+  type StoredSettings,
 } from "@/lib/settings/parse";
 import { snaptradeGet } from "@/lib/snaptrade/api";
 import { tokenDeps } from "@/lib/snaptrade/config";
@@ -43,27 +44,35 @@ const saved = (message = "Saved"): FormState => {
   return { status: "saved", message };
 };
 
-export async function savePlan(
+// Saving replaces all three fields, so an emptied field clears that target.
+function withoutTargets(s: StoredSettings): StoredSettings {
+  const next = { ...s };
+  delete next.contributionTargetCents;
+  delete next.allocation;
+  delete next.scopeAccountIds;
+  return next;
+}
+
+export async function saveTargets(
   _: FormState,
   form: FormData,
 ): Promise<FormState> {
   const userId = await requireUserId();
   const ids = await accountIds(userId);
   if (!ids) return unavailable;
-  const parsed = parsePlanForm(form, ids);
+  const parsed = parseTargetsForm(form, ids);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
-  await updateSettings(userId, (s) => ({ ...s, plan: parsed.value }));
-  return saved("Plan saved");
+  await updateSettings(userId, (s) => ({
+    ...withoutTargets(s),
+    ...parsed.value,
+  }));
+  return saved("Targets saved");
 }
 
-export async function removePlan(): Promise<FormState> {
+export async function clearTargets(): Promise<FormState> {
   const userId = await requireUserId();
-  await updateSettings(userId, (s) => {
-    const next = { ...s };
-    delete next.plan;
-    return next;
-  });
-  return saved("Plan removed");
+  await updateSettings(userId, withoutTargets);
+  return saved("Targets cleared");
 }
 
 export async function saveRoom(

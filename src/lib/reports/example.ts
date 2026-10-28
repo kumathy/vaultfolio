@@ -6,7 +6,7 @@ import { parsePeriod, type Period } from "./period";
 import type { ReportSettings } from "./types";
 
 // Illustrative data in SnapTrade's response shapes: a TFSA with a $300 monthly
-// XEQT plan, used by the landing page and the report tests.
+// XEQT purchases, used by the landing page and the report tests.
 
 const cad = { code: "CAD" };
 const xeqt = { symbol: "XEQT.TO", raw_symbol: "XEQT" };
@@ -117,11 +117,8 @@ export const EXAMPLE_NOW = new Date("2026-10-27T13:14:00.000Z");
 export const EXAMPLE_PERIOD = parsePeriod("2026-10") as Period;
 
 export const EXAMPLE_SETTINGS: ReportSettings = {
-  plan: {
-    monthlyAmountCents: 300_00,
-    contributionDay: 1,
-    targets: [{ symbol: "XEQT", weightPercent: 100 }],
-  },
+  contributionTargetCents: 300_00,
+  allocation: [{ symbol: "XEQT", weightPercent: 100 }],
   room: { TFSA: { year: 2026, availableCents: 7_000_00 } },
 };
 

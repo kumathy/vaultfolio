@@ -85,6 +85,7 @@ export interface AccountOptions {
   ][];
   activities?: Activity[] | null;
   firstTransactionDate?: string;
+  holdingsAsOf?: string;
 }
 
 export function rawAccount(options: AccountOptions): RawAccountData {
@@ -118,7 +119,7 @@ export function rawAccount(options: AccountOptions): RawAccountData {
           currency,
         }),
       ),
-      data_freshness: { as_of: null },
+      data_freshness: { as_of: options.holdingsAsOf ?? null },
     },
     activities:
       options.activities === null

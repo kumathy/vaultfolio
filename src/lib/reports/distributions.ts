@@ -255,7 +255,7 @@ export function renderDistributions(
     if (result.estimates.length > 0) {
       blocks.push(
         note(
-          "Estimate method: trailing-12-month distributions per unit × units currently held.",
+          "Estimate: distributions per unit over the past 12 months, multiplied by units held today.",
         ),
       );
     }

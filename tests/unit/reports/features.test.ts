@@ -1,63 +1,81 @@
 import { describe, expect, it } from "vitest";
 import { EXAMPLE_ACCOUNT_DATA, EXAMPLE_SETTINGS } from "@/lib/reports/example";
-import type { PlanSettings, ReportSettings } from "@/lib/reports/types";
+import type { ReportSettings } from "@/lib/reports/types";
 import { act, rawAccount } from "../../fixtures/reports/builders";
 import { report, rowWith, tableRow } from "./helpers";
 
-const plan = (overrides: Partial<PlanSettings> = {}): ReportSettings => ({
-  plan: {
-    monthlyAmountCents: 300_00,
-    contributionDay: 1,
-    targets: [{ symbol: "XEQT", weightPercent: 100 }],
-    ...overrides,
-  },
+const targets = (overrides: ReportSettings = {}): ReportSettings => ({
+  contributionTargetCents: 300_00,
+  allocation: [{ symbol: "XEQT", weightPercent: 100 }],
+  ...overrides,
 });
 
-describe("plan check", () => {
-  it("flags a missed monthly deposit after the one-day grace period", () => {
+const cashAccount = (activities: ReturnType<typeof act.deposit>[]) => [
+  rawAccount({ id: "cash", cash: [["CAD", 300]], activities }),
+];
+
+describe("monthly activity", () => {
+  it("shows progress toward the target while the month is open", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       period: "2026-11",
       now: "2026-11-05T15:00:00Z",
       settings: EXAMPLE_SETTINGS,
     });
-    expect(tableRow(r.markdown, "Deposit received")).toEqual([
-      "Deposit received",
-      "Attention",
-      "No deposit recorded; $300.00 scheduled for 2026-11-01",
+    expect(tableRow(r.markdown, "Contributions")).toEqual([
+      "Contributions",
+      "In progress",
+      "$0.00 of $300.00 target so far (0 deposits)",
     ]);
-    expect(r.frontmatter.plan_status).toBe("attention");
-    expect(r.markdown).toContain("> [!warning] Attention\n> Deposit received:");
-    expect(r.markdown).toContain("Monthly plan needs attention.");
+    expect(r.frontmatter.contribution_status).toBe("in-progress");
+    expect(r.markdown).toContain(
+      "Contributions this month: **$0.00** of **$300.00** target so far.",
+    );
+    expect(r.markdown).not.toContain("Contributions: $0.00");
   });
 
-  it("waits until the scheduled day before expecting a deposit", () => {
+  it("flags a shortfall only after the month has ended", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       period: "2026-11",
-      now: "2026-11-05T15:00:00Z",
-      settings: plan({ contributionDay: 15 }),
+      now: "2026-12-03T15:00:00Z",
+      settings: EXAMPLE_SETTINGS,
     });
-    expect(tableRow(r.markdown, "Deposit received")).toEqual([
-      "Deposit received",
-      "Not applicable",
-      "$300.00 scheduled for 2026-11-15",
+    expect(tableRow(r.markdown, "Contributions")).toEqual([
+      "Contributions",
+      "Attention",
+      "$0.00 of $300.00 target (0 deposits)",
     ]);
-    expect(r.frontmatter.plan_status).toBe("on-track");
+    expect(r.frontmatter.contribution_status).toBe("attention");
+    expect(r.markdown).toContain("> [!warning] Attention\n> Contributions:");
+    expect(r.markdown).toContain(
+      "Contributions below target: **$0.00** of **$300.00**.",
+    );
+  });
+
+  it("adds up deposits made on any schedule", () => {
+    const weekly = report(
+      cashAccount([
+        act.deposit("2026-10-02", 75),
+        act.deposit("2026-10-09", 75),
+        act.deposit("2026-10-16", 75),
+        act.deposit("2026-10-23", 75),
+      ]),
+      { settings: targets() },
+    );
+    expect(tableRow(weekly.markdown, "Contributions")).toEqual([
+      "Contributions",
+      "On track",
+      "$300.00 of $300.00 target (4 deposits)",
+    ]);
+    expect(weekly.frontmatter.contribution_status).toBe("on-track");
+    expect(weekly.markdown).toContain(
+      "Contribution target met: **$300.00** of **$300.00**.",
+    );
   });
 
   it("gives a recent deposit time to be invested", () => {
-    const r = report(
-      [
-        rawAccount({
-          id: "cash",
-          cash: [["CAD", 300]],
-          activities: [act.deposit("2026-10-25", 300)],
-        }),
-      ],
-      { settings: plan() },
-    );
-    expect(tableRow(r.markdown, "Invested per plan")?.[1]).toBe(
-      "Not applicable",
-    );
+    const r = report(cashAccount([act.deposit("2026-10-25", 300)]), {
+      settings: targets(),
+    });
     expect(tableRow(r.markdown, "Uninvested cash")).toEqual([
       "Uninvested cash",
       "On track",
@@ -66,35 +84,20 @@ describe("plan check", () => {
     expect(r.markdown).not.toContain("[!warning]");
   });
 
-  it("flags cash left uninvested beyond the window, even without a plan", () => {
-    const raw = [
-      rawAccount({
-        id: "cash",
-        cash: [["CAD", 300]],
-        activities: [act.deposit("2026-10-01", 300)],
-      }),
-    ];
-    const withPlan = report(raw, { settings: plan() });
-    expect(tableRow(withPlan.markdown, "Invested per plan")).toEqual([
-      "Invested per plan",
-      "Attention",
-      "Purchased below plan: XEQT $0.00 of $300.00",
-    ]);
-    expect(tableRow(withPlan.markdown, "Uninvested cash")).toEqual([
-      "Uninvested cash",
-      "Attention",
-      "$300.00 uninvested since 2026-10-01 (26 days)",
-    ]);
-
-    const withoutPlan = report(raw);
-    expect(tableRow(withoutPlan.markdown, "Uninvested cash")?.[1]).toBe(
-      "Attention",
-    );
-    expect(withoutPlan.frontmatter.plan_status).toBe("not-configured");
-    expect(withoutPlan.markdown).toContain("> [!warning] Attention");
+  it("flags cash left uninvested beyond the window, with or without targets", () => {
+    const raw = cashAccount([act.deposit("2026-10-01", 300)]);
+    for (const settings of [targets(), {}]) {
+      const r = report(raw, { settings });
+      expect(tableRow(r.markdown, "Uninvested cash")).toEqual([
+        "Uninvested cash",
+        "Attention",
+        "$300.00 uninvested since 2026-10-01 (26 days)",
+      ]);
+      expect(r.markdown).toContain("> [!warning] Attention");
+    }
   });
 
-  it("checks each fund of a multi-fund plan and notes purchases outside it", () => {
+  it("lists purchases by symbol and compares holdings with the target allocation", () => {
     const r = report(
       [
         rawAccount({
@@ -114,19 +117,19 @@ describe("plan check", () => {
         }),
       ],
       {
-        settings: plan({
-          monthlyAmountCents: 1000_00,
-          targets: [
+        settings: targets({
+          contributionTargetCents: 1000_00,
+          allocation: [
             { symbol: "XEQT", weightPercent: 70 },
             { symbol: "VFV", weightPercent: 30 },
           ],
         }),
       },
     );
-    expect(tableRow(r.markdown, "Invested per plan")).toEqual([
-      "Invested per plan",
-      "Attention",
-      "Purchased below plan: VFV $100.00 of $300.00; also purchased SHOP (not in plan)",
+    expect(tableRow(r.markdown, "Purchases")).toEqual([
+      "Purchases",
+      "—",
+      "20 units XEQT ($700.00); 1 unit VFV ($100.00); 1 unit SHOP ($100.00)",
     ]);
     expect(tableRow(r.markdown, "Account")).toEqual([
       "Account",
@@ -140,6 +143,15 @@ describe("plan check", () => {
       "9.1%",
       "0.0%",
     ]);
+  });
+
+  it("notes the holdings sync time only when it is more than a day old", () => {
+    const at = (holdingsAsOf: string) =>
+      report([rawAccount({ id: "tfsa", holdingsAsOf })]).markdown;
+    expect(at("2026-10-27T12:00:00Z")).not.toContain("Holdings last synced");
+    expect(at("2026-10-25T12:00:00Z")).toContain(
+      "Holdings last synced by SnapTrade 2026-10-25 08:00 EDT.",
+    );
   });
 
   it("hides zero cash balances from holdings", () => {
@@ -159,13 +171,17 @@ describe("plan check", () => {
     expect(rowWith(holdings, "XEQT")).toBeDefined();
   });
 
-  it("lists observed activity and notes the missing plan once", () => {
+  it("lists observed activity and notes the missing target once", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA);
-    expect(tableRow(r.markdown, "Deposits this month")).toEqual([
-      "Deposits this month",
+    expect(tableRow(r.markdown, "Contributions")).toEqual([
+      "Contributions",
       "Not configured",
-      "$300.00 on 2026-10-01",
+      "$300.00 (1 deposit)",
     ]);
+    expect(r.frontmatter.contribution_status).toBe("not-configured");
+    expect(
+      r.markdown.match(/no monthly contribution target is set/g),
+    ).toHaveLength(1);
     expect(r.markdown).not.toContain("| Target");
   });
 
@@ -176,9 +192,11 @@ describe("plan check", () => {
     });
     expect(tableRow(r.markdown, "Uninvested cash")?.[1]).toBe("Not applicable");
     expect(r.markdown).toContain("Values and holdings are as of 2026-10-27");
-    expect(tableRow(r.markdown, "Deposit received")?.[2]).toBe(
-      "$300.00 on 2026-09-01",
-    );
+    expect(tableRow(r.markdown, "Contributions")).toEqual([
+      "Contributions",
+      "On track",
+      "$300.00 of $300.00 target (1 deposit)",
+    ]);
   });
 });
 
@@ -315,7 +333,7 @@ describe("registered account room", () => {
     );
   });
 
-  it("warns when scheduled contributions will exceed room by December 31", () => {
+  it("warns when the contribution target will exceed room by December 31", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       settings: {
         ...EXAMPLE_SETTINGS,
@@ -328,12 +346,26 @@ describe("registered account room", () => {
       "Attention",
     ]);
     expect(r.markdown).toContain(
-      "> Scheduled contributions are projected to exceed TFSA room by $100.00 by 2026-12-31.",
+      "> Contributions at the monthly target are projected to exceed TFSA room by $100.00 by 2026-12-31.",
     );
-    expect(r.frontmatter.plan_status).toBe("on-track");
+    expect(r.frontmatter.contribution_status).toBe("on-track");
   });
 
-  it("shows remaining room without a projection when no plan is set", () => {
+  it("projects this month's unmet target plus each remaining month", () => {
+    const r = report(EXAMPLE_ACCOUNT_DATA, {
+      period: "2026-11",
+      now: "2026-11-05T15:00:00Z",
+      settings: EXAMPLE_SETTINGS,
+    });
+    // $4,000.00 remaining, less $300.00 still expected in November and December.
+    expect(tableRow(r.room(), "TFSA")?.slice(-3)).toEqual([
+      "$4,000.00",
+      "$3,400.00",
+      "On track",
+    ]);
+  });
+
+  it("shows remaining room without a projection when no target is set", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       settings: { room: EXAMPLE_SETTINGS.room },
     });
@@ -344,8 +376,8 @@ describe("registered account room", () => {
     ]);
   });
 
-  it("raises no room warnings when starting room is missing, even with a plan", () => {
-    const r = report(EXAMPLE_ACCOUNT_DATA, { settings: plan() });
+  it("raises no room warnings when starting room is missing, even with a target", () => {
+    const r = report(EXAMPLE_ACCOUNT_DATA, { settings: targets() });
     expect(tableRow(r.room(), "TFSA")?.slice(-2)).toEqual([
       "Not configured",
       "Not configured",
@@ -377,13 +409,10 @@ describe("registered account room", () => {
     expect(tableRow(r.room(), "RRSP")?.[1]).toBe("$1,000.00");
     expect(tableRow(r.room(), "FHSA")?.[1]).toBe("$2,000.00");
     expect(r.markdown).toContain(
-      "2026 RRSP maximum, for reference: $33,810.00.",
+      "2026 annual limits: RRSP $33,810.00 maximum; FHSA $8,000.00 ($40,000.00 lifetime).",
     );
     expect(r.markdown).toContain(
       "RRSP contributions made up to 2027-03-01 can be deducted for 2026.",
-    );
-    expect(r.markdown).toContain(
-      "2026 FHSA annual limit, for reference: $8,000.00 (lifetime limit $40,000.00).",
     );
     expect(r.frontmatter.rrsp_room_remaining).toBeNull();
   });
@@ -471,7 +500,7 @@ describe("distributions", () => {
     expect(r.markdown).toContain(
       "Per-unit amounts could not be determined for OLD",
     );
-    expect(r.markdown).not.toContain("Estimate method");
+    expect(r.markdown).not.toContain("multiplied by units held today");
   });
 
   it("only includes the trailing 12 months", () => {

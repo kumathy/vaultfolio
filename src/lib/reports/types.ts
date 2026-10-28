@@ -61,13 +61,9 @@ export interface ReportInput {
   accounts: ReportAccount[];
 }
 
-export interface PlanSettings {
-  monthlyAmountCents: number;
-  // Day of the month the deposit is scheduled, 1 to 28.
-  contributionDay: number;
-  targets: { symbol: string; weightPercent: number }[];
-  // Accounts the plan applies to; all accounts when omitted.
-  accountIds?: string[];
+export interface AllocationTarget {
+  symbol: string;
+  weightPercent: number;
 }
 
 export interface RoomSetting {
@@ -81,7 +77,11 @@ export interface ReportSettings {
   baseCurrency?: string;
   uninvestedCashDays?: number;
   uninvestedCashThresholdCents?: number;
-  plan?: PlanSettings;
+  // Monthly total regardless of how often deposits are made.
+  contributionTargetCents?: number;
+  allocation?: AllocationTarget[];
+  // Accounts the target and allocation apply to; all accounts when omitted.
+  scopeAccountIds?: string[];
   room?: Partial<Record<RegisteredType, RoomSetting>>;
   // User tags override the brokerage account type; null marks non-registered.
   accountTypes?: Record<string, RegisteredType | null>;
@@ -129,7 +129,11 @@ export function resolveSettings(
 }
 
 export type Status =
-  "On track" | "Attention" | "Not applicable" | "Not configured";
+  | "On track"
+  | "In progress"
+  | "Attention"
+  | "Not applicable"
+  | "Not configured";
 
 // Document model shared by the Markdown output and the web preview.
 export type Inline = string | { bold: string };

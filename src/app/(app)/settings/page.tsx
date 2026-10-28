@@ -5,8 +5,8 @@ import { AccessActions } from "@/components/settings/access-section";
 import { AccountTypesForm } from "@/components/settings/account-types-form";
 import { SettingsSection } from "@/components/settings/form-kit";
 import { OptionsForm } from "@/components/settings/options-form";
-import { PlanForm } from "@/components/settings/plan-form";
 import { RoomForm } from "@/components/settings/room-form";
+import { TargetsForm } from "@/components/settings/targets-form";
 import { TransfersForm } from "@/components/settings/transfers-form";
 import { ExternalLink } from "@/components/external-link";
 import { card } from "@/components/ui";
@@ -72,12 +72,16 @@ async function SettingsContent() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        id="plan"
-        title="Monthly plan"
-        description="The scheduled contribution and the funds it buys. Reports check each month’s deposit and purchases against it and project registered room through December."
+        id="targets"
+        title="Targets"
+        description="A monthly contribution total and a target allocation. Both are optional and work with any deposit schedule, automatic or manual. The contribution target is also used to project registered room through December."
       >
-        <PlanForm
-          plan={settings.plan}
+        <TargetsForm
+          targets={{
+            contributionTargetCents: settings.contributionTargetCents,
+            allocation: settings.allocation,
+            scopeAccountIds: settings.scopeAccountIds,
+          }}
           accounts={labelled.map((a) => ({ id: a.id, label: a.display }))}
         />
       </SettingsSection>

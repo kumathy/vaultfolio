@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildExampleReport } from "@/lib/reports/example";
 import { expectReportStyle, section, tableRow } from "./helpers";
 
-describe("example report (XEQT TFSA, plan and room configured)", () => {
+describe("example report (XEQT TFSA, targets and room configured)", () => {
   const report = buildExampleReport();
   const frontmatter = Object.fromEntries(report.document.frontmatter);
 
@@ -19,7 +19,7 @@ describe("example report (XEQT TFSA, plan and room configured)", () => {
       portfolio_value: "4312.55",
       total_contributed: "3900.00",
       net_growth: "412.55",
-      plan_status: "on-track",
+      contribution_status: "on-track",
       tfsa_room_remaining: "4000.00",
       rrsp_room_remaining: null,
       fhsa_room_remaining: null,
@@ -33,7 +33,7 @@ describe("example report (XEQT TFSA, plan and room configured)", () => {
     );
     expect(headings).toEqual([
       "Investing Report — October 2026",
-      "Plan execution",
+      "Monthly activity",
       "Contributions and growth",
       "Holdings",
       "Registered account room — 2026",
@@ -91,13 +91,11 @@ describe("example report (XEQT TFSA, plan and room configured)", () => {
   it("states missing settings once and never shows zero for unknown values", () => {
     const bare = buildExampleReport({});
     const bareFrontmatter = Object.fromEntries(bare.document.frontmatter);
-    expect(bareFrontmatter.plan_status).toBe("not-configured");
+    expect(bareFrontmatter.contribution_status).toBe("not-configured");
     expect(bareFrontmatter.tfsa_room_remaining).toBeNull();
+    expect(bare.markdown.match(/no starting room is set/g)).toHaveLength(1);
     expect(
-      bare.markdown.match(/starting room has not been configured/g),
-    ).toHaveLength(1);
-    expect(
-      bare.markdown.match(/no monthly plan has been configured/g),
+      bare.markdown.match(/no monthly contribution target is set/g),
     ).toHaveLength(1);
     expect(bare.markdown).not.toContain("[!warning]");
     expect(bare.markdown).toMatchSnapshot();

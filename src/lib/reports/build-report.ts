@@ -5,7 +5,7 @@ import { analyzeHoldings, renderHoldings } from "./holdings";
 import { renderMarkdown } from "./markdown";
 import { money, plainAmount, signedMoney } from "./money";
 import { localDateTime, localTimestamp, type Period } from "./period";
-import { analyzePlan, renderPlan } from "./plan";
+import { analyzeActivity, renderActivity } from "./activity";
 import { analyzeRoom, renderRoom } from "./room";
 import {
   resolveSettings,
@@ -29,15 +29,16 @@ export interface Report {
   markdown: string;
 }
 
+const STALE_HOLDINGS_MS = 24 * 60 * 60 * 1000;
+
 function dataNotes(
   input: ReportInput,
   ctx: Context,
+  now: Date,
   extra: string[],
 ): Inline[][] {
   const { accounts } = input;
-  const notes: string[] = [
-    "Transactions are reported by the brokerage with a one-day delay.",
-  ];
+  const notes: string[] = [];
   if (accounts.length === 0) {
     notes.push("No brokerage accounts were available for this report.");
   }
@@ -53,11 +54,12 @@ function dataNotes(
       );
     }
   }
+  // Totals can only count transactions SnapTrade provides.
   const starts = accounts
     .filter((a) => a.firstTransactionDate)
-    .map((a) => `${a.firstTransactionDate} (${accountLabel(a, accounts)})`);
+    .map((a) => `${accountLabel(a, accounts)} from ${a.firstTransactionDate}`);
   if (starts.length > 0) {
-    notes.push(`Transaction history starts on ${starts.join(", ")}.`);
+    notes.push(`Earliest available transactions: ${starts.join(", ")}.`);
   }
   if (!ctx.isCurrentPeriod) {
     notes.push(
@@ -68,9 +70,11 @@ function dataNotes(
     .map((a) => a.dataAsOf)
     .filter((d): d is string => d !== null && !Number.isNaN(Date.parse(d)))
     .sort()[0];
-  if (asOf) {
+  // Only worth stating when the sync is noticeably older than the retrieval
+  // time in the footer.
+  if (asOf && now.getTime() - Date.parse(asOf) > STALE_HOLDINGS_MS) {
     notes.push(
-      `Holdings data as of ${localDateTime(new Date(asOf), ctx.settings.timeZone)}.`,
+      `Holdings last synced by SnapTrade ${localDateTime(new Date(asOf), ctx.settings.timeZone)}.`,
     );
   }
   for (const account of accounts.filter((a) => a.isPaper)) {
@@ -98,7 +102,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
 
   const holdings = analyzeHoldings(accounts, ctx);
   const contributions = analyzeContributions(accounts, ctx);
-  const plan = analyzePlan(accounts, ctx);
+  const activity = analyzeActivity(accounts, ctx);
   const room = analyzeRoom(accounts, ctx);
   const distributions = analyzeDistributions(accounts, ctx);
 
@@ -110,10 +114,21 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
   const tfsa = room.rows.find((r) => r.type === "TFSA");
 
   const summary: Inline[] = [];
-  if (plan.status === "on-track")
-    summary.push("Monthly plan executed on schedule. ");
-  if (plan.status === "attention")
-    summary.push("Monthly plan needs attention. ");
+  if (activity.targetCents !== null) {
+    const lead = {
+      "on-track": "Contribution target met: ",
+      attention: "Contributions below target: ",
+      "in-progress": "Contributions this month: ",
+      "not-configured": "",
+    }[activity.contributionStatus];
+    summary.push(
+      lead,
+      { bold: money(activity.contributedCents, base, base) },
+      " of ",
+      { bold: money(activity.targetCents, base, base) },
+      activity.contributionStatus === "in-progress" ? " target so far. " : ". ",
+    );
+  }
   if (growth) {
     summary.push(
       "Portfolio value: ",
@@ -146,7 +161,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       : part,
   );
 
-  const warnings = [...plan.warnings, ...room.warnings];
+  const warnings = [...activity.warnings, ...room.warnings];
   const extraNotes: string[] = [];
   if (contributions.rows.length > 1 || holdings.totals.length > 1) {
     extraNotes.push("Amounts are grouped by currency and not converted.");
@@ -164,6 +179,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
   const ttm = distributions.ttm.find((t) => t.currency === base);
   const distributionsKnown = accounts.some((a) => a.activities !== null);
 
+  const notes = dataNotes(input, ctx, options.now, extraNotes);
   const document: ReportDocument = {
     frontmatter: [
       ["type", "investing-report"],
@@ -186,7 +202,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
           ? plainAmount(growth.growthCents)
           : null,
       ],
-      ["plan_status", plan.status],
+      ["contribution_status", activity.contributionStatus],
       ["tfsa_room_remaining", roomValue("TFSA")],
       ["rrsp_room_remaining", roomValue("RRSP")],
       ["fhsa_room_remaining", roomValue("FHSA")],
@@ -218,17 +234,21 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
             } satisfies Block,
           ]
         : []),
-      ...renderPlan(plan),
+      ...renderActivity(activity),
       ...renderContributions(contributions, ctx),
       ...renderHoldings(holdings, ctx),
       ...renderRoom(room, ctx),
       ...renderDistributions(distributions, ctx),
-      {
-        kind: "callout",
-        callout: "info",
-        title: "Data notes",
-        lines: dataNotes(input, ctx, extraNotes),
-      },
+      ...(notes.length > 0
+        ? [
+            {
+              kind: "callout",
+              callout: "info",
+              title: "Data notes",
+              lines: notes,
+            } satisfies Block,
+          ]
+        : []),
       {
         kind: "footer",
         text: `Data retrieved ${localDateTime(options.now, settings.timeZone)} via SnapTrade. For information only. Not financial advice.`,
