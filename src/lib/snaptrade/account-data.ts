@@ -25,6 +25,8 @@ export interface RawAccountData {
   valueHistory?: AccountValueHistory | null;
   // A part failed because SnapTrade's request limit was reached.
   rateLimited?: boolean;
+  // The connection's brokerage name, when GET /authorizations loaded.
+  brokerageName?: string | null;
 }
 
 async function loadActivities(

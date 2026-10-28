@@ -59,20 +59,50 @@ function withoutInstitutionPrefix(name: string, institution: string): string {
   return rest && rest !== name ? rest : name;
 }
 
-export function toAccountView(account: Account): AccountView | null {
+// The brokerage's name as its connection reports it ("Wealthsimple"), which
+// can be shorter than an account's institution_name ("Wealthsimple Trade").
+// The connection's own label (e.g. "Connection-1") is not a brokerage name.
+export function brokerageName(
+  connection: BrokerageAuthorization | undefined,
+): string | null {
+  return (
+    text(connection?.brokerage?.display_name) ??
+    text(connection?.brokerage?.name)
+  );
+}
+
+// Brokerage names by connection ID, from a GET /authorizations response.
+export function brokerageNames(raw: unknown): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const connection of Array.isArray(raw) ? raw : []) {
+    const id = text((connection as BrokerageAuthorization)?.id);
+    const name = brokerageName(connection as BrokerageAuthorization);
+    if (id && name) names.set(id, name);
+  }
+  return names;
+}
+
+// `brokerage` is the connection's name when known; institution_name is the
+// fallback, and is also removed from the start of account names.
+export function toAccountView(
+  account: Account,
+  brokerage?: string | null,
+): AccountView | null {
   const id = text(account?.id);
   if (!id) {
     return null;
   }
-  const institution = text(account.institution_name) ?? "Unknown institution";
+  const reported = text(account.institution_name);
+  const institution = text(brokerage) ?? reported ?? "Unknown institution";
+  let name = text(account.name) ?? institution;
+  for (const prefix of [reported, institution]) {
+    if (prefix) name = withoutInstitutionPrefix(name, prefix);
+  }
   return {
     id,
     connectionId: text(account.brokerage_authorization) ?? "",
     institution,
-    name: withoutInstitutionPrefix(
-      text(account.name) ?? institution,
-      institution,
-    ),
+    name,
     numberSuffix: numberSuffix(account.number),
     type: text(account.raw_type) ?? UNCLASSIFIED,
     total: money(account.balance?.total),
@@ -114,8 +144,16 @@ function normalizeList<T, V>(
     .filter((view): view is V => view !== null);
 }
 
-export const normalizeAccounts = (raw: unknown) =>
-  normalizeList(raw, toAccountView);
+export const normalizeAccounts = (
+  raw: unknown,
+  names: Map<string, string> = new Map(),
+) =>
+  normalizeList(raw, (account: Account) =>
+    toAccountView(
+      account,
+      names.get(text(account?.brokerage_authorization) ?? ""),
+    ),
+  );
 
 export const normalizeConnections = (raw: unknown) =>
   normalizeList(raw, toConnectionView);

@@ -118,8 +118,9 @@ export function normalizeAccountData(
         activities,
         valueHistory,
         rateLimited,
+        brokerageName,
       }) => {
-        const view = toAccountView(account);
+        const view = toAccountView(account, brokerageName);
         if (!view) return [];
         const tagged = settings.accountTypes?.[view.id];
         return {

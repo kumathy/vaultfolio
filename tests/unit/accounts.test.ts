@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formatIsoDate, formatMoney } from "@/lib/format";
 import { loadAccountsOverview } from "@/lib/snaptrade/accounts";
+import { loadReportAccounts } from "@/lib/snaptrade/report";
 import {
   ReauthorizationRequired,
   type TokenDeps,
 } from "@/lib/snaptrade/tokens";
 import {
+  brokerageNames,
   groupByInstitution,
   normalizeAccounts,
   normalizeConnections,
@@ -74,6 +76,58 @@ describe("normalizeAccounts", () => {
   it("accepts an empty list and rejects a non-list response", () => {
     expect(normalizeAccounts([])).toEqual([]);
     expect(() => normalizeAccounts({ results: [] })).toThrow();
+  });
+});
+
+// SnapTrade names Wealthsimple accounts "Wealthsimple Trade", while their
+// connection's brokerage is "Wealthsimple".
+const wealthsimpleTrade = [
+  {
+    id: "acc-ws",
+    brokerage_authorization: "conn-ws",
+    name: "Wealthsimple Trade TFSA",
+    number: "HQ8KZ1hrg",
+    institution_name: "Wealthsimple Trade",
+    raw_type: "TFSA",
+    is_paper: false,
+    balance: { total: { amount: 2444, currency: "CAD" } },
+    sync_status: {},
+  },
+];
+const wealthsimpleConnection = [
+  {
+    id: "conn-ws",
+    name: "Connection-1",
+    brokerage: { name: "WEALTHSIMPLE", display_name: "Wealthsimple" },
+  },
+];
+
+describe("brokerage names", () => {
+  it("prefers the connection's brokerage name and still shortens the account name", () => {
+    const [account] = normalizeAccounts(
+      wealthsimpleTrade,
+      brokerageNames(wealthsimpleConnection),
+    );
+    expect(account).toMatchObject({
+      institution: "Wealthsimple",
+      name: "TFSA",
+    });
+  });
+
+  it("falls back to institution_name without connections", () => {
+    const [account] = normalizeAccounts(wealthsimpleTrade);
+    expect(account).toMatchObject({
+      institution: "Wealthsimple Trade",
+      name: "TFSA",
+    });
+  });
+
+  it("never uses a connection's own label as a brokerage name", () => {
+    expect(
+      brokerageNames([
+        { id: "conn-x", name: "Sandbox connection", brokerage: {} },
+      ]),
+    ).toEqual(new Map());
   });
 });
 
@@ -194,6 +248,35 @@ describe("loadAccountsOverview", () => {
     expect(overview.accounts).toHaveLength(4);
     expect(overview.connections).toHaveLength(3);
     expect(overview.retrievedAt).toBeInstanceOf(Date);
+  });
+
+  it("groups accounts under their connection's brokerage name", async () => {
+    respondWith({
+      "/accounts": () => jsonResponse(wealthsimpleTrade),
+      "/authorizations": () => jsonResponse(wealthsimpleConnection),
+    });
+
+    const overview = await loadAccountsOverview(deps, "user-1");
+
+    expect(overview.accounts?.[0].institution).toBe("Wealthsimple");
+  });
+
+  it("names report accounts after their connection, tolerating its failure", async () => {
+    respondWith({
+      "/accounts": () => jsonResponse(wealthsimpleTrade),
+      "/authorizations": () => jsonResponse(wealthsimpleConnection),
+    });
+    const [named] = await loadReportAccounts(deps, "user-1");
+    expect(named.institution).toBe("Wealthsimple");
+
+    respondWith({
+      "/accounts": () => jsonResponse(wealthsimpleTrade),
+      "/authorizations": () => new Response(null, { status: 502 }),
+    });
+    // A different user, so the account cache does not answer.
+    await deps.store.save("user-2", (await deps.store.load("user-1"))!);
+    const [fallback] = await loadReportAccounts(deps, "user-2");
+    expect(fallback.institution).toBe("Wealthsimple Trade");
   });
 
   it("keeps accounts when connections fail to load", async () => {

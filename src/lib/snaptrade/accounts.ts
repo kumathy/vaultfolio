@@ -1,6 +1,7 @@
 import "server-only";
 
 import {
+  brokerageNames,
   normalizeAccounts,
   normalizeConnections,
   type AccountView,
@@ -21,18 +22,40 @@ function logFailure(path: string, reason: unknown) {
   console.warn(`SnapTrade ${path} failed`, { status, kind });
 }
 
+// Normalizing can also throw on a malformed response; that counts as a failed
+// request for this section only.
+function settle<T>(
+  result: PromiseSettledResult<unknown>,
+  normalize: (raw: unknown) => T,
+): PromiseSettledResult<T> {
+  if (result.status === "rejected") return result;
+  try {
+    return { status: "fulfilled", value: normalize(result.value) };
+  } catch (reason) {
+    return { status: "rejected", reason };
+  }
+}
+
 // The two requests are independent: one failing leaves the other section
 // visible with a partial-data notice (null = failed to load).
 export async function loadAccountsOverview(
   deps: TokenDeps,
   userId: string,
 ): Promise<AccountsOverview> {
-  const [accounts, connections] = await Promise.allSettled([
-    snaptradeGet<unknown>(deps, userId, "/accounts").then(normalizeAccounts),
-    snaptradeGet<unknown>(deps, userId, "/authorizations").then(
-      normalizeConnections,
-    ),
+  const [rawAccounts, rawConnections] = await Promise.allSettled([
+    snaptradeGet<unknown>(deps, userId, "/accounts"),
+    snaptradeGet<unknown>(deps, userId, "/authorizations"),
   ]);
+  // Accounts are grouped under their connection's brokerage name when the
+  // connections loaded, and under their institution_name otherwise.
+  const names =
+    rawConnections.status === "fulfilled"
+      ? brokerageNames(rawConnections.value)
+      : new Map<string, string>();
+  const [accounts, connections] = [
+    settle(rawAccounts, (raw) => normalizeAccounts(raw, names)),
+    settle(rawConnections, normalizeConnections),
+  ];
 
   for (const result of [accounts, connections]) {
     if (
