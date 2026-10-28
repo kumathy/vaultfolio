@@ -1,15 +1,16 @@
-import { connection, NextResponse } from "next/server";
+import { connection, NextResponse, type NextRequest } from "next/server";
 import {
   FLOW_COOKIE,
   flowCookieOptions,
   sealFlowState,
 } from "@/lib/auth/flow-cookie";
 import { redirectTo } from "@/lib/auth/http";
+import { pairReturnPath } from "@/lib/auth/plugin";
 import { env } from "@/lib/env";
 import { getOAuthConfig } from "@/lib/snaptrade/config";
 import { createAuthorizationRequest } from "@/lib/snaptrade/oauth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   // A prerendered response would give every visitor the same state and
   // code_verifier.
   await connection();
@@ -24,8 +25,9 @@ export async function GET() {
 
   const { url, state, nonce, codeVerifier } =
     createAuthorizationRequest(config);
+  const returnTo = pairReturnPath(request.nextUrl.searchParams.get("next"));
   const sealed = await sealFlowState(
-    { state, nonce, codeVerifier },
+    { state, nonce, codeVerifier, ...(returnTo && { returnTo }) },
     env.sessionKey,
   );
 

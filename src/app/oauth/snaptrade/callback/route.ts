@@ -48,7 +48,7 @@ async function signIn(request: NextRequest): Promise<NextResponse> {
   }
   const session = await createSession(userId);
 
-  const response = redirectTo("/accounts");
+  const response = redirectTo(flow?.returnTo ?? "/accounts");
   response.cookies.set(
     cookieName,
     session.token,

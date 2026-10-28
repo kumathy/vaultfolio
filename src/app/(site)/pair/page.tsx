@@ -1,0 +1,84 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { TbCheck } from "react-icons/tb";
+import { LogoMark } from "@/components/logo";
+import { SignInLink } from "@/components/site/sign-in-link";
+import { card, container } from "@/components/ui";
+import { isChallenge } from "@/lib/auth/plugin";
+import { currentUserId } from "@/lib/auth/session";
+import { PairForm } from "./pair-form";
+
+export const metadata: Metadata = { title: "Connect Obsidian" };
+
+const access = [
+  "Reads the monthly reports only",
+  "Never sees SnapTrade sign-in or brokerage credentials",
+  "Revocable at any time in Settings",
+];
+
+async function PairContent({
+  searchParams,
+}: {
+  searchParams: PageProps<"/pair">["searchParams"];
+}) {
+  const { challenge } = await searchParams;
+
+  if (!isChallenge(challenge)) {
+    return (
+      <>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Start from Obsidian
+        </h1>
+        <p className="mt-2 leading-relaxed text-muted">
+          Pairing begins in the Vaultfolio plugin: Settings → Vaultfolio →
+          Connect. That opens this page with a one-time link.
+        </p>
+      </>
+    );
+  }
+
+  const signedIn = (await currentUserId()) !== null;
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        Connect an Obsidian vault
+      </h1>
+      <p className="mt-2 leading-relaxed text-muted">
+        The Vaultfolio plugin will sync monthly reports into the vault that
+        opened this page.
+      </p>
+      <ul className="mt-5 space-y-2 text-sm">
+        {access.map((item) => (
+          <li key={item} className="flex items-center gap-2">
+            <TbCheck aria-hidden className="text-accent" />
+            {item}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8">
+        {signedIn ? (
+          <PairForm challenge={challenge} />
+        ) : (
+          <SignInLink
+            href={`/login?next=${encodeURIComponent(`/pair?challenge=${challenge}`)}`}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+export default function PairPage({ searchParams }: PageProps<"/pair">) {
+  return (
+    <main className={`${container} flex justify-center py-16 sm:py-24`}>
+      <div className={`${card} w-full max-w-lg p-6 sm:p-8`}>
+        <LogoMark className="mb-6 h-11 w-11" />
+        <Suspense
+          fallback={<div className="h-48 animate-pulse rounded bg-surface" />}
+        >
+          <PairContent searchParams={searchParams} />
+        </Suspense>
+      </div>
+    </main>
+  );
+}

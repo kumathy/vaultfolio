@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { TbChevronDown } from "react-icons/tb";
 import { AccessSection } from "@/components/settings/access-section";
 import { AccountTypesForm } from "@/components/settings/account-types-form";
+import { ObsidianSection } from "@/components/settings/obsidian-section";
 import { AllocationForm } from "@/components/settings/allocation-form";
 import { SettingsSection } from "@/components/settings/form-kit";
 import { OptionsForm } from "@/components/settings/options-form";
@@ -12,6 +13,7 @@ import { TransfersForm } from "@/components/settings/transfers-form";
 import { ExternalLink } from "@/components/external-link";
 import { card } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
+import { listPluginTokens } from "@/db/plugin";
 import { verifiedEmail } from "@/db/users";
 import { deleteAllSessions, requireUserId } from "@/lib/auth/session";
 import { accountLabel } from "@/lib/reports/context";
@@ -174,15 +176,29 @@ async function SettingsContent() {
   );
 }
 
+async function Obsidian() {
+  const userId = await requireUserId();
+  const [vaults, settings] = await Promise.all([
+    listPluginTokens(userId),
+    loadSettings(userId),
+  ]);
+  return (
+    <ObsidianSection
+      vaults={vaults}
+      timeZone={resolveSettings(settings).timeZone}
+    />
+  );
+}
+
 async function Access() {
   const userId = await requireUserId();
   return <AccessSection email={await verifiedEmail(userId)} />;
 }
 
-function SettingsLoading() {
+function SettingsLoading({ count = 3 }: { count?: number }) {
   return (
     <div role="status" aria-label="Loading settings" className="space-y-6">
-      {[0, 1, 2].map((i) => (
+      {Array.from({ length: count }, (_, i) => (
         <div key={i} className={`${card} h-48 animate-pulse bg-surface`} />
       ))}
     </div>
@@ -203,6 +219,9 @@ export default function SettingsPage() {
       </div>
       <Suspense fallback={<SettingsLoading />}>
         <SettingsContent />
+      </Suspense>
+      <Suspense fallback={<SettingsLoading count={1} />}>
+        <Obsidian />
       </Suspense>
       <Suspense fallback={<AccessSection email={null} />}>
         <Access />

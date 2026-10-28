@@ -61,3 +61,40 @@ export const userSettings = pgTable("user_settings", {
     .notNull()
     .defaultNow(),
 });
+
+// One-time codes that hand a sign-in from the browser to the Obsidian plugin.
+// Only hashes are stored, and a code is deleted when exchanged or expired.
+export const pairingCodes = pgTable(
+  "pairing_codes",
+  {
+    // SHA-256 of the code sent through the obsidian:// link.
+    codeHash: text("code_hash").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // S256 challenge from the plugin: an intercepted code is useless without
+    // the verifier that never leaves the plugin.
+    challenge: text("challenge").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("pairing_codes_user_id_idx").on(table.userId)],
+);
+
+// Plugin tokens can only read rendered reports. They live in the vault's
+// data.json, which may be synced or committed, so they are low-trust: hashed
+// here, revocable from Settings, and never able to reach SnapTrade directly.
+export const pluginTokens = pgTable(
+  "plugin_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // SHA-256 of the token. A database leak exposes no usable token.
+    tokenHash: text("token_hash").notNull().unique(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    createdAt: createdAt(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  },
+  (table) => [index("plugin_tokens_user_id_idx").on(table.userId)],
+);

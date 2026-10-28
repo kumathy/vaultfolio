@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import type { FormState } from "@/components/settings/form-kit";
+import { revokePluginToken } from "@/db/plugin";
 import { loadSettings, updateSettings } from "@/db/settings";
 import { requireUserId } from "@/lib/auth/session";
 import { localDate } from "@/lib/reports/period";
@@ -135,4 +136,15 @@ export async function saveOptions(
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   await updateSettings(userId, (s) => ({ ...s, ...parsed.value }));
   return saved("Options saved");
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Bound to one vault's id in the form; revocation is scoped to the signed-in
+// user, so another user's id has no effect.
+export async function revokeVault(id: string): Promise<void> {
+  const userId = await requireUserId();
+  if (!UUID.test(id)) return;
+  await revokePluginToken(userId, id);
+  refresh();
 }

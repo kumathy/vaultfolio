@@ -26,6 +26,18 @@ export function availablePeriods(
   return periodsBetween(firstReportPeriod(accounts) ?? current, current);
 }
 
+// Every month's report, oldest first, from one set of account data.
+export function buildAllReports(
+  accounts: ReportAccount[],
+  now: Date,
+  settings: ReportSettings = {},
+): { period: string; report: ReturnType<typeof buildReport> }[] {
+  return availablePeriods(accounts, now, settings).map((period) => ({
+    period: period.id,
+    report: buildReport({ accounts }, { period, now, settings }),
+  }));
+}
+
 export interface Archive {
   fileName: string;
   periods: string[];

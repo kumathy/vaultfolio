@@ -1,6 +1,7 @@
 import "server-only";
 
 import { EncryptJWT, jwtDecrypt } from "jose";
+import { pairReturnPath } from "./plugin";
 
 export const FLOW_COOKIE = "vf_oauth";
 // Sent only to the callback, the one route that reads it.
@@ -11,6 +12,8 @@ export interface FlowState {
   state: string;
   nonce: string;
   codeVerifier: string;
+  // Page to open after sign-in, validated by pairReturnPath.
+  returnTo?: `/pair?${string}`;
 }
 
 // Encrypted (JWE, A256GCM) rather than only signed: the code_verifier and
@@ -38,7 +41,7 @@ export async function openFlowState(
       keyManagementAlgorithms: ["dir"],
       contentEncryptionAlgorithms: ["A256GCM"],
     });
-    const { state, nonce, codeVerifier } = payload;
+    const { state, nonce, codeVerifier, returnTo } = payload;
     if (
       typeof state !== "string" ||
       typeof nonce !== "string" ||
@@ -46,7 +49,8 @@ export async function openFlowState(
     ) {
       return null;
     }
-    return { state, nonce, codeVerifier };
+    const back = pairReturnPath(typeof returnTo === "string" ? returnTo : null);
+    return { state, nonce, codeVerifier, ...(back && { returnTo: back }) };
   } catch {
     return null;
   }
