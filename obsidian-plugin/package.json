@@ -1,0 +1,21 @@
+{
+  "name": "vaultfolio-obsidian",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Obsidian plugin for Vaultfolio: syncs monthly investing reports into a vault.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "builtin-modules": "^5.4.0",
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.14.4",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
+  }
+}

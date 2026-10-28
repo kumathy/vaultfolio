@@ -1,0 +1,9 @@
+{
+  "id": "vaultfolio",
+  "name": "Vaultfolio",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Syncs monthly investing reports, generated from SnapTrade brokerage data, into a vault folder.",
+  "author": "kumathy",
+  "isDesktopOnly": false
+}

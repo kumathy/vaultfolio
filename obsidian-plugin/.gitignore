@@ -1,0 +1,5 @@
+node_modules
+# Build output; attached to releases rather than committed.
+main.js
+# Plugin settings, including the plugin token, when developing inside a vault.
+data.json

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Obsidian plugin has its own package and build.
+    "obsidian-plugin/**",
   ]),
 ]);
 
