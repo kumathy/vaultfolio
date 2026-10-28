@@ -1,5 +1,6 @@
 import type { RawAccountData } from "@/lib/snaptrade/account-data";
 import type {
+  AccountValueHistory,
   AccountPosition,
   Activity as RawActivity,
   Balance,
@@ -62,13 +63,21 @@ function toActivity(
   const id = activity.id ?? `${date}-${type}-${amountCents}`;
   const kind =
     settings.activityKinds?.[id] ?? activityKind(type, amountCents, units);
+  // Unit counts are reconstructed by summing these, so a sale must subtract
+  // whichever sign the brokerage reports it with.
+  const signedUnits =
+    kind === "buy"
+      ? Math.abs(units)
+      : kind === "sell"
+        ? -Math.abs(units)
+        : units;
   return {
     id,
     date,
     kind,
     type,
     symbol: activity.symbol?.raw_symbol || activity.symbol?.symbol || null,
-    units,
+    units: signedUnits,
     price: decimal(activity.price),
     amountCents,
     currency: currencyCode(activity.currency?.code),
@@ -76,6 +85,22 @@ function toActivity(
 }
 
 const notNull = <T>(value: T | null): value is T => value !== null;
+
+function toValueHistory(
+  raw: AccountValueHistory | null | undefined,
+): ReportAccount["valueHistory"] {
+  const currency = currencyCode(raw?.currency);
+  if (!raw || !currency || !Array.isArray(raw.history)) return null;
+  const points = raw.history
+    .map((item) => {
+      const date = formatIsoDate(item.date);
+      const value = decimal(item.total_value);
+      return date && value !== null ? { date, cents: toCents(value) } : null;
+    })
+    .filter(notNull)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  return points.length > 0 ? { currency, points } : null;
+}
 
 export function normalizeAccountData(
   data: RawAccountData[],
@@ -85,37 +110,48 @@ export function normalizeAccountData(
     .filter(
       ({ account }) => !EXCLUDED_CATEGORIES.has(account.account_category ?? ""),
     )
-    .flatMap(({ account, balances, positions, activities }) => {
-      const view = toAccountView(account);
-      if (!view) return [];
-      const tagged = settings.accountTypes?.[view.id];
-      return {
-        id: view.id,
-        name: view.name,
-        institution: view.institution,
-        numberSuffix: view.numberSuffix,
-        label: view.type,
-        registeredType:
-          tagged !== undefined
-            ? tagged
-            : view.type === UNCLASSIFIED
-              ? null
-              : registeredType(view.type),
-        isPaper: view.isPaper,
-        holdings: positions
-          ? (positions.results ?? []).map(toHolding).filter(notNull)
-          : null,
-        cash: balances ? balances.map(toCash).filter(notNull) : null,
-        activities: activities
-          ? activities
-              .map((a) => toActivity(a, settings))
-              .filter(notNull)
-              .sort((a, b) => a.date.localeCompare(b.date))
-          : null,
-        firstTransactionDate: formatIsoDate(
-          account.sync_status?.transactions?.first_transaction_date,
-        ),
-        dataAsOf: positions?.data_freshness?.as_of ?? null,
-      } satisfies ReportAccount;
-    });
+    .flatMap(
+      ({
+        account,
+        balances,
+        positions,
+        activities,
+        valueHistory,
+        rateLimited,
+      }) => {
+        const view = toAccountView(account);
+        if (!view) return [];
+        const tagged = settings.accountTypes?.[view.id];
+        return {
+          id: view.id,
+          name: view.name,
+          institution: view.institution,
+          numberSuffix: view.numberSuffix,
+          label: view.type,
+          registeredType:
+            tagged !== undefined
+              ? tagged
+              : view.type === UNCLASSIFIED
+                ? null
+                : registeredType(view.type),
+          isPaper: view.isPaper,
+          rateLimited: rateLimited ?? false,
+          valueHistory: toValueHistory(valueHistory),
+          holdings: positions
+            ? (positions.results ?? []).map(toHolding).filter(notNull)
+            : null,
+          cash: balances ? balances.map(toCash).filter(notNull) : null,
+          activities: activities
+            ? activities
+                .map((a) => toActivity(a, settings))
+                .filter(notNull)
+                .sort((a, b) => a.date.localeCompare(b.date))
+            : null,
+          firstTransactionDate: formatIsoDate(
+            account.sync_status?.transactions?.first_transaction_date,
+          ),
+          dataAsOf: positions?.data_freshness?.as_of ?? null,
+        } satisfies ReportAccount;
+      },
+    );
 }

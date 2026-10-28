@@ -1,10 +1,11 @@
 import "server-only";
 
-import { snaptradeGet } from "./api";
+import { SnapTradeApiError, snaptradeGet } from "./api";
 import { ReauthorizationRequired, type TokenDeps } from "./tokens";
 import type {
   Account,
   AccountPositionsResponse,
+  AccountValueHistory,
   Activity,
   ActivityPage,
   Balance,
@@ -20,6 +21,10 @@ export interface RawAccountData {
   balances: Balance[] | null;
   positions: AccountPositionsResponse | null;
   activities: Activity[] | null;
+  // Optional add-on: null when it is not enabled or the request failed.
+  valueHistory?: AccountValueHistory | null;
+  // A part failed because SnapTrade's request limit was reached.
+  rateLimited?: boolean;
 }
 
 async function loadActivities(
@@ -46,11 +51,25 @@ async function loadActivities(
   return activities;
 }
 
-function settledValue<T>(result: PromiseSettledResult<T>): T | null {
+function settledValue<T>(
+  part: string,
+  result: PromiseSettledResult<T>,
+): T | null {
   if (result.status === "fulfilled") return result.value;
   if (result.reason instanceof ReauthorizationRequired) throw result.reason;
+  // Status only: response bodies may contain account data.
+  const status =
+    result.reason instanceof SnapTradeApiError
+      ? `HTTP ${result.reason.status}`
+      : "request failed";
+  console.warn(`SnapTrade ${part} could not be loaded: ${status}`);
   return null;
 }
+
+const isRateLimited = (result: PromiseSettledResult<unknown>) =>
+  result.status === "rejected" &&
+  result.reason instanceof SnapTradeApiError &&
+  result.reason.rateLimited;
 
 async function loadOneAccount(
   deps: TokenDeps,
@@ -58,21 +77,29 @@ async function loadOneAccount(
   account: Account,
 ): Promise<RawAccountData> {
   const id = encodeURIComponent(account.id);
-  const [balances, positions, activities] = await Promise.allSettled([
-    snaptradeGet<Balance[]>(deps, userId, `/accounts/${id}/balances`),
-    snaptradeGet<AccountPositionsResponse>(
-      deps,
-      userId,
-      `/accounts/${id}/positions/all`,
-    ),
-    loadActivities(deps, userId, account.id),
-  ]);
+  const [balances, positions, activities, valueHistory] =
+    await Promise.allSettled([
+      snaptradeGet<Balance[]>(deps, userId, `/accounts/${id}/balances`),
+      snaptradeGet<AccountPositionsResponse>(
+        deps,
+        userId,
+        `/accounts/${id}/positions/all`,
+      ),
+      loadActivities(deps, userId, account.id),
+      snaptradeGet<AccountValueHistory>(
+        deps,
+        userId,
+        `/accounts/${id}/balanceHistory`,
+      ),
+    ]);
 
   return {
     account,
-    balances: settledValue(balances),
-    positions: settledValue(positions),
-    activities: settledValue(activities),
+    balances: settledValue("balances", balances),
+    positions: settledValue("positions", positions),
+    activities: settledValue("activities", activities),
+    valueHistory: settledValue("value history", valueHistory),
+    rateLimited: [balances, positions, activities].some(isRateLimited),
   };
 }
 

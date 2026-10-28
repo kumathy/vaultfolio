@@ -4,6 +4,7 @@ import { buildReport, type Report } from "@/lib/reports/build-report";
 import { normalizeAccountData } from "@/lib/reports/normalize";
 import type { Period } from "@/lib/reports/period";
 import type { ReportAccount, ReportSettings } from "@/lib/reports/types";
+import { cachedAccountData } from "./account-cache";
 import { loadAccountData } from "./account-data";
 import { snaptradeGet } from "./api";
 import type { TokenDeps } from "./tokens";
@@ -15,12 +16,13 @@ export async function loadReportAccounts(
   userId: string,
   settings: ReportSettings = {},
 ): Promise<ReportAccount[]> {
-  const response = await snaptradeGet<unknown>(deps, userId, "/accounts");
-  const accounts = Array.isArray(response) ? (response as Account[]) : [];
-  return normalizeAccountData(
-    await loadAccountData(deps, userId, accounts),
-    settings,
-  );
+  const raw = await cachedAccountData(userId, async () => {
+    const response = await snaptradeGet<unknown>(deps, userId, "/accounts");
+    const accounts = Array.isArray(response) ? (response as Account[]) : [];
+    return loadAccountData(deps, userId, accounts);
+  });
+  // Settings are applied after the cache, so changes show immediately.
+  return normalizeAccountData(raw, settings);
 }
 
 export async function generateReport(

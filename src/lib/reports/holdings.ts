@@ -7,6 +7,7 @@ import {
 } from "./context";
 import { money, percent, units } from "./money";
 import type { Block, ReportAccount } from "./types";
+import { symbolsSeen, unitsHeldOn } from "./units";
 
 export interface HoldingRow {
   account: string;
@@ -20,14 +21,46 @@ export interface HoldingRow {
 
 export interface HoldingsResult {
   rows: HoldingRow[];
+  // Past months list units at the month's end; values need historical prices.
+  unitsOnlyAt: string | null;
   totals: { currency: string; cents: number }[];
   showTargets: boolean;
+}
+
+function unitsAtMonthEnd(
+  accounts: ReportAccount[],
+  ctx: Context,
+): HoldingsResult {
+  const rows: HoldingRow[] = [];
+  for (const account of accounts) {
+    const name = accountLabel(account, accounts);
+    const held = symbolsSeen(account)
+      .map((symbol) => ({
+        symbol,
+        units: unitsHeldOn(account, symbol, ctx.evalDate, ctx.asOf),
+      }))
+      .filter((h): h is { symbol: string; units: number } => h.units !== null)
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+    for (const { symbol, units } of held) {
+      rows.push({
+        account: name,
+        symbol,
+        units,
+        valueCents: null,
+        currency: null,
+        weight: null,
+        targetPercent: null,
+      });
+    }
+  }
+  return { rows, unitsOnlyAt: ctx.evalDate, totals: [], showTargets: false };
 }
 
 export function analyzeHoldings(
   accounts: ReportAccount[],
   ctx: Context,
 ): HoldingsResult {
+  if (!ctx.isCurrentPeriod) return unitsAtMonthEnd(accounts, ctx);
   const allocation = ctx.settings.allocation;
   const rows: HoldingRow[] = [];
 
@@ -84,6 +117,7 @@ export function analyzeHoldings(
 
   return {
     rows,
+    unitsOnlyAt: null,
     totals: orderCurrencies(
       totalsByCurrency.keys(),
       ctx.settings.baseCurrency,
@@ -108,7 +142,36 @@ export function renderHoldings(result: HoldingsResult, ctx: Context): Block[] {
       heading,
       {
         kind: "paragraph",
-        text: ["No holdings or cash balances were reported."],
+        text: [
+          result.unitsOnlyAt
+            ? "No units were held at month end."
+            : "No holdings or cash balances were reported.",
+        ],
+      },
+    ];
+  }
+
+  if (result.unitsOnlyAt) {
+    return [
+      heading,
+      {
+        kind: "table",
+        columns: [
+          { label: "Account" },
+          { label: "Symbol" },
+          { label: "Units", align: "right" },
+        ],
+        rows: result.rows.map((row) => [
+          row.account,
+          row.symbol,
+          units(row.units ?? 0),
+        ]),
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Units held at month end, from current holdings and transaction history.",
+        ],
       },
     ];
   }

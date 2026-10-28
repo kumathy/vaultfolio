@@ -19,10 +19,9 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
       portfolio_value: "4312.55",
       total_contributed: "3900.00",
       net_growth: "412.55",
+      contributed_this_month: "300.00",
       contribution_status: "on-track",
       tfsa_room_remaining: "4000.00",
-      rrsp_room_remaining: null,
-      fhsa_room_remaining: null,
       distributions_ttm: "25.01",
     });
   });
@@ -46,10 +45,7 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
       "Total contributed",
       "$3,900.00",
     ]);
-    expect(tableRow(report.markdown, "Current value")).toEqual([
-      "Current value",
-      "$4,312.55",
-    ]);
+    expect(tableRow(report.markdown, "Value")).toEqual(["Value", "$4,312.55"]);
     expect(tableRow(report.markdown, "Net growth")).toEqual([
       "Net growth",
       "+$412.55",
@@ -91,8 +87,9 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
   it("states missing settings once and never shows zero for unknown values", () => {
     const bare = buildExampleReport({});
     const bareFrontmatter = Object.fromEntries(bare.document.frontmatter);
-    expect(bareFrontmatter.contribution_status).toBe("not-configured");
-    expect(bareFrontmatter.tfsa_room_remaining).toBeNull();
+    // Unknown values are left out, never written as 0.
+    expect(bareFrontmatter).not.toHaveProperty("contribution_status");
+    expect(bareFrontmatter).not.toHaveProperty("tfsa_room_remaining");
     expect(bare.markdown.match(/no starting room is set/g)).toHaveLength(1);
     expect(
       bare.markdown.match(/no monthly contribution target is set/g),

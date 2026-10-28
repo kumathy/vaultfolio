@@ -23,8 +23,7 @@ describe("monthly activity", () => {
     });
     expect(tableRow(r.markdown, "Contributions")).toEqual([
       "Contributions",
-      "In progress",
-      "$0.00 of $300.00 target so far (0 deposits)",
+      "$0.00 of $300.00 target so far (0 deposits) — In progress",
     ]);
     expect(r.frontmatter.contribution_status).toBe("in-progress");
     expect(r.markdown).toContain(
@@ -41,8 +40,7 @@ describe("monthly activity", () => {
     });
     expect(tableRow(r.markdown, "Contributions")).toEqual([
       "Contributions",
-      "Attention",
-      "$0.00 of $300.00 target (0 deposits)",
+      "$0.00 of $300.00 target (0 deposits) — Attention",
     ]);
     expect(r.frontmatter.contribution_status).toBe("attention");
     expect(r.markdown).toContain("> [!warning] Attention\n> Contributions:");
@@ -63,8 +61,7 @@ describe("monthly activity", () => {
     );
     expect(tableRow(weekly.markdown, "Contributions")).toEqual([
       "Contributions",
-      "On track",
-      "$300.00 of $300.00 target (4 deposits)",
+      "$300.00 of $300.00 target (4 deposits) — On track",
     ]);
     expect(weekly.frontmatter.contribution_status).toBe("on-track");
     expect(weekly.markdown).toContain(
@@ -78,8 +75,7 @@ describe("monthly activity", () => {
     });
     expect(tableRow(r.markdown, "Uninvested cash")).toEqual([
       "Uninvested cash",
-      "On track",
-      "$300.00 since 2026-10-25 (2 days, within 5-day window)",
+      "$300.00 since 2026-10-25 (2 days, within 5-day window) — On track",
     ]);
     expect(r.markdown).not.toContain("[!warning]");
   });
@@ -90,8 +86,7 @@ describe("monthly activity", () => {
       const r = report(raw, { settings });
       expect(tableRow(r.markdown, "Uninvested cash")).toEqual([
         "Uninvested cash",
-        "Attention",
-        "$300.00 uninvested since 2026-10-01 (26 days)",
+        "$300.00 uninvested since 2026-10-01 (26 days) — Attention",
       ]);
       expect(r.markdown).toContain("> [!warning] Attention");
     }
@@ -128,7 +123,6 @@ describe("monthly activity", () => {
     );
     expect(tableRow(r.markdown, "Purchases")).toEqual([
       "Purchases",
-      "—",
       "20 units XEQT ($700.00); 1 unit VFV ($100.00); 1 unit SHOP ($100.00)",
     ]);
     expect(tableRow(r.markdown, "Account")).toEqual([
@@ -143,6 +137,20 @@ describe("monthly activity", () => {
       "9.1%",
       "0.0%",
     ]);
+  });
+
+  it("explains data missing because of SnapTrade's request limit", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        name: "TFSA",
+        activities: null,
+        rateLimited: true,
+      }),
+    ]);
+    expect(r.markdown).toContain(
+      "TFSA: transactions could not be loaded because SnapTrade's per-account request limit was reached; reloading after a minute retries. Affected sections exclude this data.",
+    );
   });
 
   it("notes the holdings sync time only when it is more than a day old", () => {
@@ -175,14 +183,104 @@ describe("monthly activity", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA);
     expect(tableRow(r.markdown, "Contributions")).toEqual([
       "Contributions",
-      "Not configured",
       "$300.00 (1 deposit)",
     ]);
-    expect(r.frontmatter.contribution_status).toBe("not-configured");
+    expect(r.frontmatter).not.toHaveProperty("contribution_status");
     expect(
       r.markdown.match(/no monthly contribution target is set/g),
     ).toHaveLength(1);
     expect(r.markdown).not.toContain("| Target");
+  });
+
+  it("reports a past month as a month-end record", () => {
+    const r = report(EXAMPLE_ACCOUNT_DATA, {
+      period: "2026-09",
+      settings: EXAMPLE_SETTINGS,
+    });
+    // October's 300.00 deposit and 9-unit purchase come after this month.
+    expect(tableRow(r.markdown, "Total contributed")).toEqual([
+      "Total contributed",
+      "$3,600.00",
+    ]);
+    expect(rowWith(r.section("Holdings"), "XEQT")).toEqual([
+      "TFSA",
+      "XEQT",
+      "106",
+    ]);
+    expect(r.markdown).toContain("multiplied by units held at month end.");
+  });
+
+  const valued = (history?: [string, number][]) =>
+    report(
+      [
+        rawAccount({
+          id: "tfsa",
+          name: "TFSA",
+          positions: [["XEQT", 30, 35]],
+          activities: [
+            act.deposit("2026-08-01", 1000),
+            act.buy("2026-08-02", "XEQT", 30, 1000),
+          ],
+          valueHistory: history,
+        }),
+      ],
+      { period: "2026-09" },
+    );
+
+  it("estimates a past month's value from SnapTrade's value history", () => {
+    const r = valued([
+      ["2026-09-28", 1040],
+      ["2026-09-30", 1052.5],
+      ["2026-10-01", 1060],
+    ]);
+    expect(tableRow(r.markdown, "Value")).toEqual(["Value", "$1,052.50"]);
+    expect(tableRow(r.markdown, "Net growth")).toEqual([
+      "Net growth",
+      "+$52.50",
+    ]);
+    expect(r.frontmatter).toMatchObject({
+      portfolio_value: "1052.50",
+      total_contributed: "1000.00",
+      net_growth: "52.50",
+    });
+    expect(r.markdown).toContain(
+      "Estimated portfolio value: **$1,052.50** against **$1,000.00** contributed (net growth **+$52.50**).",
+    );
+    expect(r.markdown).toContain(
+      "Estimate: account value at month end, from SnapTrade's account value history.",
+    );
+  });
+
+  it("shows no value when the history is missing or too far from the month's end", () => {
+    for (const r of [valued(), valued([["2026-09-20", 1040]])]) {
+      expect(tableRow(r.markdown, "Value")?.[1]).toBe("Not available");
+      expect(r.frontmatter).not.toHaveProperty("portfolio_value");
+      expect(r.frontmatter).not.toHaveProperty("net_growth");
+      expect(r.markdown).toContain(
+        "Value and net growth are not available: SnapTrade's account value history has no value near month end.",
+      );
+    }
+  });
+
+  it("lists symbols sold since a past month at that month's units", () => {
+    const r = report(
+      [
+        rawAccount({
+          id: "tfsa",
+          name: "TFSA",
+          positions: [["XEQT", 10, 35]],
+          activities: [
+            act.deposit("2026-08-01", 450),
+            act.buy("2026-08-02", "XEQT", 10, 350),
+            act.buy("2026-08-02", "VFV", 1, 100),
+            act.sell("2026-10-05", "VFV", 1, 105),
+          ],
+        }),
+      ],
+      { period: "2026-08" },
+    );
+    expect(rowWith(r.section("Holdings"), "VFV")).toEqual(["TFSA", "VFV", "1"]);
+    expect(rowWith(r.section("Holdings"), "XEQT")?.[2]).toBe("10");
   });
 
   it("does not judge cash in a past month", () => {
@@ -190,12 +288,10 @@ describe("monthly activity", () => {
       period: "2026-09",
       settings: EXAMPLE_SETTINGS,
     });
-    expect(tableRow(r.markdown, "Uninvested cash")?.[1]).toBe("Not applicable");
-    expect(r.markdown).toContain("Values and holdings are as of 2026-10-27");
+    expect(tableRow(r.markdown, "Uninvested cash")).toBeUndefined();
     expect(tableRow(r.markdown, "Contributions")).toEqual([
       "Contributions",
-      "On track",
-      "$300.00 of $300.00 target (1 deposit)",
+      "$300.00 of $300.00 target (1 deposit) — On track",
     ]);
   });
 });
@@ -418,7 +514,7 @@ describe("registered account room", () => {
       "Not configured",
       "Not configured",
     ]);
-    expect(r.frontmatter.tfsa_room_remaining).toBeNull();
+    expect(r.frontmatter).not.toHaveProperty("tfsa_room_remaining");
     expect(r.markdown).not.toContain("[!warning]");
   });
 
@@ -426,7 +522,7 @@ describe("registered account room", () => {
     const r = report(EXAMPLE_ACCOUNT_DATA, {
       settings: { room: { TFSA: { year: 2025, availableCents: 6_000_00 } } },
     });
-    expect(r.frontmatter.tfsa_room_remaining).toBeNull();
+    expect(r.frontmatter).not.toHaveProperty("tfsa_room_remaining");
   });
 
   it("covers RRSP and FHSA with their reference limits and deadline", () => {
@@ -450,7 +546,7 @@ describe("registered account room", () => {
     expect(r.markdown).toContain(
       "RRSP contributions made up to 2027-03-01 can be deducted for 2026.",
     );
-    expect(r.frontmatter.rrsp_room_remaining).toBeNull();
+    expect(r.frontmatter).not.toHaveProperty("rrsp_room_remaining");
   });
 
   it("uses account tags to classify accounts", () => {
@@ -563,8 +659,8 @@ describe("report-level states", () => {
     expect(r.markdown).toContain(
       "No brokerage accounts were available for this report.",
     );
-    expect(r.frontmatter.portfolio_value).toBeNull();
-    expect(r.frontmatter.distributions_ttm).toBeNull();
+    expect(r.frontmatter).not.toHaveProperty("portfolio_value");
+    expect(r.frontmatter).not.toHaveProperty("distributions_ttm");
   });
 
   it("notes paper accounts and failed parts", () => {

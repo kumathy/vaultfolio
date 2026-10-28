@@ -52,6 +52,22 @@ export const act = {
     currency: money(currency),
     symbol: { symbol, raw_symbol: symbol },
   }),
+  sell: (
+    date: string,
+    symbol: string,
+    units: number,
+    amount: number,
+    currency = "CAD",
+  ): Activity => ({
+    id: nextId(),
+    type: "SELL",
+    trade_date: at(date),
+    amount,
+    units,
+    price: amount / units,
+    currency: money(currency),
+    symbol: { symbol, raw_symbol: symbol },
+  }),
   dividend: (
     date: string,
     symbol: string,
@@ -86,6 +102,9 @@ export interface AccountOptions {
   activities?: Activity[] | null;
   firstTransactionDate?: string;
   holdingsAsOf?: string;
+  rateLimited?: boolean;
+  // [date, value] pairs from SnapTrade's account value history.
+  valueHistory?: [date: string, value: number][];
 }
 
 export function rawAccount(options: AccountOptions): RawAccountData {
@@ -121,6 +140,16 @@ export function rawAccount(options: AccountOptions): RawAccountData {
       ),
       data_freshness: { as_of: options.holdingsAsOf ?? null },
     },
+    rateLimited: options.rateLimited,
+    valueHistory: options.valueHistory
+      ? {
+          currency: "CAD",
+          history: options.valueHistory.map(([date, value]) => ({
+            date,
+            total_value: String(value),
+          })),
+        }
+      : null,
     activities:
       options.activities === null
         ? null

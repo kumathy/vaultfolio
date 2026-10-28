@@ -1,4 +1,3 @@
-import { changesUnits } from "./classify";
 import {
   accountLabel,
   orderCurrencies,
@@ -7,7 +6,8 @@ import {
 } from "./context";
 import { money, perUnit, sumBy, units } from "./money";
 import { addDays } from "./period";
-import type { Activity, Block, ReportAccount } from "./types";
+import { unitsHeldOn } from "./units";
+import type { Block, ReportAccount } from "./types";
 
 export interface Payment {
   date: string;
@@ -34,31 +34,6 @@ export interface DistributionsResult {
   unknownPerUnit: string[];
   missingAccounts: string[];
   multipleAccounts: boolean;
-}
-
-function unitsHeldOn(
-  account: ReportAccount,
-  symbol: string,
-  date: string,
-  asOf: string,
-): number | null {
-  if (account.holdings === null) return null;
-  const now = sumBy(
-    account.holdings.filter((h) => symbolsMatch(h.symbol, symbol)),
-    (h) => h.units,
-  );
-  const changedSince = sumBy(
-    (account.activities ?? []).filter(
-      (a: Activity) =>
-        changesUnits(a.kind) &&
-        symbolsMatch(a.symbol, symbol) &&
-        a.date > date &&
-        a.date <= asOf,
-    ),
-    (a) => a.units,
-  );
-  const held = now - changedSince;
-  return held > 0 ? held : null;
 }
 
 export function analyzeDistributions(
@@ -134,12 +109,18 @@ export function analyzeDistributions(
     // The same fund paying into two accounts on one day is one per-unit amount.
     const perDate = new Map(symbolPayments.map((p) => [p.date, p.perUnit!]));
     const perUnitTtm = [...perDate.values()].reduce((a, b) => a + b, 0);
-    const unitsHeld = sumBy(
-      accounts
-        .flatMap((a) => a.holdings ?? [])
-        .filter((h) => symbolsMatch(h.symbol, symbol)),
-      (h) => h.units,
-    );
+    // Past months project from the units held at the month's end.
+    const unitsHeld = ctx.isCurrentPeriod
+      ? sumBy(
+          accounts
+            .flatMap((a) => a.holdings ?? [])
+            .filter((h) => symbolsMatch(h.symbol, symbol)),
+          (h) => h.units,
+        )
+      : sumBy(
+          accounts,
+          (a) => unitsHeldOn(a, symbol, ctx.evalDate, ctx.asOf) ?? 0,
+        );
     estimates.push({
       symbol,
       currency,
@@ -255,7 +236,7 @@ export function renderDistributions(
     if (result.estimates.length > 0) {
       blocks.push(
         note(
-          "Estimate: distributions per unit over the past 12 months, multiplied by units held today.",
+          `Estimate: distributions per unit over the past 12 months, multiplied by units held ${ctx.isCurrentPeriod ? "today" : "at month end"}.`,
         ),
       );
     }

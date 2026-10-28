@@ -98,3 +98,10 @@ export interface BrokerageAuthorization {
     display_name?: string;
   };
 }
+
+// GET /accounts/{accountId}/balanceHistory (beta add-on): estimated daily
+// total account value, up to one year back, possibly with gaps.
+export interface AccountValueHistory {
+  history?: { date?: string; total_value?: string | number | null }[];
+  currency?: string | null;
+}

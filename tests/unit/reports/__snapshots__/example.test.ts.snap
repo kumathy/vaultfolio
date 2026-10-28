@@ -9,10 +9,9 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
+contributed_this_month: 300.00
 contribution_status: on-track
 tfsa_room_remaining: 4000.00
-rrsp_room_remaining: null
-fhsa_room_remaining: null
 distributions_ttm: 25.01
 ---
 
@@ -23,19 +22,19 @@ distributions_ttm: 25.01
 
 ## Monthly activity
 
-| Activity        | Status   | Detail                                |
-| --------------- | -------- | ------------------------------------- |
-| Contributions   | On track | $300.00 of $300.00 target (1 deposit) |
-| Purchases       | —        | 9 units XEQT ($336.29)                |
-| Distributions   | —        | None recorded                         |
-| Uninvested cash | On track | $4.12 (below $25.00 threshold)        |
+| Activity        | Detail                                           |
+| --------------- | ------------------------------------------------ |
+| Contributions   | $300.00 of $300.00 target (1 deposit) — On track |
+| Purchases       | 9 units XEQT ($336.29)                           |
+| Distributions   | None recorded                                    |
+| Uninvested cash | $4.12 (below $25.00 threshold) — On track        |
 
 ## Contributions and growth
 
 | Measure           |    Amount |
 | ----------------- | --------: |
 | Total contributed | $3,900.00 |
-| Current value     | $4,312.55 |
+| Value             | $4,312.55 |
 | Net growth        |  +$412.55 |
 
 ## Holdings
@@ -83,10 +82,7 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
-contribution_status: not-configured
-tfsa_room_remaining: null
-rrsp_room_remaining: null
-fhsa_room_remaining: null
+contributed_this_month: 300.00
 distributions_ttm: 25.01
 ---
 
@@ -97,12 +93,12 @@ distributions_ttm: 25.01
 
 ## Monthly activity
 
-| Activity        | Status         | Detail                         |
-| --------------- | -------------- | ------------------------------ |
-| Contributions   | Not configured | $300.00 (1 deposit)            |
-| Purchases       | —              | 9 units XEQT ($336.29)         |
-| Distributions   | —              | None recorded                  |
-| Uninvested cash | On track       | $4.12 (below $25.00 threshold) |
+| Activity        | Detail                                    |
+| --------------- | ----------------------------------------- |
+| Contributions   | $300.00 (1 deposit)                       |
+| Purchases       | 9 units XEQT ($336.29)                    |
+| Distributions   | None recorded                             |
+| Uninvested cash | $4.12 (below $25.00 threshold) — On track |
 
 > [!info] Contribution progress is not calculated: no monthly contribution target is set in Vaultfolio settings.
 
@@ -111,7 +107,7 @@ distributions_ttm: 25.01
 | Measure           |    Amount |
 | ----------------- | --------: |
 | Total contributed | $3,900.00 |
-| Current value     | $4,312.55 |
+| Value             | $4,312.55 |
 | Net growth        |  +$412.55 |
 
 ## Holdings

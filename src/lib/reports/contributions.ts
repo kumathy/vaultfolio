@@ -5,6 +5,7 @@ import {
   type Context,
 } from "./context";
 import { money, signedMoney } from "./money";
+import { daysBetween } from "./period";
 import type { Activity, Block, ReportAccount } from "./types";
 
 export interface ContributionTotals {
@@ -13,12 +14,18 @@ export interface ContributionTotals {
   withdrawalsCents: number;
   transfersNetCents: number;
   netContributedCents: number;
-  valueCents: number;
-  growthCents: number;
+  // Past months use SnapTrade's estimated value history; null when it has no
+  // value close enough to the month's end.
+  valueCents: number | null;
+  growthCents: number | null;
 }
 
 export interface ContributionsResult {
   rows: ContributionTotals[];
+  // Last day counted: today in the current month, otherwise the month's end.
+  through: string;
+  // Past months: values are estimates from SnapTrade's value history.
+  valuesEstimated: boolean;
   excludedAccounts: string[];
   assetTransfersWithoutValue: number;
   // Accounts that held money before their earliest available transaction.
@@ -71,18 +78,34 @@ export function analyzeContributions(
     return row;
   };
 
+  const live = ctx.isCurrentPeriod;
+  // Currencies missing a value for some account, so their total is unknown.
+  const unvalued = new Set<string>();
   const excludedAccounts: string[] = [];
   const incompleteHistory: ContributionsResult["incompleteHistory"] = [];
   let assetTransfersWithoutValue = 0;
 
   for (const account of accounts) {
     const value = accountValue(account);
-    if (account.activities === null || value === null) {
+    if (account.activities === null || (live && value === null)) {
       excludedAccounts.push(accountLabel(account, accounts));
       continue;
     }
-    for (const [currency, cents] of value) entry(currency).valueCents += cents;
-    if (!startsWithFunding(account.activities, value)) {
+    if (live && value) {
+      for (const [currency, cents] of value) {
+        const row = entry(currency);
+        row.valueCents = (row.valueCents ?? 0) + cents;
+      }
+    } else if (!live) {
+      const estimate = estimatedValueOn(account, ctx.evalDate);
+      if (estimate) {
+        const row = entry(estimate.currency);
+        row.valueCents = (row.valueCents ?? 0) + estimate.cents;
+      } else {
+        unvalued.add(account.valueHistory?.currency ?? "");
+      }
+    }
+    if (!startsWithFunding(account.activities, value ?? new Map())) {
       incompleteHistory.push({
         account: accountLabel(account, accounts),
         since: account.firstTransactionDate,
@@ -90,7 +113,7 @@ export function analyzeContributions(
     }
 
     for (const activity of account.activities) {
-      if (activity.date > ctx.asOf) continue;
+      if (activity.date > ctx.evalDate) continue;
       const isTransfer =
         activity.kind === "transfer_in" || activity.kind === "transfer_out";
       if (isTransfer && activity.amountCents === 0 && activity.units !== 0) {
@@ -112,21 +135,52 @@ export function analyzeContributions(
   const rows = orderCurrencies(totals.keys(), ctx.settings.baseCurrency).map(
     (currency) => {
       const row = totals.get(currency)!;
+      if (unvalued.has(currency) || unvalued.has("")) row.valueCents = null;
       const netContributedCents =
         row.contributionsCents - row.withdrawalsCents + row.transfersNetCents;
       return {
         ...row,
         netContributedCents,
-        growthCents: row.valueCents - netContributedCents,
+        growthCents:
+          row.valueCents === null ? null : row.valueCents - netContributedCents,
       };
     },
   );
 
   return {
     rows,
+    through: ctx.evalDate,
+    valuesEstimated: !live,
     excludedAccounts,
     assetTransfersWithoutValue,
     incompleteHistory,
+  };
+}
+
+// SnapTrade's value history is daily but may have gaps; an older value would
+// misstate the month's end.
+const MAX_VALUE_AGE_DAYS = 7;
+
+function estimatedValueOn(
+  account: ReportAccount,
+  date: string,
+): { currency: string; cents: number } | null {
+  const history = account.valueHistory;
+  if (!history) return null;
+  const point = history.points.findLast((p) => p.date <= date);
+  if (!point || daysBetween(point.date, date) > MAX_VALUE_AGE_DAYS) return null;
+  return { currency: history.currency, cents: point.cents };
+}
+
+function estimateNote(result: ContributionsResult): Block {
+  const known = result.rows.some((r) => r.valueCents !== null);
+  return {
+    kind: "paragraph",
+    text: [
+      known
+        ? "Estimate: account value at month end, from SnapTrade's account value history."
+        : "Value and net growth are not available: SnapTrade's account value history has no value near month end.",
+    ],
   };
 }
 
@@ -172,8 +226,22 @@ export function renderContributions(
       (r) => money(r.netContributedCents, r.currency, base),
       true,
     ],
-    ["Current value", (r) => money(r.valueCents, r.currency, base), true],
-    ["Net growth", (r) => signedMoney(r.growthCents, r.currency, base), true],
+    [
+      "Value",
+      (r) =>
+        r.valueCents === null
+          ? "Not available"
+          : money(r.valueCents, r.currency, base),
+      true,
+    ],
+    [
+      "Net growth",
+      (r) =>
+        r.growthCents === null
+          ? "Not available"
+          : signedMoney(r.growthCents, r.currency, base),
+      true,
+    ],
   ];
   const visible = measures.filter(([, , show]) => show);
   const single = result.rows.length === 1;
@@ -196,6 +264,7 @@ export function renderContributions(
         ...result.rows.map(format),
       ]),
     },
+    ...(result.valuesEstimated ? [estimateNote(result)] : []),
     ...historyLine(result.incompleteHistory),
   ];
 }

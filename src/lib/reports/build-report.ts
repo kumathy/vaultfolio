@@ -49,15 +49,13 @@ function dataNotes(
       account.activities === null && "transactions",
     ].filter(Boolean);
     if (failed.length > 0) {
+      const reason = account.rateLimited
+        ? " because SnapTrade's per-account request limit was reached; reloading after a minute retries"
+        : "";
       notes.push(
-        `${accountLabel(account, accounts)}: ${failed.join(", ")} could not be loaded; affected sections exclude this data.`,
+        `${accountLabel(account, accounts)}: ${failed.join(", ")} could not be loaded${reason}. Affected sections exclude this data.`,
       );
     }
-  }
-  if (!ctx.isCurrentPeriod) {
-    notes.push(
-      `Values and holdings are as of ${ctx.asOf}; historical prices are not available.`,
-    );
   }
   const asOf = accounts
     .map((a) => a.dataAsOf)
@@ -122,10 +120,18 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       activity.contributionStatus === "in-progress" ? " target so far. " : ". ",
     );
   }
-  if (growth) {
+  if (growth && growth.valueCents === null) {
     summary.push(
-      "Portfolio value: ",
-      { bold: money(growth.valueCents, growth.currency, base) },
+      "Total contributed: ",
+      { bold: money(growth.netContributedCents, growth.currency, base) },
+      ". ",
+    );
+  } else if (growth && growth.growthCents !== null) {
+    summary.push(
+      contributions.valuesEstimated
+        ? "Estimated portfolio value: "
+        : "Portfolio value: ",
+      { bold: money(growth.valueCents!, growth.currency, base) },
       " against ",
       { bold: money(growth.netContributedCents, growth.currency, base) },
       " contributed (net growth ",
@@ -173,37 +179,54 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
   const distributionsKnown = accounts.some((a) => a.activities !== null);
 
   const notes = dataNotes(input, ctx, options.now, extraNotes);
-  const document: ReportDocument = {
-    frontmatter: [
-      ["type", "investing-report"],
-      ["period", ctx.period.id],
-      ["generated_at", localTimestamp(options.now, settings.timeZone)],
-      ["base_currency", base],
-      [
-        "portfolio_value",
-        value && value.currency === base ? plainAmount(value.cents) : null,
-      ],
-      [
-        "total_contributed",
-        growth && growth.currency === base
-          ? plainAmount(growth.netContributedCents)
+  // Unknown values are left out rather than written as null: Obsidian shows
+  // null as "Empty", while Dataview reads a missing key as null anyway.
+  const frontmatter: [string, string | null][] = [
+    ["type", "investing-report"],
+    ["period", ctx.period.id],
+    ["generated_at", localTimestamp(options.now, settings.timeZone)],
+    ["base_currency", base],
+    [
+      "portfolio_value",
+      contributions.valuesEstimated
+        ? growth && growth.currency === base && growth.valueCents !== null
+          ? plainAmount(growth.valueCents)
+          : null
+        : value && value.currency === base
+          ? plainAmount(value.cents)
           : null,
-      ],
-      [
-        "net_growth",
-        growth && growth.currency === base
-          ? plainAmount(growth.growthCents)
-          : null,
-      ],
-      ["contribution_status", activity.contributionStatus],
-      ["tfsa_room_remaining", roomValue("TFSA")],
-      ["rrsp_room_remaining", roomValue("RRSP")],
-      ["fhsa_room_remaining", roomValue("FHSA")],
-      [
-        "distributions_ttm",
-        distributionsKnown ? plainAmount(ttm?.cents ?? 0) : null,
-      ],
     ],
+    [
+      "total_contributed",
+      growth && growth.currency === base
+        ? plainAmount(growth.netContributedCents)
+        : null,
+    ],
+    [
+      "net_growth",
+      growth && growth.currency === base && growth.growthCents !== null
+        ? plainAmount(growth.growthCents)
+        : null,
+    ],
+    ["contributed_this_month", plainAmount(activity.contributedCents)],
+    [
+      "contribution_status",
+      activity.contributionStatus === "not-configured"
+        ? null
+        : activity.contributionStatus,
+    ],
+    ["tfsa_room_remaining", roomValue("TFSA")],
+    ["rrsp_room_remaining", roomValue("RRSP")],
+    ["fhsa_room_remaining", roomValue("FHSA")],
+    [
+      "distributions_ttm",
+      distributionsKnown ? plainAmount(ttm?.cents ?? 0) : null,
+    ],
+  ];
+  const document: ReportDocument = {
+    frontmatter: frontmatter.filter(
+      (entry): entry is [string, string] => entry[1] !== null,
+    ),
     blocks: [
       {
         kind: "heading",

@@ -35,7 +35,7 @@ A beginner investor making automatic monthly contributions to an all-in-one ETF 
 
 ### MVP features
 1. **Monthly activity.** Deposits, purchases by symbol, and distributions for the month. Investing styles differ (daily, weekly, biweekly, monthly, or manual), so no schedule or deposit day is assumed. An optional monthly contribution target is compared with the month's total deposits: **In progress** while the month is open, **Attention** only once it has ended below target. Flags cash left uninvested for more than N days (configurable, default 5).
-2. **Contributions and growth.** Total contributed versus current value, where growth = current value − total contributions. Percentage returns are avoided because recurring deposits make them misleading.
+2. **Contributions and growth.** Total contributed versus current value, where growth = current value − total contributions. Percentage returns are avoided because recurring deposits make them misleading. Past-month reports are month-end records: contributions are totalled to the month's end and holdings list the units held then. Their value and growth are estimates from SnapTrade's account value history (see Data notes), marked by a one-line "Estimate" note under the table (labels match the current month), and show **Not available** when that history has no value within 7 days of the month's end.
 3. **Registered-account room tracking (TFSA, RRSP, FHSA).** Starting room is entered by the user (from CRA My Account, which cannot be fetched) and is optional. The app tracks contributions from that point, shows remaining room, and projects whether contributions at the monthly target will exceed it before December 31. Rules:
    - TFSA withdrawals are added back to room on **January 1 of the following year**, not immediately.
    - FHSA: $8,000 per year and $40,000 lifetime. Room accumulates only once the account is opened, and the deadline follows the calendar year.
@@ -56,7 +56,7 @@ A user who signs in and configures nothing still receives a useful report. Setti
 | Uninvested-cash threshold | Defaults to 5 days. |
 
 - Missing configuration is noted impersonally as an `info` callout (not a warning, since nothing is wrong), once per report, in one pattern: `<Result> is not calculated: no <setting> is set in Vaultfolio settings.` E.g. `> [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.`
-- Unknown frontmatter values are `null` (e.g. `tfsa_room_remaining: null`, `contribution_status: not-configured`). `0` is never used for an unknown value, because it means "no room remaining."
+- Unknown frontmatter values are left out rather than written as `null` (Obsidian shows `null` as "Empty"; Dataview reads a missing key as `null`). `contribution_status` appears only when a target is set, and `<type>_room_remaining` only when starting room is known. `0` is never used for an unknown value, because it means "no room remaining."
 - The web dashboard may show a single dismissible "Add starting room" prompt in settings. It never blocks anything.
 
 Example room section without starting room configured:
@@ -118,6 +118,7 @@ base_currency: CAD
 portfolio_value: 4312.55
 total_contributed: 3900.00
 net_growth: 412.55
+contributed_this_month: 300.00
 contribution_status: on-track
 tfsa_room_remaining: 2100.00
 distributions_ttm: 38.20
@@ -130,19 +131,19 @@ distributions_ttm: 38.20
 
 ## Monthly activity
 
-| Activity        | Status   | Detail                                |
-| --------------- | -------- | ------------------------------------- |
-| Contributions   | On track | $300.00 of $300.00 target (1 deposit) |
-| Purchases       | —        | 9 units XEQT ($336.29)                |
-| Distributions   | —        | None recorded                         |
-| Uninvested cash | On track | $4.12 (below $25.00 threshold)        |
+| Activity        | Detail                                           |
+| --------------- | ------------------------------------------------ |
+| Contributions   | $300.00 of $300.00 target (1 deposit) — On track |
+| Purchases       | 9 units XEQT ($336.29)                           |
+| Distributions   | None recorded                                    |
+| Uninvested cash | $4.12 (below $25.00 threshold) — On track        |
 
 ## Contributions and growth
 
 | Measure           |     Amount |
 | ----------------- | ---------: |
 | Total contributed |  $3,900.00 |
-| Current value     |  $4,312.55 |
+| Value             |  $4,312.55 |
 | Net growth        |   +$412.55 |
 
 ## Holdings
@@ -293,6 +294,7 @@ Requirements:
 - **Activity types:** rely on `amount`, `units`, `price`, and `symbol`, plus the common types (BUY, SELL, CONTRIBUTION, WITHDRAWAL, DIVIDEND/distribution, FEE). Verify type names against the OpenAPI spec and real responses.
 - **Account type:** verify whether accounts expose a type (TFSA, RRSP, FHSA). If not reliably, let users tag accounts in settings.
 - **Prices:** SnapTrade does not provide historical price series. MVP features must not depend on them.
+- **Account value history:** `GET /accounts/{accountId}/balanceHistory` (beta, "Account Value History" add-on, enabled in the Customer Dashboard) returns estimated daily total account value, up to one year back, possibly with gaps. Used only for past-month value and growth; when it is disabled (403) or missing, reports fall back to **Not available**.
 
 ## Obsidian plugin pairing flow
 

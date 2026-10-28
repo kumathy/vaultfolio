@@ -55,6 +55,15 @@ export interface ReportAccount {
   activities: Activity[] | null;
   firstTransactionDate: string | null;
   dataAsOf: string | null;
+  // Some data is missing because SnapTrade's request limit was reached.
+  rateLimited: boolean;
+  // Estimated daily account value, oldest first; null when unavailable.
+  valueHistory: { currency: string; points: ValuePoint[] } | null;
+}
+
+export interface ValuePoint {
+  date: string;
+  cents: number;
 }
 
 export interface ReportInput {
@@ -156,6 +165,6 @@ export type Block =
   | { kind: "footer"; text: string };
 
 export interface ReportDocument {
-  frontmatter: [key: string, value: string | number | null][];
+  frontmatter: [key: string, value: string][];
   blocks: Block[];
 }

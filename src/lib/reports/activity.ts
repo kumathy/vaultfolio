@@ -254,12 +254,17 @@ export function renderActivity(result: ActivityResult): Block[] {
     },
     {
       kind: "table",
-      columns: [
-        { label: "Activity" },
-        { label: "Status" },
-        { label: "Detail" },
-      ],
-      rows: result.rows.map((r) => [r.label, r.status ?? "—", r.detail]),
+      columns: [{ label: "Activity" }, { label: "Detail" }],
+      // A status is shown only where something was checked. "Not applicable"
+      // rows are left out, and a missing target is noted once below.
+      rows: result.rows
+        .filter((r) => r.status !== "Not applicable")
+        .map((r) => [
+          r.label,
+          r.status && r.status !== "Not configured"
+            ? `${r.detail} — ${r.status}`
+            : r.detail,
+        ]),
     },
     ...(result.contributionStatus === "not-configured"
       ? [notConfigured("Contribution progress", "monthly contribution target")]
