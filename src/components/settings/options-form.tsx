@@ -24,10 +24,15 @@ export function OptionsForm({
   const [state, save, saving] = useActionState(saveOptions, idle);
   return (
     <form action={save}>
+      {/* Labels sit at the bottom of their cell, so the three fields stay level
+          when a label wraps. */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div>
-          <label htmlFor="days" className={labelClass}>
-            Uninvested cash: days allowed
+        <div className="flex flex-col">
+          <label
+            htmlFor="days"
+            className={`${labelClass} md:flex md:flex-1 md:items-end`}
+          >
+            Uninvested cash: days
           </label>
           <input
             id="days"
@@ -41,9 +46,12 @@ export function OptionsForm({
           />
           <FieldError state={state} name="days" />
         </div>
-        <div>
-          <label htmlFor="threshold" className={labelClass}>
-            Uninvested cash: minimum amount
+        <div className="flex flex-col">
+          <label
+            htmlFor="threshold"
+            className={`${labelClass} md:flex md:flex-1 md:items-end`}
+          >
+            Uninvested cash: minimum
           </label>
           <input
             id="threshold"
@@ -55,9 +63,12 @@ export function OptionsForm({
           />
           <FieldError state={state} name="threshold" />
         </div>
-        <div>
-          <label htmlFor="timeZone" className={labelClass}>
-            Report time zone
+        <div className="flex flex-col">
+          <label
+            htmlFor="timeZone"
+            className={`${labelClass} md:flex md:flex-1 md:items-end`}
+          >
+            Time zone
           </label>
           <select
             id="timeZone"

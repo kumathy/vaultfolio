@@ -108,8 +108,8 @@ async function SettingsContent() {
           <span>
             <span className="block font-semibold">Advanced settings</span>
             <span className="mt-0.5 block text-sm text-muted">
-              Target allocation, account types, transfers, idle cash and time
-              zone.
+              Target allocation, account types, transfers, uninvested cash and
+              time zone.
             </span>
           </span>
           <TbChevronDown
@@ -162,7 +162,7 @@ async function SettingsContent() {
           <SettingsSection
             id="options"
             title="Report options"
-            description="When idle cash is flagged, and the time zone that defines each month."
+            description="When uninvested cash is flagged, and the time zone that defines each month."
           >
             <OptionsForm
               days={resolved.uninvestedCashDays}

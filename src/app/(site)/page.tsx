@@ -118,7 +118,7 @@ const reportSections: {
 }[] = [
   {
     title: "Monthly activity",
-    text: "Deposits, purchases and distributions, against an optional monthly target. Idle cash is flagged.",
+    text: "Deposits, purchases and distributions, against an optional monthly target. Uninvested cash is flagged.",
     Icon: TbCalendarCheck,
     sample: ["Contributions", "On track"],
   },
