@@ -1,6 +1,11 @@
 import { Notice } from "@/components/notice";
-import { SnapTradeLink, SnapTradeName } from "@/components/snaptrade";
-import { card } from "@/components/ui";
+import {
+  SNAPTRADE_DASHBOARD_URL,
+  SnapTradeLink,
+  SnapTradeName,
+} from "@/components/snaptrade";
+import { TbArrowUpRight } from "react-icons/tb";
+import { buttonSecondary, card, compact } from "@/components/ui";
 import { localDateTime } from "@/lib/reports/period";
 import type { AccountsOverview } from "@/lib/snaptrade/accounts";
 import { totalsByCurrency } from "@/lib/view-models/accounts";
@@ -8,13 +13,28 @@ import { AccountGroups, OverviewPanel } from "./overview";
 
 function PageHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-        Accounts
-      </h1>
-      <p className="mt-1 text-sm text-muted">
-        Brokerage accounts shared with Vaultfolio through SnapTrade.
-      </p>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Accounts
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Brokerage accounts shared with Vaultfolio through SnapTrade.
+        </p>
+      </div>
+      {/* Also in the sidebar, which narrow screens hide. */}
+      <a
+        href={SNAPTRADE_DASHBOARD_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${compact(buttonSecondary)} self-start sm:self-auto`}
+      >
+        Manage connections
+        <TbArrowUpRight aria-hidden />
+        <span className="sr-only">
+          (SnapTrade Dashboard, opens in a new tab)
+        </span>
+      </a>
     </div>
   );
 }
