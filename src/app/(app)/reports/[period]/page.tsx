@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TbChevronDown, TbChevronLeft, TbChevronRight } from "react-icons/tb";
-import { ObsidianStatusLine } from "@/components/app/obsidian-status";
 import { DismissibleDetails } from "@/components/dismissible-details";
 import { ReportPreview } from "@/components/report/report-preview";
 import { card } from "@/components/ui";
@@ -188,9 +187,6 @@ async function ReportContent({
         document={report.document}
         markdown={report.markdown}
       />
-      <Suspense fallback={null}>
-        <ObsidianStatusLine />
-      </Suspense>
     </div>
   );
 }

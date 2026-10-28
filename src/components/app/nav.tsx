@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import type { IconType } from "react-icons";
 import { TbFileText, TbSettings, TbWallet } from "react-icons/tb";
 
@@ -60,26 +61,25 @@ export function BreadcrumbView({ pathname }: { pathname: string | null }) {
   );
 }
 
-export function MobileLinksView({ pathname }: { pathname: string | null }) {
-  return (
-    <nav
-      aria-label="App"
-      className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none]"
-    >
-      {appPages.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          aria-current={isActive(pathname, href) ? "page" : undefined}
-          className="shrink-0 rounded-full px-3 py-1.5 text-sm whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-foreground aria-[current=page]:bg-surface aria-[current=page]:text-foreground"
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
 export const SidebarLinks = () => <SidebarLinksView pathname={usePathname()} />;
 export const Breadcrumb = () => <BreadcrumbView pathname={usePathname()} />;
-export const MobileLinks = () => <MobileLinksView pathname={usePathname()} />;
+
+// Closes the narrow-screen drawer when one of its links is followed, including
+// links to the current page (a hash change does not change the pathname).
+export function CloseMenuOnLinkClick({ menuId }: { menuId: string }) {
+  useEffect(() => {
+    const menu = document.getElementById(menuId);
+    if (!menu) return;
+    const onClick = (event: MouseEvent) => {
+      if (
+        (event.target as Element).closest("a") &&
+        menu.matches(":popover-open")
+      ) {
+        menu.hidePopover();
+      }
+    };
+    menu.addEventListener("click", onClick);
+    return () => menu.removeEventListener("click", onClick);
+  }, [menuId]);
+  return null;
+}

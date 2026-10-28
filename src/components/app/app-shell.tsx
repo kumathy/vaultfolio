@@ -1,4 +1,10 @@
-import { TbArrowUpRight, TbBuildingBank, TbNotebook } from "react-icons/tb";
+import {
+  TbArrowUpRight,
+  TbBuildingBank,
+  TbMenu2,
+  TbNotebook,
+  TbX,
+} from "react-icons/tb";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ObsidianSidebarStatus } from "./obsidian-status";
@@ -7,11 +13,12 @@ import { Suspense } from "react";
 import {
   Breadcrumb,
   BreadcrumbView,
-  MobileLinks,
-  MobileLinksView,
+  CloseMenuOnLinkClick,
   SidebarLinks,
   SidebarLinksView,
 } from "./nav";
+
+const MENU_ID = "app-menu";
 
 function SidebarGroup({
   title,
@@ -28,11 +35,29 @@ function SidebarGroup({
   );
 }
 
+// One sidebar for every screen size: a fixed column on desktop, and on narrow
+// screens a popover drawer opened from the top bar. The popover API provides
+// Escape, outside-tap dismissal and stacking without extra code.
 function Sidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
-      <div className="flex h-16 items-center border-b border-border px-5">
+    <aside
+      id={MENU_ID}
+      popover="auto"
+      aria-label="Menu"
+      className="fixed inset-y-0 right-auto left-0 m-0 h-dvh w-72 max-w-[85vw] flex-col border-0 border-r border-border bg-surface p-0 text-foreground backdrop:bg-black/50 [&:popover-open]:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0"
+    >
+      <CloseMenuOnLinkClick menuId={MENU_ID} />
+      <div className="flex h-16 items-center justify-between border-b border-border px-5">
         <Logo href="/accounts" />
+        <button
+          type="button"
+          popoverTarget={MENU_ID}
+          popoverTargetAction="hide"
+          aria-label="Close menu"
+          className="-mr-2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-card hover:text-foreground lg:hidden"
+        >
+          <TbX aria-hidden className="text-lg" />
+        </button>
       </div>
 
       <nav aria-label="App" className="flex-1 space-y-7 px-3 py-6 text-sm">
@@ -86,11 +111,14 @@ function Topbar() {
             </Suspense>
           </span>
         </div>
-      </div>
-      <div className="border-t border-border px-4 py-2 lg:hidden">
-        <Suspense fallback={<MobileLinksView pathname={null} />}>
-          <MobileLinks />
-        </Suspense>
+        <button
+          type="button"
+          popoverTarget={MENU_ID}
+          aria-label="Open menu"
+          className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground lg:hidden"
+        >
+          <TbMenu2 aria-hidden className="text-xl" />
+        </button>
       </div>
     </header>
   );

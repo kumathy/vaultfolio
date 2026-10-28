@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { TbChevronRight, TbNotebook } from "react-icons/tb";
 import { listPluginTokens } from "@/db/plugin";
 import { loadSettings } from "@/db/settings";
 import { currentUserId } from "@/lib/auth/session";
@@ -56,7 +54,7 @@ const Dot = ({ connected }: { connected: boolean }) => (
   />
 );
 
-// Two lines inside the sidebar card, which is hidden on narrow screens.
+// Two lines inside the sidebar's Obsidian card.
 export async function ObsidianSidebarStatus() {
   const status = await loadStatus();
   if (!status) return null;
@@ -68,31 +66,5 @@ export async function ObsidianSidebarStatus() {
       </span>
       <span className="mt-0.5 block pl-3.5 text-muted">{status.detail}</span>
     </>
-  );
-}
-
-// One line for the Reports page, shown at every screen size.
-export async function ObsidianStatusLine() {
-  const status = await loadStatus();
-  if (!status) return null;
-  return (
-    <Link
-      href="/settings#obsidian"
-      className="group inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted transition-colors hover:text-foreground"
-    >
-      <TbNotebook aria-hidden className="text-accent" />
-      <span className="text-foreground">Obsidian</span>
-      <span aria-hidden>·</span>
-      <span className="inline-flex items-center gap-1.5">
-        <Dot connected={status.connected} />
-        {status.label}
-      </span>
-      <span aria-hidden>·</span>
-      <span>{status.detail}</span>
-      <TbChevronRight
-        aria-hidden
-        className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-      />
-    </Link>
   );
 }
