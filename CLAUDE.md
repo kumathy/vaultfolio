@@ -89,6 +89,7 @@ Built only after the MVP is complete and tested.
 - Calendar notes: January 1 TFSA room, RRSP deadline, FHSA December 31.
 - One-line summary appended to the Obsidian daily note.
 - Webhooks (`ACCOUNT_TRANSACTIONS_UPDATED`) to regenerate reports.
+- Sample-data mode for people without a brokerage connection: the app (accounts, reports, settings) on sample data, labelled on every page and never mixed with real data. The landing page's interactive example covers what a report looks like.
 
 ## Report specification
 
@@ -227,7 +228,7 @@ Follow SnapTrade's Build with AI guide (https://docs.snaptrade.com/docs/build-wi
 ### Adaptations for OAuth
 - **Authentication:** do not use `SnaptradeAuth.personalApiKey` or a Personal consumer key. Send the OAuth access token as `Authorization: Bearer <token>`. Inspect the installed `snaptrade-typescript-sdk` types to see whether Bearer auth is supported. If it is, use the SDK. If not, use a small server-only `fetch` wrapper typed from the OpenAPI spec. Report the finding before building.
 - **Environment variables:** `SNAPTRADE_OAUTH_CLIENT_ID` and `SNAPTRADE_OAUTH_CLIENT_SECRET`.
-- **Demo mode:** never substitute sample data when a real request fails. Demo mode is a separate, explicitly selected mode ("Try with sample data"), labelled on every page and never mixed with real data.
+- **No substitute data:** never substitute sample data when a real request fails. The landing page's illustrative example report is the only sample data, labelled as such and never shown as a user's own.
 - **Access control:** every data route checks the session. Plugin routes check the plugin token.
 
 ### General rules
@@ -285,7 +286,6 @@ Requirements:
 - **Disconnect:** revoke the refresh token at the revocation endpoint, then delete the stored tokens.
 - **Edge cases:**
   - Handle consent denial, users with no connected accounts, and sparse data such as the SnapTrade Sandbox brokerage.
-  - Offer the explicitly selected demo mode described above.
 - **Broken connections:** link users to https://dashboard.snaptrade.com to add or repair them.
 
 ### Data notes
