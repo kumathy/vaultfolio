@@ -298,12 +298,12 @@ Requirements:
 
 ## Obsidian plugin pairing flow
 
-1. Plugin settings → **Connect** opens `https://<app>/pair` in the browser.
-2. After SnapTrade sign-in, the app creates a **one-time, short-lived pairing code** and redirects to `obsidian://vaultfolio?code=...`.
-3. The plugin registers `registerObsidianProtocolHandler('vaultfolio', ...)`, receives the code, and exchanges it via Obsidian's `requestUrl` for a **plugin token**.
-4. The plugin token can only fetch rendered reports. It is revocable from the web dashboard and stored hashed on the server.
+1. Plugin settings → **Connect** creates a random verifier (kept in memory) and opens `https://<app>/pair?challenge=<S256 of the verifier>` in the browser.
+2. `/pair` asks a signed-out user to sign in with SnapTrade, then returns to the same page (the return path is validated and carried in the encrypted flow cookie). The signed-in user clicks **Connect this vault**, a POST that creates a **one-time pairing code** (5 minutes, stored hashed, bound to the challenge) and opens `obsidian://vaultfolio?code=...`.
+3. The plugin registers `registerObsidianProtocolHandler('vaultfolio', ...)`, receives the code, and exchanges code + verifier via Obsidian's `requestUrl` (`POST /api/plugin/token`) for a **plugin token**. A code intercepted on the way is useless without the verifier, and a wrong verifier burns it.
+4. The plugin token (`vfp_…`) can only fetch rendered reports (`GET /api/plugin/reports`). It is stored hashed on the server, listed with its last use and revocable in Settings, revoked by the plugin's own Disconnect (`DELETE /api/plugin/token`), and revoked with every other plugin token when SnapTrade is disconnected.
 5. Plugin settings are stored in `data.json` inside the vault, which may be synced or committed to git. The plugin token is therefore treated as low-trust, and SnapTrade tokens are never stored there.
-6. The plugin fetches reports on startup and via the command "Vaultfolio: Sync now", writing them to a configurable folder (default `Investing/`). Reports are generated on demand per request, and no copy is stored on the server.
+6. The plugin fetches reports on startup and via the command "Vaultfolio: Sync now", writing every month to a configurable folder (default `Investing/`). It overwrites only notes whose frontmatter has `type: investing-report`; other notes with the same name are skipped. Reports are generated on demand per request, and no copy is stored on the server.
 
 ## Testing
 
