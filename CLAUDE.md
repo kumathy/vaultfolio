@@ -89,7 +89,6 @@ Built only after the MVP is complete and tested.
 - Calendar notes: January 1 TFSA room, RRSP deadline, FHSA December 31.
 - One-line summary appended to the Obsidian daily note.
 - Webhooks (`ACCOUNT_TRANSACTIONS_UPDATED`) to regenerate reports.
-- Sample-data mode for people without a brokerage connection: the app (accounts, reports, settings) on sample data, labelled on every page and never mixed with real data. The landing page's interactive example covers what a report looks like.
 
 ## Report specification
 
