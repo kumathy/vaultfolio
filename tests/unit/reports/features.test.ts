@@ -738,3 +738,104 @@ describe("report-level states", () => {
     expect(r.markdown).toContain("RRSP: holdings could not be loaded");
   });
 });
+
+describe("partial and mixed data", () => {
+  it("keeps the portfolio value consistent when an account is excluded from growth", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        cash: [["CAD", 50]],
+        positions: [["XEQT", 30, 35]],
+        activities: [
+          act.deposit("2026-08-01", 1000),
+          act.buy("2026-08-02", "XEQT", 30, 950),
+        ],
+      }),
+      // Transactions failed, so this account's cash is left out of growth.
+      rawAccount({
+        id: "cash",
+        rawType: "Individual",
+        cash: [["CAD", 500]],
+        activities: null,
+      }),
+    ]);
+    expect(r.frontmatter).toMatchObject({
+      portfolio_value: "1100.00",
+      total_contributed: "1000.00",
+      net_growth: "100.00",
+    });
+    expect(r.markdown).toContain("Portfolio value: **$1,100.00**");
+  });
+
+  it("does not estimate past values for an account that used several currencies", () => {
+    const r = report(
+      [
+        rawAccount({
+          id: "margin",
+          rawType: "Margin",
+          cash: [
+            ["CAD", 0],
+            ["USD", 0],
+          ],
+          positions: [
+            ["XEQT", 28, 36],
+            ["AAPL", 2, 250, "USD"],
+          ],
+          activities: [
+            act.deposit("2026-08-01", 1000),
+            act.buy("2026-08-02", "XEQT", 28, 1000),
+            act.deposit("2026-08-01", 500, "USD"),
+            act.buy("2026-08-02", "AAPL", 2, 500, "USD"),
+          ],
+          valueHistory: [["2026-09-30", 1700]],
+        }),
+      ],
+      { period: "2026-09" },
+    );
+    expect(tableRow(r.markdown, "Value")).toEqual([
+      "Value",
+      "Not available",
+      "Not available",
+    ]);
+    expect(r.section("Contributions and growth")).toContain(
+      "Value is not available for Margin: SnapTrade's account value history is one total across currencies",
+    );
+    expect(r.frontmatter).not.toHaveProperty("portfolio_value");
+    expect(r.frontmatter).not.toHaveProperty("net_growth");
+  });
+
+  it("leaves a fund out of the estimate when its account's holdings failed", () => {
+    const raw = rawAccount({
+      id: "personal",
+      rawType: "Non-registered",
+      activities: [
+        act.deposit("2026-01-02", 1000),
+        act.buy("2026-01-03", "VEQT", 20, 1000),
+        act.dividend("2026-09-29", "VEQT", 11, 0.55),
+      ],
+    });
+    const r = report([{ ...raw, positions: null }]);
+    expect(r.section("Distributions")).not.toContain("Estimate");
+    expect(r.section("Distributions")).toContain(
+      "Units held could not be loaded for VEQT; the estimate excludes it.",
+    );
+  });
+
+  it("states no net growth when transaction history is incomplete", () => {
+    const r = report([
+      rawAccount({
+        id: "sandbox",
+        rawType: null,
+        cash: [["CAD", 100]],
+        positions: [["VFV", 10, 150]],
+        activities: [],
+      }),
+    ]);
+    expect(r.markdown).toContain(
+      "Portfolio value: **$1,600.00**. Total contributed: **$0.00** (transaction history incomplete).",
+    );
+    expect(r.markdown).not.toContain("net growth **");
+    expect(r.frontmatter.portfolio_value).toBe("1600.00");
+    expect(r.frontmatter).not.toHaveProperty("net_growth");
+  });
+});

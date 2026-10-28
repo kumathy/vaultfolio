@@ -11,6 +11,7 @@ import type { Block, ReportAccount } from "./types";
 
 export interface Payment {
   date: string;
+  accountId: string;
   account: string;
   symbol: string;
   amountCents: number;
@@ -32,6 +33,8 @@ export interface DistributionsResult {
   ttm: { currency: string; cents: number }[];
   estimates: SymbolEstimate[];
   unknownPerUnit: string[];
+  // Paid into an account whose holdings failed to load, so units are unknown.
+  unknownUnits: string[];
   missingAccounts: string[];
   multipleAccounts: boolean;
 }
@@ -73,6 +76,7 @@ export function analyzeDistributions(
       }
       payments.push({
         date: activity.date,
+        accountId: account.id,
         account: accountLabel(account, accounts),
         symbol,
         amountCents: activity.amountCents,
@@ -100,10 +104,23 @@ export function analyzeDistributions(
 
   const estimates: SymbolEstimate[] = [];
   const unknownPerUnit: string[] = [];
+  const unknownUnits: string[] = [];
+  const holdingsFailed = new Set(
+    accounts.filter((a) => a.holdings === null).map((a) => a.id),
+  );
   for (const symbolPayments of bySymbol.values()) {
     const { symbol, currency } = symbolPayments[0];
     if (symbolPayments.some((p) => p.perUnit === null)) {
       unknownPerUnit.push(symbol);
+      continue;
+    }
+    // Today's units come from holdings; past months count them from
+    // transactions, which loaded for every paying account.
+    if (
+      ctx.isCurrentPeriod &&
+      symbolPayments.some((p) => holdingsFailed.has(p.accountId))
+    ) {
+      unknownUnits.push(symbol);
       continue;
     }
     // The same fund paying into two accounts on one day is one per-unit amount.
@@ -138,6 +155,7 @@ export function analyzeDistributions(
     ),
     estimates,
     unknownPerUnit,
+    unknownUnits,
     missingAccounts,
     multipleAccounts: paying.size > 1,
   };
@@ -244,6 +262,13 @@ export function renderDistributions(
       blocks.push(
         note(
           `Per-unit amounts could not be determined for ${result.unknownPerUnit.join(", ")}; the estimate excludes ${result.unknownPerUnit.length === 1 ? "it" : "them"}.`,
+        ),
+      );
+    }
+    if (result.unknownUnits.length > 0) {
+      blocks.push(
+        note(
+          `Units held could not be loaded for ${result.unknownUnits.join(", ")}; the estimate excludes ${result.unknownUnits.length === 1 ? "it" : "them"}.`,
         ),
       );
     }

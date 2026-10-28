@@ -103,6 +103,10 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     contributions.rows.find((r) => r.currency === base) ??
     contributions.rows[0];
   const tfsa = room.rows.find((r) => r.type === "TFSA");
+  // Money held before the earliest available transaction would count as
+  // growth, so net growth is not stated in the summary or frontmatter.
+  const growthKnown =
+    growth?.growthCents != null && contributions.incompleteHistory.length === 0;
 
   const summary: Inline[] = [];
   if (activity.targetCents !== null) {
@@ -125,6 +129,16 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       "Total contributed: ",
       { bold: money(growth.netContributedCents, growth.currency, base) },
       ". ",
+    );
+  } else if (growth && !growthKnown) {
+    summary.push(
+      contributions.valuesEstimated
+        ? "Estimated portfolio value: "
+        : "Portfolio value: ",
+      { bold: money(growth.valueCents!, growth.currency, base) },
+      ". Total contributed: ",
+      { bold: money(growth.netContributedCents, growth.currency, base) },
+      " (transaction history incomplete). ",
     );
   } else if (growth && growth.growthCents !== null) {
     summary.push(
@@ -186,13 +200,16 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     ["period", ctx.period.id],
     ["generated_at", localTimestamp(options.now, settings.timeZone)],
     ["base_currency", base],
+    // The summary's figure, so net_growth = portfolio_value - total_contributed
+    // even when an account is excluded from growth. Holdings alone give the
+    // value only when there is no contribution history to compare.
     [
       "portfolio_value",
-      contributions.valuesEstimated
-        ? growth && growth.currency === base && growth.valueCents !== null
-          ? plainAmount(growth.valueCents)
-          : null
-        : value && value.currency === base
+      growth && growth.currency === base
+        ? growth.valueCents === null
+          ? null
+          : plainAmount(growth.valueCents)
+        : !contributions.valuesEstimated && value && value.currency === base
           ? plainAmount(value.cents)
           : null,
     ],
@@ -204,8 +221,8 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     ],
     [
       "net_growth",
-      growth && growth.currency === base && growth.growthCents !== null
-        ? plainAmount(growth.growthCents)
+      growth && growth.currency === base && growthKnown
+        ? plainAmount(growth.growthCents!)
         : null,
     ],
     ["contributed_this_month", plainAmount(activity.contributedCents)],

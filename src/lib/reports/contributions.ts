@@ -27,6 +27,8 @@ export interface ContributionsResult {
   // Past months: values are estimates from SnapTrade's value history.
   valuesEstimated: boolean;
   excludedAccounts: string[];
+  // Past months: accounts whose value history cannot be split by currency.
+  mixedCurrencyAccounts: string[];
   assetTransfersWithoutValue: number;
   // Accounts that held money before their earliest available transaction.
   incompleteHistory: { account: string; since: string | null }[];
@@ -82,6 +84,7 @@ export function analyzeContributions(
   // Currencies missing a value for some account, so their total is unknown.
   const unvalued = new Set<string>();
   const excludedAccounts: string[] = [];
+  const mixedCurrencyAccounts: string[] = [];
   const incompleteHistory: ContributionsResult["incompleteHistory"] = [];
   let assetTransfersWithoutValue = 0;
 
@@ -97,11 +100,19 @@ export function analyzeContributions(
         row.valueCents = (row.valueCents ?? 0) + cents;
       }
     } else if (!live) {
+      // The value history is one total in the account's currency, with other
+      // currencies already converted by SnapTrade. Contributions are kept per
+      // currency, so an account that used several cannot be compared.
+      const used = currenciesUsed(account, ctx.evalDate);
       const estimate = estimatedValueOn(account, ctx.evalDate);
-      if (estimate) {
+      const mixed =
+        estimate !== null && [...used].some((c) => c !== estimate.currency);
+      if (estimate && !mixed) {
         const row = entry(estimate.currency);
         row.valueCents = (row.valueCents ?? 0) + estimate.cents;
       } else {
+        if (mixed) mixedCurrencyAccounts.push(accountLabel(account, accounts));
+        for (const currency of used) unvalued.add(currency);
         unvalued.add(account.valueHistory?.currency ?? "");
       }
     }
@@ -152,9 +163,20 @@ export function analyzeContributions(
     through: ctx.evalDate,
     valuesEstimated: !live,
     excludedAccounts,
+    mixedCurrencyAccounts,
     assetTransfersWithoutValue,
     incompleteHistory,
   };
+}
+
+function currenciesUsed(account: ReportAccount, through: string): Set<string> {
+  const used = new Set<string>();
+  for (const activity of account.activities ?? []) {
+    if (activity.date <= through && activity.currency) {
+      used.add(activity.currency);
+    }
+  }
+  return used;
 }
 
 // SnapTrade's value history is daily but may have gaps; an older value would
@@ -172,16 +194,25 @@ function estimatedValueOn(
   return { currency: history.currency, cents: point.cents };
 }
 
-function estimateNote(result: ContributionsResult): Block {
+function estimateNotes(result: ContributionsResult): Block[] {
   const known = result.rows.some((r) => r.valueCents !== null);
-  return {
-    kind: "paragraph",
-    text: [
-      known
-        ? "Estimate: account value at month end, from SnapTrade's account value history."
-        : "Value and net growth are not available: SnapTrade's account value history has no value near month end.",
-    ],
-  };
+  const mixed = result.mixedCurrencyAccounts;
+  const notes: string[] = [];
+  if (known) {
+    notes.push(
+      "Estimate: account value at month end, from SnapTrade's account value history.",
+    );
+  } else if (mixed.length === 0) {
+    notes.push(
+      "Value and net growth are not available: SnapTrade's account value history has no value near month end.",
+    );
+  }
+  if (mixed.length > 0) {
+    notes.push(
+      `Value is not available for ${mixed.join(", ")}: SnapTrade's account value history is one total across currencies, which cannot be compared with contributions in each currency.`,
+    );
+  }
+  return notes.map((note) => ({ kind: "paragraph", text: [note] }));
 }
 
 export function renderContributions(
@@ -264,7 +295,7 @@ export function renderContributions(
         ...result.rows.map(format),
       ]),
     },
-    ...(result.valuesEstimated ? [estimateNote(result)] : []),
+    ...(result.valuesEstimated ? estimateNotes(result) : []),
     ...historyLine(result.incompleteHistory),
   ];
 }
