@@ -22,7 +22,7 @@ import { Notice, type NoticeTone } from "@/components/notice";
 import { Toast, type ToastTone } from "@/components/toast";
 import { LogoMark } from "@/components/logo";
 import { PluginDownloadLink } from "@/components/plugin-download";
-import { HeroBackdrop } from "@/components/site/hero-backdrop";
+import { DotBackdrop } from "@/components/site/dot-backdrop";
 import { ObsidianWindow } from "@/components/site/obsidian-window";
 import { SignInLink } from "@/components/site/sign-in-link";
 import { ExternalLink } from "@/components/external-link";
@@ -245,7 +245,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
   return (
     <main>
       <div className="relative isolate overflow-hidden">
-        <HeroBackdrop />
+        <DotBackdrop />
         <section
           className={`${container} grid items-center gap-12 pt-14 pb-14 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:py-24`}
         >
@@ -393,22 +393,26 @@ export default function Home({ searchParams }: PageProps<"/">) {
           </div>
         </section>
 
-        <section className={`${container} py-14 md:py-20`}>
-          <div
-            className={`${card} flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between lg:p-10`}
-          >
-            <div className="max-w-2xl">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                A report for every month, in the vault
-              </h2>
-              <p className="mt-2 leading-relaxed text-muted">
-                Sign in with SnapTrade to generate the first report. No setup
-                required.
-              </p>
+        {/* Same backdrop as the hero, since both end in the sign-in button. */}
+        <div className="relative isolate overflow-hidden">
+          <DotBackdrop fade="both" />
+          <section className={`${container} py-14 md:py-20`}>
+            <div
+              className={`${card} flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between lg:p-10`}
+            >
+              <div className="max-w-2xl">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  A report for every month, in the vault
+                </h2>
+                <p className="mt-2 leading-relaxed text-muted">
+                  Sign in with SnapTrade to generate the first report. No setup
+                  required.
+                </p>
+              </div>
+              <SignInLink />
             </div>
-            <SignInLink />
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </main>
   );

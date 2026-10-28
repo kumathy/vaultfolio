@@ -2,10 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-// Dot grid behind the hero, brightened around the pointer. The position is
-// written to CSS variables once per frame, so moving the mouse never
-// re-renders React. Touch screens and reduced motion get the static grid.
-export function HeroBackdrop() {
+// Dot grid brightened around the pointer, used behind the hero and the closing
+// sign-in section. The position is written to CSS variables once per frame, so
+// moving the mouse never re-renders React. Touch screens and reduced motion get
+// the static grid. `fade` sets which edges fade out: the hero's lower edge, or
+// both edges for a section between others.
+export function DotBackdrop({ fade = "down" }: { fade?: "down" | "both" }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,7 +42,8 @@ export function HeroBackdrop() {
     <div
       ref={ref}
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-10"
+      data-fade={fade}
+      className="dot-backdrop pointer-events-none absolute inset-0 -z-10"
     >
       <div className="dot-grid" />
       <div className="dot-grid dot-grid-spot" />
