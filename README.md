@@ -22,7 +22,7 @@ Reports state facts and never recommend trades. Every setting is optional: a rep
 
 ## Get started
 
-1. Open [Vaultfolio](https://DEPLOYMENT.vercel.app) and choose **Sign in with SnapTrade**.
+1. Open [Vaultfolio](https://vaultfolio-tau.vercel.app) and choose **Sign in with SnapTrade**.
 2. Approve read-only access in SnapTrade. A SnapTrade Personal account with at least one connected brokerage is needed; every connected brokerage is included.
 3. Open **Reports**. Each month can be copied as Markdown, or a whole year downloaded as a zip.
 
