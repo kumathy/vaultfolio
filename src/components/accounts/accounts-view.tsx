@@ -1,6 +1,6 @@
 import { Notice } from "@/components/notice";
 import { SnapTradeLink, SnapTradeName } from "@/components/snaptrade";
-import { buttonDanger, buttonSecondary, card } from "@/components/ui";
+import { card } from "@/components/ui";
 import { formatTimestampUtc } from "@/lib/format";
 import type { AccountsOverview } from "@/lib/snaptrade/accounts";
 import { totalsByCurrency } from "@/lib/view-models/accounts";
@@ -19,44 +19,6 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
       </div>
       {children}
     </div>
-  );
-}
-
-function AccessCard() {
-  const fullWidthOnPhones = "w-full sm:w-auto";
-  return (
-    <section
-      aria-labelledby="access-heading"
-      className={`${card} flex flex-col gap-5 p-5 sm:p-6 md:flex-row md:items-center md:justify-between`}
-    >
-      <div className="max-w-2xl">
-        <h2 id="access-heading" className="font-semibold">
-          Access
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-muted">
-          Sign out ends this browser session. Disconnect revokes Vaultfolio’s
-          access at SnapTrade and deletes the stored tokens.
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <form method="post" action="/logout">
-          <button
-            type="submit"
-            className={`${buttonSecondary} ${fullWidthOnPhones}`}
-          >
-            Sign out
-          </button>
-        </form>
-        <form method="post" action="/disconnect">
-          <button
-            type="submit"
-            className={`${buttonDanger} ${fullWidthOnPhones}`}
-          >
-            Disconnect SnapTrade
-          </button>
-        </form>
-      </div>
-    </section>
   );
 }
 
@@ -127,8 +89,6 @@ export function AccountsView({ overview }: { overview: AccountsOverview }) {
           </p>
         </div>
       )}
-
-      <AccessCard />
     </div>
   );
 }

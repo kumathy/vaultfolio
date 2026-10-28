@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { AccessActions } from "@/components/settings/access-section";
 import { AccountTypesForm } from "@/components/settings/account-types-form";
 import { SettingsSection } from "@/components/settings/form-kit";
 import { OptionsForm } from "@/components/settings/options-form";
@@ -162,6 +163,13 @@ export default function SettingsPage() {
       <Suspense fallback={<SettingsLoading />}>
         <SettingsContent />
       </Suspense>
+      <SettingsSection
+        id="access"
+        title="Access"
+        description="This browser session and Vaultfolio’s access to SnapTrade."
+      >
+        <AccessActions />
+      </SettingsSection>
     </div>
   );
 }

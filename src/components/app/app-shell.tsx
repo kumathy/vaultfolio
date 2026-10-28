@@ -1,9 +1,4 @@
-import {
-  TbArrowUpRight,
-  TbBuildingBank,
-  TbLogout,
-  TbNotebook,
-} from "react-icons/tb";
+import { TbArrowUpRight, TbBuildingBank, TbNotebook } from "react-icons/tb";
 import { Logo } from "@/components/logo";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Suspense } from "react";
@@ -85,16 +80,6 @@ function Topbar() {
             </Suspense>
           </span>
         </div>
-        <form method="post" action="/logout">
-          <button
-            type="submit"
-            aria-label="Sign out"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-muted transition-colors hover:bg-surface hover:text-foreground sm:px-3"
-          >
-            <TbLogout aria-hidden className="text-base" />
-            <span className="hidden sm:inline">Sign out</span>
-          </button>
-        </form>
       </div>
       <div className="border-t border-border px-4 py-2 lg:hidden">
         <Suspense fallback={<MobileLinksView pathname={null} />}>
