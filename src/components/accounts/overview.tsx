@@ -33,6 +33,11 @@ export function ConnectionChip({
   return <SnapTradeBadge status="connected" label="Connected" />;
 }
 
+// Layout follows the panel's own width (container query), not the screen:
+// four columns only when each value fits in full, otherwise stacked rows.
+const valueText =
+  "font-semibold tabular-nums @4xl:mt-2 @4xl:text-3xl @4xl:tracking-tight";
+
 function Metric({
   label,
   value,
@@ -43,12 +48,10 @@ function Metric({
   detail: string;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-t border-border px-5 py-3 sm:block sm:border-r sm:p-6 sm:last:border-r-0 lg:border-t-0">
+    <div className="flex min-w-0 items-baseline justify-between gap-4 bg-card px-5 py-3 @4xl:block @4xl:p-6">
       <p className="text-sm text-muted">{label}</p>
-      <p className="font-semibold tabular-nums sm:mt-2 sm:truncate sm:text-2xl sm:tracking-tight">
-        {value}
-      </p>
-      <p className="mt-1 hidden text-sm text-muted sm:block">{detail}</p>
+      <p className={valueText}>{value}</p>
+      <p className="mt-1 hidden text-sm text-muted @4xl:block">{detail}</p>
     </div>
   );
 }
@@ -71,65 +74,66 @@ export function OverviewPanel({
     .sort()[0];
   const [primary, ...others] = totals;
 
+  // A 1px gap over a border-coloured background draws the dividers, so they
+  // stay correct for 4 columns, a 2 × 2 grid, or stacked rows.
   return (
-    <section
-      aria-label="Overview"
-      className={`${card} grid overflow-hidden sm:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]`}
-    >
-      <div className="min-w-0 p-5 sm:col-span-3 sm:p-6 lg:col-span-1 lg:border-r lg:border-border">
-        <p className="text-sm text-muted">Total value</p>
-        {primary ? (
-          <>
-            <p className="mt-2 flex flex-wrap items-baseline gap-x-2 tabular-nums">
-              <span className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {formatAmount(primary.amount, primary.currency)}
-              </span>
-              <span className="text-sm font-medium text-muted">
-                {primary.currency}
-              </span>
-            </p>
-            {others.map((total) => (
-              <p key={total.currency} className="mt-1 text-lg tabular-nums">
-                {formatMoney(total.amount, total.currency)}
+    <section aria-label="Overview" className="@container">
+      <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border @4xl:grid-cols-4">
+        <div className="min-w-0 bg-card p-5 @4xl:p-6">
+          <p className="text-sm text-muted">Total value</p>
+          {primary ? (
+            <>
+              <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
+                <span className="text-3xl font-semibold tracking-tight">
+                  {formatAmount(primary.amount, primary.currency)}
+                </span>
+                <span className="text-sm font-medium text-muted">
+                  {primary.currency}
+                </span>
               </p>
-            ))}
-          </>
-        ) : (
-          <p className="mt-2 text-lg text-muted">Not reported</p>
-        )}
-        <p className="mt-2 text-sm text-muted">
-          {others.length > 0
-            ? "Sum of reported values per currency, not converted"
-            : "Sum of reported account values"}
-        </p>
+              {others.map((total) => (
+                <p key={total.currency} className="mt-1 tabular-nums">
+                  {formatMoney(total.amount, total.currency)}
+                </p>
+              ))}
+            </>
+          ) : (
+            <p className="mt-2 text-lg text-muted">Not reported</p>
+          )}
+          <p className="mt-1 text-sm text-muted">
+            {others.length > 0
+              ? "Not converted between currencies"
+              : "Sum of reported account values"}
+          </p>
+        </div>
+        <Metric
+          label="Accounts"
+          value={String(accounts.length)}
+          detail={
+            institutions === 1
+              ? "At 1 institution"
+              : `At ${institutions} institutions`
+          }
+        />
+        <Metric
+          label="Connections"
+          value={
+            connections === null ? "—" : `${active} of ${connections.length}`
+          }
+          detail={
+            connections === null ? "Status unavailable" : "Active in SnapTrade"
+          }
+        />
+        <Metric
+          label="Holdings synced"
+          value={oldestSync ?? "Not reported"}
+          detail={
+            accounts.length > 1
+              ? "Oldest across accounts"
+              : "Reported by SnapTrade"
+          }
+        />
       </div>
-      <Metric
-        label="Accounts"
-        value={String(accounts.length)}
-        detail={
-          institutions === 1
-            ? "At 1 institution"
-            : `At ${institutions} institutions`
-        }
-      />
-      <Metric
-        label="Connections"
-        value={
-          connections === null ? "—" : `${active} of ${connections.length}`
-        }
-        detail={
-          connections === null ? "Status unavailable" : "Active in SnapTrade"
-        }
-      />
-      <Metric
-        label="Holdings synced"
-        value={oldestSync ?? "Not reported"}
-        detail={
-          accounts.length > 1
-            ? "Oldest across accounts"
-            : "Reported by SnapTrade"
-        }
-      />
     </section>
   );
 }
