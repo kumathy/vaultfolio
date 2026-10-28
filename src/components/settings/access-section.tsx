@@ -40,7 +40,7 @@ export function AccessActions() {
             className={`${compact(buttonDanger)} w-full cursor-pointer list-none sm:w-auto [&::-webkit-details-marker]:hidden`}
           >
             <TbPlugConnectedX aria-hidden />
-            Disconnect…
+            Disconnect
           </summary>
           <div className="mt-3 rounded bg-attention-soft px-4 py-3 text-left text-sm sm:w-72">
             <p className="leading-relaxed">
@@ -51,7 +51,7 @@ export function AccessActions() {
                 type="submit"
                 className="inline-flex w-full items-center justify-center rounded-full bg-attention px-4 py-2 text-sm font-medium whitespace-nowrap text-background transition-opacity hover:opacity-90"
               >
-                Disconnect SnapTrade
+                Confirm disconnect
               </button>
             </form>
           </div>
