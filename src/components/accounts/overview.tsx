@@ -33,31 +33,27 @@ export function ConnectionChip({
   return <SnapTradeBadge status="connected" label="Connected" />;
 }
 
-function Tile({
+function Metric({
   label,
   value,
   detail,
-  wide = false,
 }: {
-  label: React.ReactNode;
+  label: string;
   value: string;
   detail: string;
-  wide?: boolean;
 }) {
   return (
-    <div
-      className={`${card} min-w-0 p-4 sm:p-5 ${wide ? "col-span-2 sm:col-span-1" : ""}`}
-    >
-      <p className="flex items-center gap-2 text-sm text-muted">{label}</p>
-      <p className="mt-2 truncate text-2xl font-semibold tracking-tight tabular-nums sm:mt-3 sm:text-3xl">
+    <div className="flex items-baseline justify-between gap-4 border-t border-border px-5 py-3 sm:block sm:border-r sm:p-6 sm:last:border-r-0 lg:border-t-0">
+      <p className="text-sm text-muted">{label}</p>
+      <p className="font-semibold tabular-nums sm:mt-2 sm:truncate sm:text-2xl sm:tracking-tight">
         {value}
       </p>
-      <p className="mt-1 text-xs text-muted sm:text-sm">{detail}</p>
+      <p className="mt-1 hidden text-sm text-muted sm:block">{detail}</p>
     </div>
   );
 }
 
-export function StatTiles({
+export function OverviewPanel({
   accounts,
   connections,
   totals,
@@ -68,26 +64,46 @@ export function StatTiles({
 }) {
   const institutions = new Set(accounts.map((a) => a.institution)).size;
   const active = connections?.filter((c) => !c.disabled).length ?? 0;
+  // The oldest sync is the one that limits how current the page is.
+  const oldestSync = accounts
+    .map((a) => a.holdingsSyncedOn)
+    .filter((date): date is string => date !== null)
+    .sort()[0];
+  const [primary, ...others] = totals;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-      {totals.map((total) => (
-        <Tile
-          key={total.currency}
-          wide
-          label={
-            <>
-              Total value
-              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-foreground">
-                {total.currency}
+    <section
+      aria-label="Overview"
+      className={`${card} grid overflow-hidden sm:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]`}
+    >
+      <div className="min-w-0 p-5 sm:col-span-3 sm:p-6 lg:col-span-1 lg:border-r lg:border-border">
+        <p className="text-sm text-muted">Total value</p>
+        {primary ? (
+          <>
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-2 tabular-nums">
+              <span className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {formatAmount(primary.amount, primary.currency)}
               </span>
-            </>
-          }
-          value={formatAmount(total.amount, total.currency)}
-          detail="Sum of reported account values"
-        />
-      ))}
-      <Tile
+              <span className="text-sm font-medium text-muted">
+                {primary.currency}
+              </span>
+            </p>
+            {others.map((total) => (
+              <p key={total.currency} className="mt-1 text-lg tabular-nums">
+                {formatMoney(total.amount, total.currency)}
+              </p>
+            ))}
+          </>
+        ) : (
+          <p className="mt-2 text-lg text-muted">Not reported</p>
+        )}
+        <p className="mt-2 text-sm text-muted">
+          {others.length > 0
+            ? "Sum of reported values per currency, not converted"
+            : "Sum of reported account values"}
+        </p>
+      </div>
+      <Metric
         label="Accounts"
         value={String(accounts.length)}
         detail={
@@ -96,7 +112,7 @@ export function StatTiles({
             : `At ${institutions} institutions`
         }
       />
-      <Tile
+      <Metric
         label="Connections"
         value={
           connections === null ? "—" : `${active} of ${connections.length}`
@@ -105,7 +121,16 @@ export function StatTiles({
           connections === null ? "Status unavailable" : "Active in SnapTrade"
         }
       />
-    </div>
+      <Metric
+        label="Holdings synced"
+        value={oldestSync ?? "Not reported"}
+        detail={
+          accounts.length > 1
+            ? "Oldest across accounts"
+            : "Reported by SnapTrade"
+        }
+      />
+    </section>
   );
 }
 

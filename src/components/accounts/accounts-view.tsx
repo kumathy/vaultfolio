@@ -4,7 +4,7 @@ import { buttonDanger, buttonSecondary, card } from "@/components/ui";
 import { formatTimestampUtc } from "@/lib/format";
 import type { AccountsOverview } from "@/lib/snaptrade/accounts";
 import { totalsByCurrency } from "@/lib/view-models/accounts";
-import { AccountGroups, ConnectionChip, StatTiles } from "./overview";
+import { AccountGroups, ConnectionChip, OverviewPanel } from "./overview";
 
 function PageHeader({ children }: { children?: React.ReactNode }) {
   return (
@@ -105,7 +105,7 @@ export function AccountsView({ overview }: { overview: AccountsOverview }) {
 
       {accounts && accounts.length > 0 && (
         <>
-          <StatTiles
+          <OverviewPanel
             accounts={accounts}
             connections={connections}
             totals={totalsByCurrency(accounts)}
@@ -140,14 +140,8 @@ export function AccountsLoading() {
       <div
         role="status"
         aria-label="Loading accounts from SnapTrade"
-        className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
-      >
-        <div
-          className={`${card} col-span-2 h-28 animate-pulse bg-surface sm:col-span-1 sm:h-32`}
-        />
-        <div className={`${card} h-28 animate-pulse bg-surface sm:h-32`} />
-        <div className={`${card} h-28 animate-pulse bg-surface sm:h-32`} />
-      </div>
+        className={`${card} h-56 animate-pulse bg-surface sm:h-64 lg:h-36`}
+      />
       <div className={`${card} h-48 animate-pulse bg-surface`} />
     </div>
   );
