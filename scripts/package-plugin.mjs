@@ -14,8 +14,10 @@ const plugin = "obsidian-plugin";
 const run = (args) =>
   execFileSync("npm", args, { cwd: plugin, stdio: "inherit" });
 
+// The plugin's build tools are dev dependencies, which npm skips when the
+// hosting build sets NODE_ENV=production.
 if (!existsSync(`${plugin}/node_modules`))
-  run(["ci", "--no-audit", "--no-fund"]);
+  run(["ci", "--include=dev", "--no-audit", "--no-fund"]);
 execFileSync("npm", ["run", "build"], {
   cwd: plugin,
   stdio: "inherit",
