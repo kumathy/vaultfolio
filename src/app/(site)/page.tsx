@@ -22,6 +22,7 @@ import { ClearSearchParams } from "@/components/clear-search-params";
 import { Notice, type NoticeTone } from "@/components/notice";
 import { Toast, type ToastTone } from "@/components/toast";
 import { LogoMark } from "@/components/logo";
+import { PluginDownloadLink } from "@/components/plugin-download";
 import { HeroBackdrop } from "@/components/site/hero-backdrop";
 import { ObsidianWindow } from "@/components/site/obsidian-window";
 import { SignInLink } from "@/components/site/sign-in-link";
@@ -94,6 +95,7 @@ const steps: {
   title: string;
   text: string;
   Icon: IconType;
+  download?: boolean;
 }[] = [
   {
     label: "Step 1",
@@ -112,6 +114,7 @@ const steps: {
     title: "Obsidian",
     text: "The plugin syncs reports into a vault folder, with frontmatter for Dataview.",
     Icon: TbNotebook,
+    download: true,
   },
 ];
 
@@ -355,6 +358,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
                   <p className="mt-5 text-sm text-muted">{step.label}</p>
                   <h3 className="mt-1 text-lg font-semibold">{step.title}</h3>
                   <p className="mt-2 leading-relaxed text-muted">{step.text}</p>
+                  {step.download && <PluginDownloadLink className="mt-5" />}
                   {/* Centred in the 2rem gap: half the gap plus half the arrow. */}
                   {index < steps.length - 1 && (
                     <TbArrowRight

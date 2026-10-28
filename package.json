@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
+    "predev": "node scripts/package-plugin.mjs",
     "build": "next build",
+    "prebuild": "node scripts/package-plugin.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",

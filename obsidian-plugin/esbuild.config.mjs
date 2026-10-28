@@ -15,6 +15,12 @@ const context = await esbuild.context({
   sourcemap: production ? false : "inline",
   treeShaking: true,
   outfile: "main.js",
+  // The address of the app this build is for; empty means local development.
+  define: {
+    __DEFAULT_APP_URL__: JSON.stringify(
+      process.env.VAULTFOLIO_APP_URL || "http://127.0.0.1:3000",
+    ),
+  },
 });
 
 if (production) {
