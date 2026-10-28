@@ -11,8 +11,9 @@ import {
   localTimestamp,
   parsePeriod,
 } from "@/lib/reports/period";
-import { resolveSettings } from "@/lib/reports/types";
+import { baseCurrencyOf, resolveSettings } from "@/lib/reports/types";
 import type { RawAccountData } from "@/lib/snaptrade/account-data";
+import { rawAccount } from "../../fixtures/reports/builders";
 
 describe("activityKind", () => {
   it.each([
@@ -141,6 +142,51 @@ describe("resolveSettings", () => {
       uninvestedCashDays: 5,
       uninvestedCashThresholdCents: 2500,
     });
+  });
+});
+
+describe("baseCurrencyOf", () => {
+  const accounts = (...raw: Parameters<typeof rawAccount>[0][]) =>
+    normalizeAccountData(raw.map(rawAccount));
+
+  it("uses CAD when any account is registered, whatever holds more value", () => {
+    expect(
+      baseCurrencyOf(
+        accounts(
+          { id: "tfsa", cash: [["CAD", 10]] },
+          { id: "us", rawType: "Margin", cash: [["USD", 5000]] },
+        ),
+      ),
+    ).toBe("CAD");
+  });
+
+  it("otherwise uses the currency holding the most value", () => {
+    expect(
+      baseCurrencyOf(
+        accounts({
+          id: "us",
+          rawType: "Individual",
+          cash: [["CAD", 50]],
+          positions: [["VOO", 1, 500, "USD"]],
+        }),
+      ),
+    ).toBe("USD");
+  });
+
+  it("falls back to CAD on a tie or with no data", () => {
+    expect(
+      baseCurrencyOf(
+        accounts({
+          id: "both",
+          rawType: "Margin",
+          cash: [
+            ["USD", 0],
+            ["CAD", 0],
+          ],
+        }),
+      ),
+    ).toBe("CAD");
+    expect(baseCurrencyOf([])).toBe("CAD");
   });
 });
 

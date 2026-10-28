@@ -3,14 +3,7 @@
 import { useActionState } from "react";
 import { saveSetup } from "@/app/(app)/settings/actions";
 import type { RegisteredType } from "@/lib/reports/types";
-import {
-  FieldError,
-  idle,
-  inputClass,
-  invalid,
-  labelClass,
-  SaveRow,
-} from "./form-kit";
+import { AmountInput, FieldError, idle, labelClass, SaveRow } from "./form-kit";
 
 const ROOM_LABELS: Record<RegisteredType, (year: number) => string> = {
   TFSA: (y) => `TFSA room on January 1, ${y}`,
@@ -26,12 +19,14 @@ export function SetupForm({
   types,
   room,
   contributionTargetCents,
+  currency,
 }: {
   year: number;
   // Registered types the user holds; only these get a room field.
   types: RegisteredType[];
   room: Partial<Record<RegisteredType, number>>;
   contributionTargetCents: number | undefined;
+  currency: string;
 }) {
   const [state, save, saving] = useActionState(saveSetup, idle);
 
@@ -43,14 +38,13 @@ export function SetupForm({
             <label htmlFor={`room-${type}`} className={labelClass}>
               {ROOM_LABELS[type](year)}
             </label>
-            <input
+            <AmountInput
               id={`room-${type}`}
               name={type}
-              inputMode="decimal"
+              unit={currency}
+              state={state}
               placeholder="Not set"
               defaultValue={cents(room[type])}
-              className={`${inputClass} mt-1.5 tabular-nums`}
-              {...invalid(state, type)}
             />
             <FieldError state={state} name={type} />
           </div>
@@ -59,14 +53,13 @@ export function SetupForm({
           <label htmlFor="amount" className={labelClass}>
             Monthly contribution target
           </label>
-          <input
+          <AmountInput
             id="amount"
             name="amount"
-            inputMode="decimal"
+            unit={currency}
+            state={state}
             placeholder="Not set"
             defaultValue={cents(contributionTargetCents)}
-            className={`${inputClass} mt-1.5 tabular-nums`}
-            {...invalid(state, "amount")}
           />
           <FieldError state={state} name="amount" />
         </div>

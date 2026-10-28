@@ -78,7 +78,7 @@ function uninvestedCash(
   const base = ctx.settings.baseCurrency;
   const named = scoped.length > 1;
   const checks: ActivityRow[] = [];
-  const below: string[] = [];
+  const below: { amount: string; currency: string }[] = [];
 
   for (const account of scoped) {
     if (account.cash === null) continue;
@@ -86,7 +86,7 @@ function uninvestedCash(
     for (const cash of account.cash) {
       const amount = money(cash.cents, cash.currency, base);
       if (cash.cents < threshold) {
-        below.push(amount);
+        below.push({ amount, currency: cash.currency });
         continue;
       }
       const activities = (account.activities ?? []).filter(
@@ -128,13 +128,19 @@ function uninvestedCash(
   }
 
   if (checks.length === 0) {
+    // The minimum is the same figure in each currency, so it is stated in the
+    // balance's own currency rather than implying a conversion.
+    const currencies = [...new Set(below.map((b) => b.currency))];
+    const limits = (currencies.length ? currencies : [base]).map((c) =>
+      money(threshold, c, base),
+    );
     checks.push({
       label,
       status: "On track",
       detail:
         below.length === 1
-          ? `${below[0]} (below ${money(threshold, base, base)} threshold)`
-          : `All cash balances below ${money(threshold, base, base)} threshold`,
+          ? `${below[0].amount} (below ${limits[0]} threshold)`
+          : `All cash balances below ${limits.join(" and ")} ${limits.length > 1 ? "thresholds" : "threshold"}`,
     });
   }
   return checks;

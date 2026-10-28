@@ -86,7 +86,7 @@ function dataNotes(
 }
 
 export function buildReport(input: ReportInput, options: BuildOptions): Report {
-  const settings = resolveSettings(options.settings);
+  const settings = resolveSettings(options.settings, input.accounts);
   const ctx = createContext(options.period, options.now, settings);
   const base = settings.baseCurrency;
   const { accounts } = input;

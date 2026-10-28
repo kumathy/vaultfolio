@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { saveOptions } from "@/app/(app)/settings/actions";
 import { TIME_ZONES } from "@/lib/settings/parse";
 import {
+  AmountInput,
   FieldError,
   idle,
   inputClass,
@@ -16,10 +17,13 @@ export function OptionsForm({
   days,
   thresholdCents,
   timeZone,
+  thresholdUnit,
 }: {
   days: number;
   thresholdCents: number;
   timeZone: string;
+  // The currency of the cash held, or "per currency" when there are several.
+  thresholdUnit: string;
 }) {
   const [state, save, saving] = useActionState(saveOptions, idle);
   return (
@@ -48,13 +52,12 @@ export function OptionsForm({
             <label htmlFor="threshold" className={labelClass}>
               Uninvested cash: minimum amount
             </label>
-            <input
+            <AmountInput
               id="threshold"
               name="threshold"
-              inputMode="decimal"
+              unit={thresholdUnit}
+              state={state}
               defaultValue={(thresholdCents / 100).toFixed(2)}
-              className={`${inputClass} mt-1.5 tabular-nums`}
-              {...invalid(state, "threshold")}
             />
             <FieldError state={state} name="threshold" />
           </div>

@@ -32,8 +32,6 @@ const TRANSFER_TYPES = new Set(["TRANSFER", "EXTERNAL_ASSET_TRANSFER_IN"]);
 const loadPageData = cache(async () => {
   const userId = await requireUserId();
   const settings = await loadSettings(userId);
-  const resolved = resolveSettings(settings);
-  const year = Number(localDate(new Date(), resolved.timeZone).slice(0, 4));
 
   let accounts;
   try {
@@ -43,6 +41,8 @@ const loadPageData = cache(async () => {
     await deleteAllSessions(userId);
     redirect("/?error=reauthorize");
   }
+  const resolved = resolveSettings(settings, accounts);
+  const year = Number(localDate(new Date(), resolved.timeZone).slice(0, 4));
 
   const labelled = accounts.map((a) => ({
     ...a,
@@ -77,11 +77,29 @@ const loadPageData = cache(async () => {
     )
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  return { settings, resolved, year, labelled, heldTypes, room, transfers };
+  // The minimum applies to each cash balance in its own currency.
+  const cashCurrencies = new Set(
+    accounts.flatMap((a) => (a.cash ?? []).map((c) => c.currency)),
+  );
+  const thresholdUnit =
+    cashCurrencies.size > 1
+      ? "per currency"
+      : ([...cashCurrencies][0] ?? resolved.baseCurrency);
+
+  return {
+    settings,
+    resolved,
+    year,
+    labelled,
+    heldTypes,
+    room,
+    transfers,
+    thresholdUnit,
+  };
 });
 
 async function ReportSetup() {
-  const { settings, year, heldTypes, room } = await loadPageData();
+  const { settings, resolved, year, heldTypes, room } = await loadPageData();
   return (
     <SettingsSection
       id="setup"
@@ -103,13 +121,15 @@ async function ReportSetup() {
         types={heldTypes}
         room={room}
         contributionTargetCents={settings.contributionTargetCents}
+        currency={resolved.baseCurrency}
       />
     </SettingsSection>
   );
 }
 
 async function AdvancedSettings() {
-  const { settings, resolved, labelled, transfers } = await loadPageData();
+  const { settings, resolved, labelled, transfers, thresholdUnit } =
+    await loadPageData();
   return (
     <details className="group">
       <summary
@@ -178,6 +198,7 @@ async function AdvancedSettings() {
             days={resolved.uninvestedCashDays}
             thresholdCents={resolved.uninvestedCashThresholdCents}
             timeZone={resolved.timeZone}
+            thresholdUnit={thresholdUnit}
           />
         </SettingsSection>
       </div>

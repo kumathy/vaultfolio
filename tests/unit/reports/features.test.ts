@@ -92,6 +92,62 @@ describe("monthly activity", () => {
     }
   });
 
+  it("reports a US-only portfolio in USD and counts its deposits", () => {
+    const r = report(
+      [
+        rawAccount({
+          id: "us",
+          rawType: "Individual",
+          cash: [["USD", 4]],
+          positions: [["VOO", 1, 296, "USD"]],
+          activities: [
+            act.deposit("2026-10-02", 300, "USD"),
+            act.buy("2026-10-03", "VOO", 1, 296, "USD"),
+          ],
+        }),
+      ],
+      { settings: targets({ allocation: undefined }) },
+    );
+    expect(r.frontmatter.base_currency).toBe("USD");
+    expect(tableRow(r.markdown, "Contributions")).toEqual([
+      "Contributions",
+      "$300.00 of $300.00 target (1 deposit) — On track",
+    ]);
+    // No amount carries a currency code, and CAD appears nowhere.
+    expect(r.markdown).not.toMatch(/\d USD/);
+    expect(r.markdown).not.toContain("CAD");
+  });
+
+  it("states the uninvested cash minimum in the balance's own currency", () => {
+    const usd = report(
+      // A TFSA keeps CAD as the base while holding only USD cash.
+      [rawAccount({ id: "usd", cash: [["USD", 20]], activities: [] })],
+      { settings: {} },
+    );
+    expect(tableRow(usd.markdown, "Uninvested cash")).toEqual([
+      "Uninvested cash",
+      "$20.00 USD (below $25.00 USD threshold) — On track",
+    ]);
+
+    const mixed = report(
+      [
+        rawAccount({
+          id: "mixed",
+          cash: [
+            ["CAD", 4],
+            ["USD", 20],
+          ],
+          activities: [],
+        }),
+      ],
+      { settings: {} },
+    );
+    expect(tableRow(mixed.markdown, "Uninvested cash")).toEqual([
+      "Uninvested cash",
+      "All cash balances below $25.00 and $25.00 USD thresholds — On track",
+    ]);
+  });
+
   it("lists purchases by symbol and compares holdings with the target allocation", () => {
     const r = report(
       [
@@ -350,18 +406,20 @@ describe("contributions and growth", () => {
         ],
       }),
     ]);
-    expect(tableRow(r.markdown, "Measure")).toEqual(["Measure", "CAD", "USD"]);
+    // No registered account, and USD holds more value, so USD is the base.
+    expect(tableRow(r.markdown, "Measure")).toEqual(["Measure", "USD", "CAD"]);
     expect(tableRow(r.markdown, "Total contributed")).toEqual([
       "Total contributed",
-      "$1,000.00",
-      "$600.00 USD",
+      "$600.00",
+      "$1,000.00 CAD",
     ]);
     expect(tableRow(r.markdown, "Net growth")).toEqual([
       "Net growth",
-      "-$900.00",
-      "-$50.00 USD",
+      "-$50.00",
+      "-$900.00 CAD",
     ]);
-    expect(r.frontmatter.portfolio_value).toBe("100.00");
+    expect(r.frontmatter.base_currency).toBe("USD");
+    expect(r.frontmatter.portfolio_value).toBe("550.00");
     expect(r.markdown).toContain(
       "Amounts are grouped by currency and not converted.",
     );

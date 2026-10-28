@@ -36,6 +36,47 @@ export const invalid = (state: FormState, name: string) =>
     ? { "aria-invalid": true, "aria-describedby": `${name}-error` }
     : {};
 
+// A money field with its currency shown inside the box. The unit is also
+// linked to the input, so screen readers announce it with the label.
+export function AmountInput({
+  id,
+  name,
+  unit,
+  state,
+  defaultValue,
+  placeholder,
+}: {
+  id: string;
+  name: string;
+  unit: string;
+  state: FormState;
+  defaultValue: string;
+  placeholder?: string;
+}) {
+  const error = state.errors?.[name];
+  return (
+    <div className="relative mt-1.5">
+      <input
+        id={id}
+        name={name}
+        inputMode="decimal"
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+        className={`${inputClass} tabular-nums`}
+        style={{ paddingRight: `${unit.length + 3}ch` }}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-unit ${name}-error` : `${id}-unit`}
+      />
+      <span
+        id={`${id}-unit`}
+        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted"
+      >
+        {unit}
+      </span>
+    </div>
+  );
+}
+
 export function SettingsSection({
   id,
   title,

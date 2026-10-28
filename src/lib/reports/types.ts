@@ -83,7 +83,6 @@ export interface RoomSetting {
 
 export interface ReportSettings {
   timeZone?: string;
-  baseCurrency?: string;
   uninvestedCashDays?: number;
   uninvestedCashThresholdCents?: number;
   // Monthly total regardless of how often deposits are made.
@@ -98,22 +97,11 @@ export interface ReportSettings {
   activityKinds?: Record<string, "contribution" | "transfer_in">;
 }
 
-export type ResolvedSettings = Required<
-  Pick<
-    ReportSettings,
-    | "timeZone"
-    | "baseCurrency"
-    | "uninvestedCashDays"
-    | "uninvestedCashThresholdCents"
-  >
-> &
-  Omit<
-    ReportSettings,
-    | "timeZone"
-    | "baseCurrency"
-    | "uninvestedCashDays"
-    | "uninvestedCashThresholdCents"
-  >;
+type Defaulted =
+  "timeZone" | "uninvestedCashDays" | "uninvestedCashThresholdCents";
+
+export type ResolvedSettings = Required<Pick<ReportSettings, Defaulted>> &
+  Omit<ReportSettings, Defaulted> & { baseCurrency: string };
 
 export const DEFAULT_SETTINGS = {
   timeZone: "America/Toronto",
@@ -122,13 +110,41 @@ export const DEFAULT_SETTINGS = {
   uninvestedCashThresholdCents: 25_00,
 } as const;
 
+// The currency shown without a code, and the one deposits are counted in for
+// the monthly target. A TFSA, RRSP or FHSA means a Canadian investor, so CAD.
+// Otherwise it is the currency holding the most value; comparing totals across
+// currencies only picks this default and never converts a figure.
+export function baseCurrencyOf(accounts: ReportAccount[]): string {
+  if (accounts.some((a) => a.registeredType !== null)) return "CAD";
+  const totals = new Map<string, number>();
+  const add = (currency: string, cents: number) =>
+    totals.set(currency, (totals.get(currency) ?? 0) + cents);
+  for (const account of accounts) {
+    for (const cash of account.cash ?? []) add(cash.currency, cash.cents);
+    for (const h of account.holdings ?? []) {
+      if (h.currency) add(h.currency, h.valueCents ?? 0);
+    }
+  }
+  const fallback = DEFAULT_SETTINGS.baseCurrency;
+  const ranked = [...totals].sort(
+    ([a, x], [b, y]) =>
+      y - x ||
+      Number(b === fallback) - Number(a === fallback) ||
+      a.localeCompare(b),
+  );
+  return ranked[0]?.[0] ?? fallback;
+}
+
+// Settings that depend only on the user's choices need no accounts; pass them
+// whenever amounts are formatted or compared.
 export function resolveSettings(
   settings: ReportSettings = {},
+  accounts: ReportAccount[] = [],
 ): ResolvedSettings {
   return {
     ...settings,
     timeZone: settings.timeZone ?? DEFAULT_SETTINGS.timeZone,
-    baseCurrency: settings.baseCurrency ?? DEFAULT_SETTINGS.baseCurrency,
+    baseCurrency: baseCurrencyOf(accounts),
     uninvestedCashDays:
       settings.uninvestedCashDays ?? DEFAULT_SETTINGS.uninvestedCashDays,
     uninvestedCashThresholdCents:
