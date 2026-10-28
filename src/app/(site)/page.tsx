@@ -17,7 +17,6 @@ import {
   TbWallet,
 } from "react-icons/tb";
 import { ClearSearchParams } from "@/components/clear-search-params";
-import { Notice, type NoticeTone } from "@/components/notice";
 import { Toast, type ToastTone } from "@/components/toast";
 import { LogoMark } from "@/components/logo";
 import { PluginDownloadLink } from "@/components/plugin-download";
@@ -38,44 +37,37 @@ const OBSIDIAN_SITE_URL = "https://obsidian.md";
 
 // Confirmations appear as a toast; problems that need action stay inline next
 // to the sign-in button.
-type Message =
-  | { display: "toast"; tone: ToastTone; text: string }
-  | { display: "inline"; tone: NoticeTone; text: string };
+// Shown as toasts after sign-in, sign-out or disconnect. Warnings stay until
+// dismissed (toast.tsx).
+type Message = { tone: ToastTone; text: string };
 
 const messages: Record<string, Message> = {
   state_mismatch: {
-    display: "inline",
     tone: "warning",
     text: "Sign-in could not be verified: the request expired or did not start in this browser. Signing in again starts a new request.",
   },
   access_denied: {
-    display: "toast",
     tone: "info",
     text: "Access was not granted on SnapTrade. No account data was retrieved.",
   },
   login_failed: {
-    display: "inline",
     tone: "warning",
     text: "Sign-in with SnapTrade did not complete. No account data was retrieved.",
   },
   reauthorize: {
-    display: "inline",
     tone: "warning",
     text: "SnapTrade authorization expired or was revoked. Signing in again restores access.",
   },
   unavailable: {
-    display: "inline",
     tone: "warning",
     text: "SnapTrade sign-in is temporarily unavailable.",
   },
-  signed_out: { display: "toast", tone: "success", text: "Signed out." },
+  signed_out: { tone: "success", text: "Signed out." },
   disconnected: {
-    display: "toast",
     tone: "success",
     text: "SnapTrade access revoked. Stored tokens were deleted.",
   },
   disconnected_unconfirmed: {
-    display: "inline",
     tone: "warning",
     text: "Stored tokens were deleted, but SnapTrade did not confirm the revocation. Access can also be removed in the SnapTrade Dashboard.",
   },
@@ -215,14 +207,7 @@ async function HeroMessage({
   return (
     <>
       <ClearSearchParams keys="error,notice" />
-      {message.display === "toast" && (
-        <Toast tone={message.tone} message={message.text} />
-      )}
-      {message.display === "inline" && (
-        <div className="mx-auto mt-8 max-w-xl text-left lg:mx-0">
-          <Notice tone={message.tone}>{message.text}</Notice>
-        </div>
-      )}
+      <Toast tone={message.tone} message={message.text} />
     </>
   );
 }

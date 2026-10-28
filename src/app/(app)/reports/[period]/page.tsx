@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TbChevronDown, TbChevronLeft, TbChevronRight } from "react-icons/tb";
 import { DismissibleDetails } from "@/components/dismissible-details";
+import { Notice } from "@/components/notice";
 import { ReportPreview } from "@/components/report/report-preview";
 import { card } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
@@ -107,28 +108,29 @@ function MonthPicker({
 
 function RoomPrompt({ types }: { types: RegisteredType[] }) {
   return (
-    <div className="flex flex-col gap-3 rounded bg-surface px-6 py-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-      <p className="leading-relaxed">
-        Remaining {types.join(", ")} room is not calculated. Starting room from
-        CRA My Account can be added in settings.
-      </p>
-      <div className="flex shrink-0 gap-2">
-        <Link
-          href="/settings#setup"
-          className="inline-flex items-center rounded-full bg-accent px-4 py-2 text-sm font-medium whitespace-nowrap text-accent-contrast transition-opacity hover:opacity-90"
-        >
-          Add starting room
-        </Link>
-        <form action={dismissRoomPrompt}>
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:bg-card hover:text-foreground"
+    <Notice
+      actions={
+        <>
+          <Link
+            href="/settings#setup"
+            className="inline-flex items-center rounded-full bg-accent px-4 py-2 text-sm font-medium whitespace-nowrap text-accent-contrast transition-opacity hover:opacity-90"
           >
-            Dismiss
-          </button>
-        </form>
-      </div>
-    </div>
+            Add starting room
+          </Link>
+          <form action={dismissRoomPrompt}>
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-foreground"
+            >
+              Dismiss
+            </button>
+          </form>
+        </>
+      }
+    >
+      Remaining {types.join(", ")} room is not calculated. Starting room from
+      CRA My Account can be added in settings.
+    </Notice>
   );
 }
 

@@ -1,38 +1,38 @@
-import { TbAlertTriangle, TbInfoCircle } from "react-icons/tb";
+import { card } from "@/components/ui";
+import { tones, type Tone } from "./tones";
 
-const tones = {
-  info: {
-    label: "Note",
-    Icon: TbInfoCircle,
-    box: "bg-surface",
-    title: "text-muted",
-  },
-  warning: {
-    label: "Attention",
-    Icon: TbAlertTriangle,
-    box: "bg-attention-soft",
-    title: "text-attention",
-  },
-} as const;
+export type NoticeTone = Exclude<Tone, "success">;
 
-export type NoticeTone = keyof typeof tones;
-
-// Same shape as an Obsidian callout, the format reports use for [!info] and [!warning].
+// A message within a page, styled as a card like the rest of the app and
+// like toasts. Report callouts keep Obsidian's look instead (report-view.tsx).
 export function Notice({
   tone = "info",
   children,
+  actions,
 }: {
   tone?: NoticeTone;
   children: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
-  const { label, Icon, box, title } = tones[tone];
+  const { label, Icon, icon } = tones[tone];
   return (
-    <div className={`rounded px-6 py-3 text-sm leading-relaxed ${box}`}>
-      <p className={`flex items-center gap-2 font-semibold ${title}`}>
-        <Icon aria-hidden className="shrink-0 text-lg" />
-        {label}
-      </p>
-      <div className="mt-1 text-foreground">{children}</div>
+    <div
+      className={`${card} flex flex-col gap-3 px-5 py-4 text-sm sm:flex-row sm:items-center`}
+    >
+      <div className="flex flex-1 items-start gap-3">
+        {Icon && (
+          <Icon aria-hidden className={`mt-0.5 shrink-0 text-lg ${icon}`} />
+        )}
+        <div className="leading-relaxed">
+          <span className="sr-only">{label}: </span>
+          {children}
+        </div>
+      </div>
+      {actions && (
+        <div className={`flex shrink-0 gap-2 sm:pl-0 ${Icon ? "pl-8" : ""}`}>
+          {actions}
+        </div>
+      )}
     </div>
   );
 }
