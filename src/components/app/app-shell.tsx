@@ -16,7 +16,7 @@ import {
 const MENU_ID = "app-menu";
 
 const connectionRow =
-  "flex items-start gap-2.5 rounded-lg px-3 py-2 text-muted transition-colors hover:bg-card hover:text-foreground";
+  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-muted transition-colors hover:bg-card hover:text-foreground";
 
 function SidebarGroup({
   title,
@@ -64,6 +64,8 @@ function Sidebar() {
             <SidebarLinks />
           </Suspense>
         </SidebarGroup>
+        {/* One line per service, like the links above, each ending in a
+            trailing indicator: ↗ for SnapTrade, sync status for Obsidian. */}
         <SidebarGroup title="Connections">
           <ul className="space-y-0.5">
             <li>
@@ -73,37 +75,30 @@ function Sidebar() {
                 rel="noopener noreferrer"
                 className={connectionRow}
               >
-                <TbBuildingBank
-                  aria-hidden
-                  className="mt-0.5 shrink-0 text-lg"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block">SnapTrade</span>
-                  <span className="block text-xs">Manage brokerages</span>
+                <TbBuildingBank aria-hidden className="shrink-0 text-lg" />
+                SnapTrade
+                <TbArrowUpRight aria-hidden className="ml-auto shrink-0" />
+                <span className="sr-only">
+                  (manage brokerages, opens in a new tab)
                 </span>
-                <TbArrowUpRight aria-hidden className="mt-1 shrink-0" />
-                <span className="sr-only">(opens in a new tab)</span>
               </a>
             </li>
             <li>
               <Link href="/settings#obsidian" className={connectionRow}>
-                {/* Obsidian's app icon, exported unmodified from obsidian.md. */}
+                {/* Obsidian's logomark, unmodified, from obsidian.md/brand. */}
                 <Image
-                  src="/brand/obsidian-icon.svg"
+                  src="/brand/obsidian-logo.svg"
                   alt=""
                   width={18}
                   height={18}
                   unoptimized
-                  className="mt-0.5 shrink-0"
+                  className="shrink-0"
                 />
-                <span className="min-w-0 flex-1">
-                  <span className="block">Obsidian</span>
-                  <span className="block text-xs">
-                    {/* Reserves the line so the row does not resize. */}
-                    <Suspense fallback={<span className="block h-4" />}>
-                      <ObsidianSidebarStatus />
-                    </Suspense>
-                  </span>
+                Obsidian
+                <span className="ml-auto text-xs">
+                  <Suspense fallback={null}>
+                    <ObsidianSidebarStatus />
+                  </Suspense>
                 </span>
               </Link>
             </li>

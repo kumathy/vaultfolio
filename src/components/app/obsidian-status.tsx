@@ -9,13 +9,19 @@ interface Status {
   text: string;
 }
 
-// "today" and "yesterday" read faster in the interface; reports keep ISO dates.
+// Short enough to sit at the end of a sidebar row: "today", "yesterday", or
+// a short date. Reports keep ISO dates.
 function syncedLabel(date: Date, now: Date, timeZone: string): string {
   const day = localDate(date, timeZone);
   if (day === localDate(now, timeZone)) return "synced today";
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   if (day === localDate(yesterday, timeZone)) return "synced yesterday";
-  return `synced ${day}`;
+  const short = new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    timeZone,
+  }).format(date);
+  return `synced ${short}`;
 }
 
 const capitalize = (text: string) => text[0].toUpperCase() + text.slice(1);
@@ -35,21 +41,19 @@ async function loadStatus(): Promise<Status | null> {
   const synced = lastSync
     ? syncedLabel(lastSync, new Date(), resolveSettings(settings).timeZone)
     : "not synced yet";
+  // Several vaults: the count, since a single date would not describe them all.
   return {
     connected: true,
-    text:
-      vaults.length === 1
-        ? capitalize(synced)
-        : `${vaults.length} vaults · ${synced}`,
+    text: vaults.length === 1 ? capitalize(synced) : `${vaults.length} vaults`,
   };
 }
 
-// One status line under Obsidian in the sidebar's Connections group.
+// Trailing status on the Obsidian row of the sidebar's Connections group.
 export async function ObsidianSidebarStatus() {
   const status = await loadStatus();
   if (!status) return null;
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex items-center gap-1.5 whitespace-nowrap">
       <span
         aria-hidden
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.connected ? "bg-accent" : "border border-muted"}`}
