@@ -78,7 +78,7 @@ function uninvestedCash(
   const base = ctx.settings.baseCurrency;
   const named = scoped.length > 1;
   const checks: ActivityRow[] = [];
-  const below: { amount: string; currency: string }[] = [];
+  const below: { amount: string; currency: string; cents: number }[] = [];
 
   for (const account of scoped) {
     if (account.cash === null) continue;
@@ -86,7 +86,7 @@ function uninvestedCash(
     for (const cash of account.cash) {
       const amount = money(cash.cents, cash.currency, base);
       if (cash.cents < threshold) {
-        below.push({ amount, currency: cash.currency });
+        below.push({ amount, currency: cash.currency, cents: cash.cents });
         continue;
       }
       const activities = (account.activities ?? []).filter(
@@ -138,9 +138,11 @@ function uninvestedCash(
       label,
       status: "On track",
       detail:
-        below.length === 1
-          ? `${below[0].amount} (below ${limits[0]} threshold)`
-          : `All cash balances below ${limits.join(" and ")} ${limits.length > 1 ? "thresholds" : "threshold"}`,
+        below.length > 0 && below.every((b) => b.cents === 0)
+          ? "None"
+          : below.length === 1
+            ? `${below[0].amount} (below ${limits[0]} threshold)`
+            : `All cash balances below ${limits.join(" and ")} ${limits.length > 1 ? "thresholds" : "threshold"}`,
     });
   }
   return checks;

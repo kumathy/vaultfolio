@@ -9,7 +9,7 @@ import {
   EXAMPLE_ACCOUNT_DATA,
   EXAMPLE_NOW,
   EXAMPLE_SETTINGS,
-} from "@/lib/reports/example";
+} from "../../fixtures/reports/xeqt-tfsa";
 import { normalizeAccountData } from "@/lib/reports/normalize";
 import { periodsBetween } from "@/lib/reports/period";
 import { expectReportStyle } from "./helpers";

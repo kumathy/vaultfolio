@@ -1,82 +1,71 @@
 import type { RawAccountData } from "@/lib/snaptrade/account-data";
-import type { Activity } from "@/lib/snaptrade/types";
+import { dateOf, Ledger, type Instrument } from "@/lib/sample-data/ledger";
 import { buildReport } from "./build-report";
 import { normalizeAccountData } from "./normalize";
 import { parsePeriod, type Period } from "./period";
 import type { ReportSettings } from "./types";
 
-// Illustrative data in SnapTrade's response shapes: a TFSA with a $300 monthly
-// XEQT purchases, used by the landing page and the report tests.
+// The landing page's illustrative report: a Wealthsimple TFSA buying exactly
+// $500 of XEQT each month since January 2025 (about 95% of the account), plus
+// small one-off purchases of NVIDIA and Amazon. Purchases are fractional and
+// distributions are reinvested, so no cash sits idle. The stocks are CAD-listed
+// CDRs, as commonly held in a TFSA, so the account stays in one currency and
+// past months can show an estimated value from the account value history.
 
-const cad = { code: "CAD" };
-const xeqt = { symbol: "XEQT.TO", raw_symbol: "XEQT" };
+const INSTRUMENTS: Record<string, Instrument> = {
+  XEQT: {
+    listing: "XEQT.TO",
+    description: "iShares Core Equity ETF Portfolio",
+    currency: "CAD",
+    price: 37.46,
+    yearlyGrowth: 0.12,
+  },
+  NVDA: {
+    listing: "NVDA.NE",
+    description: "NVIDIA Corporation CDR (CAD Hedged)",
+    currency: "CAD",
+    price: 33.8,
+    yearlyGrowth: 0.45,
+  },
+  AMZN: {
+    listing: "AMZN.NE",
+    description: "Amazon.com, Inc. CDR (CAD Hedged)",
+    currency: "CAD",
+    price: 27.4,
+    yearlyGrowth: 0.18,
+  },
+};
 
-const purchases: [month: string, units: number, amount: number][] = [
-  ["2025-10", 9, 288.9],
-  ["2025-11", 9, 291.6],
-  ["2025-12", 9, 295.2],
-  ["2026-01", 9, 298.8],
-  ["2026-02", 9, 297.9],
-  ["2026-03", 8, 276.0],
-  ["2026-04", 9, 300.6],
-  ["2026-05", 9, 305.1],
-  ["2026-06", 9, 307.8],
-  ["2026-07", 9, 311.4],
-  ["2026-08", 8, 286.4],
-  ["2026-09", 9, 324.9],
-  ["2026-10", 9, 336.29],
-];
+export const EXAMPLE_NOW = new Date("2026-10-27T13:14:00.000Z");
+export const EXAMPLE_PERIOD = parsePeriod("2026-10") as Period;
 
-const distributions: [date: string, amount: number, perUnit: number | null][] =
-  [
-    ["2025-12-29", 2.97, 0.11],
-    ["2026-03-27", 4.24, null],
-    ["2026-06-27", 7.2, 0.09],
-    ["2026-09-29", 10.6, 0.1],
-  ];
+const TODAY = "2026-10-27";
+// SnapTrade syncs transactions with a one-day delay.
+const UNTIL = "2026-10-26";
 
-const at = (date: string) => `${date}T00:00:00.000Z`;
+function exampleAccount(): RawAccountData {
+  const l = new Ledger("example", "CAD", INSTRUMENTS, UNTIL, TODAY);
+  // Exactly $500 of XEQT each month, in fractional units.
+  for (let month = 0; month < 22; month++) {
+    l.deposit(dateOf(2025, month, 1), 500);
+    l.buyAmount(dateOf(2025, month, 2), "XEQT", 500);
+  }
+  l.deposit(dateOf(2025, 6, 16), 200);
+  l.buyAmount(dateOf(2025, 6, 17), "NVDA", 200);
+  l.deposit(dateOf(2026, 1, 16), 250);
+  l.buyAmount(dateOf(2026, 1, 17), "AMZN", 250);
+  // Quarterly distributions, reinvested through a DRIP.
+  for (const year of [2025, 2026]) {
+    [0.11, 0.13, 0.12, 0.24].forEach((perUnit, quarter) =>
+      l.distribute(dateOf(year, quarter * 3 + 2, 27), "XEQT", perUnit, {
+        reinvest: true,
+      }),
+    );
+  }
+  l.settle();
 
-const activities: Activity[] = [
-  ...purchases.flatMap(([month, units, amount]): Activity[] => [
-    {
-      id: `dep-${month}`,
-      type: "CONTRIBUTION",
-      trade_date: at(`${month}-01`),
-      amount: 300,
-      currency: cad,
-      symbol: null,
-      units: 0,
-      price: 0,
-      description: "Contribution",
-    },
-    {
-      id: `buy-${month}`,
-      type: "BUY",
-      trade_date: at(`${month}-02`),
-      amount: -amount,
-      units,
-      price: Math.round((amount / units) * 10_000) / 10_000,
-      currency: cad,
-      symbol: xeqt,
-      description: "Bought XEQT",
-    },
-  ]),
-  ...distributions.map(([date, amount, perUnit]): Activity => ({
-    id: `div-${date}`,
-    type: "DIVIDEND",
-    trade_date: at(date),
-    amount,
-    units: 0,
-    price: perUnit ?? 0,
-    currency: cad,
-    symbol: xeqt,
-    description: "Distribution",
-  })),
-].reverse();
-
-export const EXAMPLE_ACCOUNT_DATA: RawAccountData[] = [
-  {
+  const syncedAt = "2026-10-27T12:00:00.000Z";
+  return {
     account: {
       id: "example-tfsa",
       brokerage_authorization: "example-connection",
@@ -86,39 +75,23 @@ export const EXAMPLE_ACCOUNT_DATA: RawAccountData[] = [
       raw_type: "TFSA",
       account_category: "INVESTMENT",
       is_paper: false,
-      balance: { total: { amount: 4312.55, currency: "CAD" } },
+      balance: { total: { amount: l.valueOn(TODAY), currency: "CAD" } },
       sync_status: {
-        transactions: { first_transaction_date: "2025-10-01" },
+        holdings: { last_successful_sync: syncedAt },
+        transactions: { first_transaction_date: l.firstDate() },
       },
     },
-    balances: [{ currency: cad, cash: 4.12 }],
-    positions: {
-      results: [
-        {
-          instrument: {
-            kind: "etf",
-            symbol: "XEQT.TO",
-            raw_symbol: "XEQT",
-            description: "iShares Core Equity ETF Portfolio",
-            currency: "CAD",
-          },
-          units: "115",
-          price: "37.4646",
-          currency: "CAD",
-        },
-      ],
-      data_freshness: { as_of: "2026-10-27T12:00:00.000Z" },
-    },
-    activities,
-  },
-];
+    balances: l.balances(),
+    positions: { results: l.positions(), data_freshness: { as_of: syncedAt } },
+    activities: l.activityHistory(),
+    valueHistory: l.valueHistory(),
+  };
+}
 
-export const EXAMPLE_NOW = new Date("2026-10-27T13:14:00.000Z");
-export const EXAMPLE_PERIOD = parsePeriod("2026-10") as Period;
+export const EXAMPLE_ACCOUNT_DATA: RawAccountData[] = [exampleAccount()];
 
 export const EXAMPLE_SETTINGS: ReportSettings = {
-  contributionTargetCents: 300_00,
-  allocation: [{ symbol: "XEQT", weightPercent: 100 }],
+  contributionTargetCents: 500_00,
   room: { TFSA: { year: 2026, availableCents: 7_000_00 } },
 };
 

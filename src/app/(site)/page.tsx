@@ -109,6 +109,7 @@ const steps: {
   },
 ];
 
+// Samples are figures from the example report in src/lib/reports/example.ts.
 const reportSections: {
   title: string;
   text: string;
@@ -125,19 +126,19 @@ const reportSections: {
     title: "Contributions and growth",
     text: "Total contributed against current value, with growth in dollars.",
     Icon: TbCoins,
-    sample: ["Net growth", "+$412.55"],
+    sample: ["Net growth", "+$1,928.46"],
   },
   {
     title: "Registered-account room",
     text: "TFSA, RRSP and FHSA contributions against starting room, projected to December 31.",
     Icon: TbWallet,
-    sample: ["TFSA room remaining", "$2,100.00"],
+    sample: ["TFSA room remaining", "$1,750.00"],
   },
   {
     title: "Distributions",
     text: "Every payment by symbol, plus a 12-month estimate.",
     Icon: TbReceipt2,
-    sample: ["Next 12 months (Estimate)", "~$46.00"],
+    sample: ["Next 12 months (Estimate)", "~$199.45"],
   },
 ];
 

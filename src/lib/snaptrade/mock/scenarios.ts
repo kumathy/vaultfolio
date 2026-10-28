@@ -9,7 +9,13 @@ import type {
   BrokerageAuthorization,
 } from "../types";
 import type { MockScenario } from "./config";
-import { addDays, dateOf, isoDay, Ledger, type Instrument } from "./ledger";
+import {
+  addDays,
+  dateOf,
+  isoDay,
+  Ledger,
+  type Instrument,
+} from "@/lib/sample-data/ledger";
 
 export type MockPart = "balances" | "positions" | "activities" | "valueHistory";
 

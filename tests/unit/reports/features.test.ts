@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { EXAMPLE_ACCOUNT_DATA, EXAMPLE_SETTINGS } from "@/lib/reports/example";
+import {
+  EXAMPLE_ACCOUNT_DATA,
+  EXAMPLE_SETTINGS,
+} from "../../fixtures/reports/xeqt-tfsa";
 import type { ReportSettings } from "@/lib/reports/types";
 import { act, rawAccount } from "../../fixtures/reports/builders";
 import { report, rowWith, tableRow } from "./helpers";
@@ -116,6 +119,27 @@ describe("monthly activity", () => {
     // No amount carries a currency code, and CAD appears nowhere.
     expect(r.markdown).not.toMatch(/\d USD/);
     expect(r.markdown).not.toContain("CAD");
+  });
+
+  it("reports no uninvested cash when every balance is zero", () => {
+    const r = report(
+      [
+        rawAccount({
+          id: "tfsa",
+          cash: [["CAD", 0]],
+          positions: [["XEQT", 13.5, 37]],
+          activities: [
+            act.deposit("2026-10-01", 500),
+            act.buy("2026-10-02", "XEQT", 13.5, 500),
+          ],
+        }),
+      ],
+      { settings: {} },
+    );
+    expect(tableRow(r.markdown, "Uninvested cash")).toEqual([
+      "Uninvested cash",
+      "None — On track",
+    ]);
   });
 
   it("states the uninvested cash minimum in the balance's own currency", () => {

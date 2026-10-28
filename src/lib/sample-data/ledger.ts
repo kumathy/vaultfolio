@@ -1,16 +1,15 @@
-import "server-only";
-
 import type {
   AccountPosition,
   AccountValueHistory,
   Activity,
   Balance,
-} from "../types";
+} from "@/lib/snaptrade/types";
 
-// Builds one mock account's history in SnapTrade's response shapes. Events
-// are recorded in any order, then replayed by date so cash and units stay
-// consistent: positions, balances, activities and value history all come from
-// the same ledger.
+// Builds one generated account's history in SnapTrade's response shapes, for
+// development mock data and the landing page example. Events are recorded in
+// any order, then replayed by date so cash and units stay consistent:
+// positions, balances, activities and value history all come from the same
+// ledger.
 
 export interface Instrument {
   listing: string;
@@ -39,6 +38,8 @@ export const dateOf = (year: number, month: number, day: number) =>
   isoDay(new Date(Date.UTC(year, month, day)));
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
+// Fractional units to four decimals, as brokerages that offer them report.
+const round4 = (value: number) => Math.round(value * 10_000) / 10_000;
 
 // A steady trend with a gentle wave, so month-end values differ and past
 // prices are lower than today's.
@@ -129,6 +130,11 @@ export class Ledger {
     });
   }
 
+  // Spends exactly `amount` on fractional units, as Wealthsimple does.
+  buyAmount(date: string, symbol: string, amount: number) {
+    this.later(date, () => this.purchase(date, "BUY", symbol, amount));
+  }
+
   // Sells enough whole units to raise at least `amount`.
   sellFor(date: string, symbol: string, amount: number) {
     this.later(date, () => {
@@ -148,18 +154,25 @@ export class Ledger {
     });
   }
 
-  distribute(date: string, symbol: string, perUnit: number) {
+  // With `reinvest`, the payment buys fractional units the same day (a DRIP),
+  // reported as a DIVIDEND followed by a REI.
+  distribute(
+    date: string,
+    symbol: string,
+    perUnit: number,
+    { reinvest = false } = {},
+  ) {
     this.later(date, () => {
       const held = this.units.get(symbol) ?? 0;
       if (held <= 0) return;
       const instrument = this.instruments[symbol];
-      this.record(
-        date,
-        "DIVIDEND",
-        round2(held * perUnit),
-        instrument.currency,
-        { symbol, price: perUnit, description: `${symbol} distribution` },
-      );
+      const amount = round2(held * perUnit);
+      this.record(date, "DIVIDEND", amount, instrument.currency, {
+        symbol,
+        price: perUnit,
+        description: `${symbol} distribution`,
+      });
+      if (reinvest) this.purchase(date, "REI", symbol, amount);
     });
   }
 
@@ -260,6 +273,27 @@ export class Ledger {
     return { currency: this.currency, history };
   }
 
+  private purchase(
+    date: string,
+    type: "BUY" | "REI",
+    symbol: string,
+    amount: number,
+  ) {
+    const instrument = this.instruments[symbol];
+    const price = priceOn(instrument, date, this.today);
+    const count = round4(amount / price);
+    if (count <= 0) return;
+    this.record(date, type, -amount, instrument.currency, {
+      symbol,
+      units: count,
+      price,
+      description:
+        type === "REI"
+          ? `Reinvested ${symbol} distribution`
+          : `Bought ${symbol}`,
+    });
+  }
+
   private later(date: string, run: () => void) {
     this.pending.push({ date, order: this.pending.length, run });
   }
@@ -293,7 +327,7 @@ export class Ledger {
     this.cash.set(currency, (this.cash.get(currency) ?? 0) + amountCents);
     if (details.symbol && details.units) {
       const held = this.units.get(details.symbol) ?? 0;
-      this.units.set(details.symbol, held + details.units);
+      this.units.set(details.symbol, round4(held + details.units));
     }
     const instrument = details.symbol
       ? this.instruments[details.symbol]

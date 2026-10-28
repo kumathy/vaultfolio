@@ -76,9 +76,9 @@ body {
   font-family: var(--font-sans);
 }
 
+/* A neutral highlight that keeps each text's own colour. */
 ::selection {
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
 }
 
 @layer base {

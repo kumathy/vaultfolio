@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExampleReport } from "@/lib/reports/example";
+import { buildExampleReport } from "../../fixtures/reports/xeqt-tfsa";
 import { expectReportStyle, section, tableRow } from "./helpers";
 
 describe("example report (XEQT TFSA, targets and room configured)", () => {
