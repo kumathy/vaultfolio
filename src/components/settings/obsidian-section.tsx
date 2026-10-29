@@ -19,7 +19,7 @@ export function ObsidianSection({
     <SettingsSection
       id="obsidian"
       title="Obsidian"
-      description="Vaults paired with the Vaultfolio plugin. A vault can only read the monthly reports; revoking it stops syncing immediately."
+      description="Vaults paired with the Vaultfolio plugin. Each can only read reports."
     >
       {vaults.length === 0 ? (
         <div className="space-y-4">

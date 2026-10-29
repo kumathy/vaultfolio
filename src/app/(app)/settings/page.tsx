@@ -106,13 +106,12 @@ async function ReportSetup() {
       title="Report setup"
       description={
         <>
-          Both are optional. Starting room enables remaining room and
-          over-contribution checks; it is shown in{" "}
+          Starting room is listed in{" "}
           <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html">
             CRA My Account
           </ExternalLink>{" "}
-          and cannot be retrieved automatically. The monthly target is a total
-          for the month, however often deposits are made.
+          and cannot be retrieved automatically. The target is a monthly total
+          across all deposits.
         </>
       }
     >
@@ -152,7 +151,7 @@ async function AdvancedSettings() {
         <SettingsSection
           id="allocation"
           title="Target allocation"
-          description="Adds target and weight-versus-target columns to Holdings. Useful when contributions are split across several funds."
+          description="Adds target weights to Holdings."
         >
           <AllocationForm
             targets={{
@@ -166,7 +165,7 @@ async function AdvancedSettings() {
         <SettingsSection
           id="accounts"
           title="Account types"
-          description="Types come from the brokerage when available. A TFSA, RRSP or FHSA tag includes the account in room tracking."
+          description="Defaults to the brokerage’s type. TFSA, RRSP and FHSA accounts are included in room tracking."
         >
           <AccountTypesForm
             accounts={labelled.map((a) => ({
@@ -183,7 +182,7 @@ async function AdvancedSettings() {
           <SettingsSection
             id="transfers"
             title="Transfers into registered accounts"
-            description="Transfers from another registered account do not use new room, so they are not counted as contributions. A transfer from a non-registered account is a contribution and can be marked here."
+            description="Transfers from another registered account are not contributions. Transfers from a non-registered account can be marked as contributions."
           >
             <TransfersForm transfers={transfers} />
           </SettingsSection>
@@ -192,7 +191,7 @@ async function AdvancedSettings() {
         <SettingsSection
           id="options"
           title="Report options"
-          description="When uninvested cash is flagged, and the time zone that defines each month."
+          description="When uninvested cash is flagged, and the time zone each month follows."
         >
           <OptionsForm
             days={resolved.uninvestedCashDays}
@@ -249,8 +248,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Every setting is optional. Reports note what is not configured instead
-          of blocking.
+          Every setting is optional. Reports note what is not configured.
         </p>
       </div>
       <Suspense fallback={<SettingsLoading />}>
