@@ -17,16 +17,16 @@ export function PairForm({ challenge }: { challenge: string }) {
   if (state.status === "ready") {
     return (
       <div className="space-y-3" role="status">
-        <p className="font-medium">Opening Obsidian…</p>
+        <p className="font-medium">Returning to Obsidian…</p>
         <p className="text-sm leading-relaxed text-muted">
-          If Obsidian does not open,{" "}
+          If Obsidian shows no confirmation,{" "}
           <a
             href={state.url}
             className="text-foreground underline underline-offset-4"
           >
-            open it from this link
+            send the code again
           </a>
-          . The link works once and expires in 5 minutes.
+          . The link expires in 5 minutes.
         </p>
       </div>
     );
