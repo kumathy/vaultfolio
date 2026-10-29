@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Vaultfolio", template: "%s · Vaultfolio" },
+  title: { default: "Vaultfolio", template: "%s | Vaultfolio" },
   description:
     "Monthly investing reports from SnapTrade brokerage data, written as Markdown for an Obsidian vault.",
 };
