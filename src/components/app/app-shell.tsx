@@ -119,7 +119,7 @@ function Topbar() {
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between gap-4 px-6 lg:px-10">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="lg:hidden">
+          <span className="flex lg:hidden">
             <Logo href="/accounts" />
           </span>
           <span className="hidden lg:block">
