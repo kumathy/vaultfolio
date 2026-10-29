@@ -46,7 +46,7 @@ describe("monthly activity", () => {
       "$0.00 of $300.00 target (0 deposits) — Attention",
     ]);
     expect(r.frontmatter.target_status).toBe("attention");
-    expect(r.markdown).toContain("> [!warning] Attention\n> - Contributions:");
+    expect(r.markdown).toContain("> [!warning] Attention\n> Contributions:");
     expect(r.markdown).toContain(
       "Contributions below target: **$0.00** of **$300.00**.",
     );
@@ -543,7 +543,7 @@ describe("registered account room", () => {
       "Attention",
     ]);
     expect(r.markdown).toContain(
-      "> - TFSA contributions exceed available room by $500.00.",
+      "> TFSA contributions exceed available room by $500.00.",
     );
   });
 
@@ -560,7 +560,7 @@ describe("registered account room", () => {
       "Attention",
     ]);
     expect(r.markdown).toContain(
-      "> - Contributions at the monthly target are projected to exceed TFSA room by $100.00 by 2026-12-31.",
+      "> Contributions at the monthly target are projected to exceed TFSA room by $100.00 by 2026-12-31.",
     );
     expect(r.frontmatter.target_status).toBe("on-track");
   });

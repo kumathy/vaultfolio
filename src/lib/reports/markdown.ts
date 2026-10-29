@@ -39,11 +39,13 @@ function renderBlock(block: Block): string {
       return inlineText(block.text);
     case "table":
       return markdownTable(block.columns, block.rows);
-    case "callout":
+    case "callout": {
+      const marker = block.lines.length > 1 ? "> - " : "> ";
       return [
         `> [!${block.callout}] ${block.title}`,
-        ...block.lines.map((line) => `> - ${inlineText(line)}`),
+        ...block.lines.map((line) => `${marker}${inlineText(line)}`),
       ].join("\n");
+    }
     case "footer":
       return `---\n*${block.text}*`;
   }

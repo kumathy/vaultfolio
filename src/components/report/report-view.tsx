@@ -116,7 +116,12 @@ function NoteBlock({ block }: { block: Block }) {
             <Icon aria-hidden className="mt-0.5 shrink-0 text-lg" />
             {block.title}
           </p>
-          {block.lines.length > 0 && (
+          {block.lines.length === 1 && (
+            <p className="mt-1 leading-relaxed">
+              <InlineText parts={block.lines[0]} />
+            </p>
+          )}
+          {block.lines.length > 1 && (
             <ul className="mt-1 list-disc space-y-1 pl-5 leading-relaxed">
               {block.lines.map((line, i) => (
                 <li key={i}>
