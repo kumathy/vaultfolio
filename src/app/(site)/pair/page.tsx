@@ -24,10 +24,13 @@ function HomeLogo({ href }: { href: "/" | "/accounts" }) {
   );
 }
 
+// Not prefetched: a prefetched Settings page would predate the vault that
+// pairing adds.
 function BackLink({ href }: { href: "/" | "/settings#obsidian" }) {
   return (
     <Link
       href={href}
+      prefetch={false}
       className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
     >
       <TbArrowLeft aria-hidden />
