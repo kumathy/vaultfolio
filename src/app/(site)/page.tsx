@@ -176,9 +176,6 @@ function IconBadge({ Icon }: { Icon: IconType }) {
 
 // Signed-in visitors never reach this page (src/proxy.ts sends them to the
 // app), so the actions are always the signed-out ones.
-// Each button fades in on its own: an ancestor with opacity below 1 would limit
-// their backdrop blur to its own content, so they would show see-through
-// until the fade ended.
 const buttonRise =
   "animate-rise motion-reduce:animate-none [animation-delay:240ms]";
 
