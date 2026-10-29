@@ -36,19 +36,25 @@ export function DismissibleDetails({
     const summary = details.querySelector(":scope > summary");
     const panel = summary?.nextElementSibling;
     const onSummaryClick = (event: Event) => {
-      if (
-        details.open ||
-        !(panel instanceof HTMLElement) ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ) {
-        return;
-      }
+      if (details.open || !summary || !(panel instanceof HTMLElement)) return;
       event.preventDefault();
       details.open = true;
+
+      // `data-above` lets the panel's styles place it above the summary when
+      // it would overflow the bottom of the viewport and fits above.
+      delete details.dataset.above;
+      const box = panel.getBoundingClientRect();
+      const anchor = summary.getBoundingClientRect();
+      const above =
+        box.bottom > window.innerHeight &&
+        anchor.top - (box.top - anchor.bottom) - box.height >= 0;
+      if (above) details.dataset.above = "";
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       panel.animate(
         {
           opacity: [0, 1],
-          transform: ["translateY(-4px)", "translateY(0)"],
+          transform: [`translateY(${above ? 4 : -4}px)`, "translateY(0)"],
         },
         { duration: 150, easing: "ease-out" },
       );

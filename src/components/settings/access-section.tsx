@@ -29,7 +29,7 @@ export function AccessSection({ email }: { email: string | null }) {
           </button>
         </form>
 
-        <DismissibleDetails className="relative">
+        <DismissibleDetails className="group relative">
           <summary
             className={`${compact(buttonDanger)} w-full cursor-pointer list-none sm:w-auto [&::-webkit-details-marker]:hidden`}
           >
@@ -37,7 +37,7 @@ export function AccessSection({ email }: { email: string | null }) {
             Disconnect SnapTrade
           </summary>
           <div
-            className={`${card} z-20 mt-2 p-4 text-sm sm:absolute sm:right-0 sm:w-80`}
+            className={`${card} absolute top-full right-0 z-20 mt-2 w-full p-4 text-sm group-data-[above]:top-auto group-data-[above]:bottom-full group-data-[above]:mt-0 group-data-[above]:mb-2 sm:w-80`}
           >
             <p className="leading-relaxed text-muted">
               Removes Vaultfolio’s access to brokerage data and signs out on
