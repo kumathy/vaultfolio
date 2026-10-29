@@ -116,11 +116,15 @@ function NoteBlock({ block }: { block: Block }) {
             <Icon aria-hidden className="mt-0.5 shrink-0 text-lg" />
             {block.title}
           </p>
-          {block.lines.map((line, i) => (
-            <p key={i} className="mt-1 leading-relaxed">
-              <InlineText parts={line} />
-            </p>
-          ))}
+          {block.lines.length > 0 && (
+            <ul className="mt-1 list-disc space-y-1 pl-5 leading-relaxed">
+              {block.lines.map((line, i) => (
+                <li key={i}>
+                  <InlineText parts={line} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
     }
@@ -233,8 +237,8 @@ function highlight(line: string, inFrontmatter: boolean): React.ReactNode {
       ),
     );
   }
-  return line.split(/(\*\*[^*]+\*\*|^> |^\*|\*$)/).map((part, i) => {
-    if (part === "> " || part === "*") {
+  return line.split(/(\*\*[^*]+\*\*|^> (?:- )?|^\*|\*$)/).map((part, i) => {
+    if (part === "> " || part === "> - " || part === "*") {
       return (
         <span key={i} className={faint}>
           {part}

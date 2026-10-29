@@ -42,7 +42,7 @@ function renderBlock(block: Block): string {
     case "callout":
       return [
         `> [!${block.callout}] ${block.title}`,
-        ...block.lines.map((line) => `> ${inlineText(line)}`),
+        ...block.lines.map((line) => `> - ${inlineText(line)}`),
       ].join("\n");
     case "footer":
       return `---\n*${block.text}*`;

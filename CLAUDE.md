@@ -127,7 +127,9 @@ income_ttm: 38.20
 # Investing Report — October 2026
 
 > [!summary] Summary
-> Contribution target met: **$300.00** of **$300.00**. Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**). TFSA room remaining for 2026: **$2,100.00**.
+> - Contribution target met: **$300.00** of **$300.00**.
+> - Portfolio value: **$4,312.55** against **$3,900.00** contributed (net growth **+$412.55**).
+> - TFSA room remaining for 2026: **$2,100.00**.
 
 ## Monthly activity
 

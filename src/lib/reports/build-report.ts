@@ -108,7 +108,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
   const growthKnown =
     growth?.growthCents != null && contributions.incompleteHistory.length === 0;
 
-  const summary: Inline[] = [];
+  const summary: Inline[][] = [];
   if (activity.targetCents !== null) {
     const lead = {
       "on-track": "Contribution target met: ",
@@ -116,32 +116,32 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       "in-progress": "Contributions this month: ",
       "not-configured": "",
     }[activity.contributionStatus];
-    summary.push(
+    summary.push([
       lead,
       { bold: money(activity.contributedCents, base, base) },
       " of ",
       { bold: money(activity.targetCents, base, base) },
-      activity.contributionStatus === "in-progress" ? " target so far. " : ". ",
-    );
+      activity.contributionStatus === "in-progress" ? " target so far." : ".",
+    ]);
   }
   if (growth && growth.valueCents === null) {
-    summary.push(
+    summary.push([
       "Total contributed: ",
       { bold: money(growth.netContributedCents, growth.currency, base) },
-      ". ",
-    );
+      ".",
+    ]);
   } else if (growth && !growthKnown) {
-    summary.push(
+    summary.push([
       contributions.valuesEstimated
         ? "Estimated portfolio value: "
         : "Portfolio value: ",
       { bold: money(growth.valueCents!, growth.currency, base) },
       ". Total contributed: ",
       { bold: money(growth.netContributedCents, growth.currency, base) },
-      " (transaction history incomplete). ",
-    );
+      " (transaction history incomplete).",
+    ]);
   } else if (growth && growth.growthCents !== null) {
-    summary.push(
+    summary.push([
       contributions.valuesEstimated
         ? "Estimated portfolio value: "
         : "Portfolio value: ",
@@ -150,29 +150,24 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       { bold: money(growth.netContributedCents, growth.currency, base) },
       " contributed (net growth ",
       { bold: signedMoney(growth.growthCents, growth.currency, base) },
-      "). ",
-    );
+      ").",
+    ]);
   } else if (value) {
-    summary.push(
+    summary.push([
       "Portfolio value: ",
       { bold: money(value.cents, value.currency, base) },
-      ". ",
-    );
+      ".",
+    ]);
   }
   if (tfsa?.remainingCents != null) {
-    summary.push(
+    summary.push([
       `TFSA room remaining for ${room.year}: `,
       { bold: money(tfsa.remainingCents, "CAD", base) },
       ".",
-    );
+    ]);
   }
   if (summary.length === 0)
-    summary.push("No account values were available for this period.");
-  const trimmed = summary.map((part, i) =>
-    i === summary.length - 1 && typeof part === "string"
-      ? part.trimEnd()
-      : part,
-  );
+    summary.push(["No account values were available for this period."]);
 
   const warnings = [...activity.warnings, ...room.warnings];
   const extraNotes: string[] = [];
@@ -252,7 +247,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
         kind: "callout",
         callout: "summary",
         title: "Summary",
-        lines: [trimmed],
+        lines: summary,
       },
       ...(warnings.length > 0
         ? [
