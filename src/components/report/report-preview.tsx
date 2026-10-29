@@ -19,6 +19,7 @@ function CopyButton({ markdown }: { markdown: string }) {
     }
     window.setTimeout(() => setState("idle"), 2500);
   }
+  const copied = state === "copied";
 
   return (
     <>
@@ -27,15 +28,20 @@ function CopyButton({ markdown }: { markdown: string }) {
         onClick={copy}
         aria-label="Copy Markdown"
         title="Copy Markdown"
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-muted transition-colors hover:bg-card hover:text-foreground"
+        className="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-medium text-muted transition-colors hover:text-foreground"
       >
-        {state === "copied" ? (
-          <TbCheck aria-hidden className="text-sm text-accent" />
-        ) : (
-          <TbCopy aria-hidden className="text-sm" />
-        )}
-        <span className="hidden sm:inline">
-          {state === "copied" ? "Copied" : "Copy Markdown"}
+        <span
+          key={copied ? "copied" : "idle"}
+          className={`inline-flex items-center gap-1.5 ${fadeIn}`}
+        >
+          {copied ? (
+            <TbCheck aria-hidden className="text-sm text-accent" />
+          ) : (
+            <TbCopy aria-hidden className="text-sm" />
+          )}
+          <span className="hidden sm:inline">
+            {copied ? "Copied" : "Copy Markdown"}
+          </span>
         </span>
       </button>
       <span role="status" className="sr-only">
