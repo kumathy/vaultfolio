@@ -93,7 +93,7 @@ export function AllocationForm({
                     )
                   }
                   aria-label={`Remove fund ${i + 1}`}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-40"
+                  className="-mr-3 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-40"
                 >
                   <TbTrash aria-hidden />
                 </button>

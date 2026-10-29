@@ -100,18 +100,20 @@ export function SettingsSection({
   id,
   title,
   description,
+  nested = false,
   children,
 }: {
   id: string;
   title: string;
   description: React.ReactNode;
+  nested?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className={`${card} scroll-mt-24 p-5 sm:p-6`}
+      className={`${nested ? "" : card} scroll-mt-24 p-5 sm:p-6`}
     >
       <h2 id={`${id}-heading`} className="text-lg font-semibold">
         {title}

@@ -130,10 +130,8 @@ async function AdvancedSettings() {
   const { settings, resolved, labelled, transfers, thresholdUnit } =
     await loadPageData();
   return (
-    <details className="group">
-      <summary
-        className={`${card} flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 transition-colors hover:border-muted sm:px-6 [&::-webkit-details-marker]:hidden`}
-      >
+    <details className={`${card} group`}>
+      <summary className="group/summary flex cursor-pointer list-none items-center justify-between gap-3 rounded-[calc(1rem-1px)] px-5 py-4 transition-colors group-open:rounded-b-none hover:bg-surface sm:px-6 [&::-webkit-details-marker]:hidden">
         <span>
           <span className="block font-semibold">Advanced settings</span>
           <span className="mt-0.5 block text-sm text-muted">
@@ -143,15 +141,16 @@ async function AdvancedSettings() {
         </span>
         <TbChevronDown
           aria-hidden
-          className="shrink-0 text-lg text-muted transition-transform group-open:rotate-180 motion-reduce:transition-none"
+          className="shrink-0 text-lg text-muted transition group-open:rotate-180 group-hover/summary:text-foreground motion-reduce:transition-none"
         />
       </summary>
 
-      <div className="mt-6 space-y-6">
+      <div className="divide-y divide-border border-t border-border">
         <SettingsSection
           id="allocation"
           title="Target allocation"
           description="Adds target weights to Holdings."
+          nested
         >
           <AllocationForm
             targets={{
@@ -166,6 +165,7 @@ async function AdvancedSettings() {
           id="accounts"
           title="Account types"
           description="Defaults to the brokerage’s type. TFSA, RRSP and FHSA accounts are included in room tracking."
+          nested
         >
           <AccountTypesForm
             accounts={labelled.map((a) => ({
@@ -183,6 +183,7 @@ async function AdvancedSettings() {
             id="transfers"
             title="Transfers into registered accounts"
             description="Transfers from another registered account are not contributions. Transfers from a non-registered account can be marked as contributions."
+            nested
           >
             <TransfersForm transfers={transfers} />
           </SettingsSection>
@@ -192,6 +193,7 @@ async function AdvancedSettings() {
           id="options"
           title="Report options"
           description="When uninvested cash is flagged, and the time zone each month follows."
+          nested
         >
           <OptionsForm
             days={resolved.uninvestedCashDays}
