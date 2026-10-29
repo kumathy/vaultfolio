@@ -176,11 +176,20 @@ function IconBadge({ Icon }: { Icon: IconType }) {
 
 // Signed-in visitors never reach this page (src/proxy.ts sends them to the
 // app), so the actions are always the signed-out ones.
+// Each button fades in on its own: an ancestor with opacity below 1 would limit
+// their backdrop blur to its own content, so they would show see-through
+// until the fade ended.
+const buttonRise =
+  "animate-rise motion-reduce:animate-none [animation-delay:240ms]";
+
 function HeroButtons() {
   return (
     <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-      <SignInLink />
-      <a href="#how-it-works" className={`group ${large(buttonGlass)}`}>
+      <SignInLink className={buttonRise} />
+      <a
+        href="#how-it-works"
+        className={`group ${large(buttonGlass)} ${buttonRise}`}
+      >
         How it works
         <TbArrowDown
           aria-hidden
@@ -253,12 +262,10 @@ export default function Home({ searchParams }: PageProps<"/">) {
               <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
             </p>
 
-            <div className="animate-rise motion-reduce:animate-none [animation-delay:240ms]">
-              <Suspense fallback={null}>
-                <HeroMessage searchParams={searchParams} />
-              </Suspense>
-              <HeroButtons />
-            </div>
+            <Suspense fallback={null}>
+              <HeroMessage searchParams={searchParams} />
+            </Suspense>
+            <HeroButtons />
 
             <p className="mx-auto mt-6 max-w-xl animate-rise motion-reduce:animate-none [animation-delay:320ms] text-sm text-muted lg:mx-0">
               Read-only access through a SnapTrade Personal account, with
