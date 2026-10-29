@@ -1,7 +1,7 @@
 import { TbDownload } from "react-icons/tb";
 import { buttonSecondary, compact } from "@/components/ui";
 
-export const PLUGIN_DOWNLOAD_URL = "/downloads/vaultfolio-obsidian.zip";
+export const PLUGIN_DOWNLOAD_URL = "/downloads/vaultfolio.zip";
 
 export function PluginDownloadLink({ className = "" }: { className?: string }) {
   return (
@@ -24,7 +24,11 @@ export function PluginInstallSteps() {
         <code className="font-mono text-xs text-foreground">
           .obsidian/plugins/
         </code>{" "}
-        folder.
+        folder, as{" "}
+        <code className="font-mono text-xs text-foreground">
+          plugins/vaultfolio/
+        </code>
+        .
       </li>
       <li>Enable Vaultfolio in Settings → Community plugins.</li>
       <li>Choose Connect in Vaultfolio&rsquo;s settings.</li>

@@ -28,7 +28,7 @@ Reports state facts and never recommend trades. Every setting is optional: a rep
 
 ## Obsidian
 
-1. Download the plugin from Vaultfolio and unzip it into the vault's `.obsidian/plugins/` folder.
+1. Download the plugin from Vaultfolio and unzip it into the vault's `.obsidian/plugins/` folder, as `plugins/vaultfolio/`.
 2. Enable **Vaultfolio** under Settings → Community plugins, then choose **Connect**.
 3. Reports appear in `Investing/` and update on startup or with **Vaultfolio: Sync now**.
 

@@ -1,6 +1,7 @@
 // Builds the Obsidian plugin and packages it as a download served by the web
-// app: public/downloads/vaultfolio-obsidian.zip, containing vaultfolio/
-// manifest.json and main.js, ready to unzip into .obsidian/plugins/.
+// app: public/downloads/vaultfolio.zip, with manifest.json and main.js at its
+// root. Default unzip tools extract a multi-file zip into a folder named after
+// it, which gives .obsidian/plugins/vaultfolio/.
 // The plugin's default address is the app it is built for (APP_BASE_URL).
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -25,12 +26,9 @@ execFileSync("npm", ["run", "build"], {
 });
 
 const files = {
-  "vaultfolio/manifest.json": readFileSync(`${plugin}/manifest.json`),
-  "vaultfolio/main.js": readFileSync(`${plugin}/main.js`),
+  "manifest.json": readFileSync(`${plugin}/manifest.json`),
+  "main.js": readFileSync(`${plugin}/main.js`),
 };
 mkdirSync("public/downloads", { recursive: true });
-writeFileSync(
-  "public/downloads/vaultfolio-obsidian.zip",
-  zipSync(files, { level: 9 }),
-);
-console.log("Packaged public/downloads/vaultfolio-obsidian.zip");
+writeFileSync("public/downloads/vaultfolio.zip", zipSync(files, { level: 9 }));
+console.log("Packaged public/downloads/vaultfolio.zip");
