@@ -1,17 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { TbCheck, TbCopy, TbEye, TbFileZip, TbMarkdown } from "react-icons/tb";
-import { card } from "@/components/ui";
+import { TbCheck, TbCopy, TbFileZip } from "react-icons/tb";
+import { card, fadeIn } from "@/components/ui";
+import { ViewToggle, type ReportView } from "@/components/view-toggle";
 import type { ReportDocument } from "@/lib/reports/types";
 import { MarkdownSource, ReportBody } from "./report-view";
-
-type View = "rendered" | "markdown";
-
-const views: { id: View; label: string; Icon: typeof TbEye }[] = [
-  { id: "rendered", label: "Rendered", Icon: TbEye },
-  { id: "markdown", label: "Markdown", Icon: TbMarkdown },
-];
 
 function CopyButton({ markdown }: { markdown: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -66,35 +60,22 @@ export function ReportPreview({
   document: ReportDocument;
   markdown: string;
 }) {
-  const [view, setView] = useState<View>("rendered");
+  const [view, setView] = useState<ReportView>("rendered");
 
   return (
     <section aria-label={`Report ${title}`} className="space-y-4">
       <div className={`${card} overflow-hidden`}>
         <div className="flex items-center justify-between gap-3 border-b border-border bg-surface px-3 py-2">
-          <div
-            role="group"
-            aria-label="Report view"
-            className="inline-flex rounded-full border border-border bg-card p-1"
-          >
-            {views.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={view === id}
-                aria-controls="report-content"
-                onClick={() => setView(id)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap text-muted transition-colors hover:text-foreground aria-pressed:bg-surface aria-pressed:text-foreground"
-              >
-                <Icon aria-hidden className="text-sm" />
-                {label}
-              </button>
-            ))}
-          </div>
+          <ViewToggle
+            label="Report view"
+            controls="report-content"
+            view={view}
+            onChange={setView}
+          />
           <CopyButton markdown={markdown} />
         </div>
 
-        <div id="report-content">
+        <div key={view} id="report-content" className={fadeIn}>
           {view === "rendered" ? (
             <ReportBody document={document} title={title} />
           ) : (

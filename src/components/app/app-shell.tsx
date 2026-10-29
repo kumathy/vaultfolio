@@ -148,9 +148,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
         <MockDataBar />
-        <main className="flex-1 px-6 py-8 animate-page-in motion-reduce:animate-none lg:px-10 lg:py-10">
-          {children}
-        </main>
+        <main className="flex-1 px-6 py-8 lg:px-10 lg:py-10">{children}</main>
         <footer className="border-t border-border px-6 py-5 text-xs text-muted lg:px-10">
           Brokerage data via <SnapTradeName />. For information only. Not
           financial advice.

@@ -4,24 +4,14 @@ import { useState } from "react";
 import {
   TbChevronDown,
   TbChevronRight,
-  TbEye,
   TbFileText,
   TbFolder,
   TbFolderOpen,
-  TbMarkdown,
 } from "react-icons/tb";
-import {
-  ExampleNote,
-  type ExampleNoteData,
-  type NoteView,
-} from "./example-note";
+import { ViewToggle, type ReportView } from "@/components/view-toggle";
+import { ExampleNote, type ExampleNoteData } from "./example-note";
 
 const FOLDER = "Investing";
-
-const views: { id: NoteView; label: string; Icon: typeof TbEye }[] = [
-  { id: "rendered", label: "Rendered", Icon: TbEye },
-  { id: "markdown", label: "Markdown", Icon: TbMarkdown },
-];
 
 function VaultTree({
   notes,
@@ -70,39 +60,9 @@ function VaultTree({
   );
 }
 
-function ViewToggle({
-  view,
-  onChange,
-}: {
-  view: NoteView;
-  onChange: (view: NoteView) => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Example report view"
-      className="inline-flex rounded-full border border-border bg-card p-1"
-    >
-      {views.map(({ id, label, Icon }) => (
-        <button
-          key={id}
-          type="button"
-          aria-pressed={view === id}
-          aria-controls="example-note"
-          onClick={() => onChange(id)}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap text-muted transition-colors hover:text-foreground aria-pressed:bg-surface aria-pressed:text-foreground"
-        >
-          <Icon aria-hidden className="text-sm" />
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // Notes oldest first; the newest opens by default.
 export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
-  const [view, setView] = useState<NoteView>("rendered");
+  const [view, setView] = useState<ReportView>("rendered");
   const [title, setTitle] = useState(notes[notes.length - 1].title);
   const note = notes.find((n) => n.title === title) ?? notes[notes.length - 1];
 
@@ -116,7 +76,12 @@ export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
         className="grid grid-cols-1 gap-3 [grid-template-areas:'toggle'_'window'_'caption'] @[30rem]:grid-cols-[1fr_auto] @[30rem]:[grid-template-areas:'caption_toggle'_'window_window']"
       >
         <div className="justify-self-center [grid-area:toggle] @[30rem]:justify-self-end">
-          <ViewToggle view={view} onChange={setView} />
+          <ViewToggle
+            label="Example report view"
+            controls="example-note"
+            view={view}
+            onChange={setView}
+          />
         </div>
         <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card [grid-area:window]">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">

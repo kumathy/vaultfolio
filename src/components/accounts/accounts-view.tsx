@@ -6,7 +6,7 @@ import type { AccountsOverview } from "@/lib/snaptrade/accounts";
 import { totalsByCurrency } from "@/lib/view-models/accounts";
 import { AccountGroups, OverviewPanel } from "./overview";
 
-function PageHeader() {
+export function AccountsHeader() {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -31,8 +31,6 @@ export function AccountsView({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <PageHeader />
-
       {(disabled.length > 0 || connections === null || accounts === null) && (
         <div className="space-y-3">
           {disabled.map((connection) => (
@@ -91,7 +89,6 @@ export function AccountsView({
 export function AccountsLoading() {
   return (
     <div className="space-y-6 sm:space-y-8">
-      <PageHeader />
       <div
         role="status"
         aria-label="Loading accounts from SnapTrade"

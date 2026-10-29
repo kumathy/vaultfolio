@@ -11,7 +11,7 @@ import { OptionsForm } from "@/components/settings/options-form";
 import { SetupForm } from "@/components/settings/setup-form";
 import { TransfersForm } from "@/components/settings/transfers-form";
 import { ExternalLink } from "@/components/external-link";
-import { card } from "@/components/ui";
+import { card, fadeIn } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
 import { listPluginTokens } from "@/db/plugin";
 import { verifiedEmail } from "@/db/users";
@@ -254,13 +254,19 @@ export default function SettingsPage() {
         </p>
       </div>
       <Suspense fallback={<SettingsLoading />}>
-        <ReportSetup />
+        <div className={fadeIn}>
+          <ReportSetup />
+        </div>
       </Suspense>
       <Suspense fallback={<SettingsLoading />}>
-        <Obsidian />
+        <div className={fadeIn}>
+          <Obsidian />
+        </div>
       </Suspense>
       <Suspense fallback={<SettingsLoading height="h-20" />}>
-        <AdvancedSettings />
+        <div className={fadeIn}>
+          <AdvancedSettings />
+        </div>
       </Suspense>
       <Suspense fallback={<AccessSection email={null} />}>
         <Access />

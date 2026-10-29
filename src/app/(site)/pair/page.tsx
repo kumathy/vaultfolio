@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { TbArrowLeft, TbCheck } from "react-icons/tb";
 import { LogoMark } from "@/components/logo";
 import { SignInLink } from "@/components/site/sign-in-link";
-import { card, container } from "@/components/ui";
+import { card, container, fadeIn } from "@/components/ui";
 import { isChallenge } from "@/lib/auth/plugin";
 import { currentUserId } from "@/lib/auth/session";
 import { PairForm } from "./pair-form";
@@ -56,14 +56,16 @@ async function PairContent({
     return (
       <>
         {logo}
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Start from Obsidian
-        </h1>
-        <p className="mt-2 leading-relaxed text-muted">
-          Pairing begins in the Vaultfolio plugin: Settings → Vaultfolio →
-          Connect. That opens this page with a one-time link.
-        </p>
-        {back}
+        <div className={fadeIn}>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Start from Obsidian
+          </h1>
+          <p className="mt-2 leading-relaxed text-muted">
+            Pairing begins in the Vaultfolio plugin: Settings → Vaultfolio →
+            Connect. That opens this page with a one-time link.
+          </p>
+          {back}
+        </div>
       </>
     );
   }
@@ -71,31 +73,33 @@ async function PairContent({
   return (
     <>
       {logo}
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Connect an Obsidian vault
-      </h1>
-      <p className="mt-2 leading-relaxed text-muted">
-        The Vaultfolio plugin will sync monthly reports into the vault that
-        opened this page.
-      </p>
-      <ul className="mt-5 space-y-2 text-sm">
-        {access.map((item) => (
-          <li key={item} className="flex items-center gap-2">
-            <TbCheck aria-hidden className="text-accent" />
-            {item}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-8">
-        {signedIn ? (
-          <PairForm challenge={challenge} />
-        ) : (
-          <SignInLink
-            href={`/login?next=${encodeURIComponent(`/pair?challenge=${challenge}`)}`}
-          />
-        )}
+      <div className={fadeIn}>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Connect an Obsidian vault
+        </h1>
+        <p className="mt-2 leading-relaxed text-muted">
+          The Vaultfolio plugin will sync monthly reports into the vault that
+          opened this page.
+        </p>
+        <ul className="mt-5 space-y-2 text-sm">
+          {access.map((item) => (
+            <li key={item} className="flex items-center gap-2">
+              <TbCheck aria-hidden className="text-accent" />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-8">
+          {signedIn ? (
+            <PairForm challenge={challenge} />
+          ) : (
+            <SignInLink
+              href={`/login?next=${encodeURIComponent(`/pair?challenge=${challenge}`)}`}
+            />
+          )}
+        </div>
+        {back}
       </div>
-      {back}
     </>
   );
 }

@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
+  AccountsHeader,
   AccountsLoading,
   AccountsView,
 } from "@/components/accounts/accounts-view";
+import { fadeIn } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
 import { deleteAllSessions, requireUserId } from "@/lib/auth/session";
 import { resolveSettings } from "@/lib/reports/types";
@@ -37,8 +39,13 @@ async function AccountsContent() {
 
 export default function AccountsPage() {
   return (
-    <Suspense fallback={<AccountsLoading />}>
-      <AccountsContent />
-    </Suspense>
+    <div className="space-y-6 sm:space-y-8">
+      <AccountsHeader />
+      <Suspense fallback={<AccountsLoading />}>
+        <div className={fadeIn}>
+          <AccountsContent />
+        </div>
+      </Suspense>
+    </div>
   );
 }

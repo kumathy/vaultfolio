@@ -6,7 +6,7 @@ import { TbChevronDown, TbChevronLeft, TbChevronRight } from "react-icons/tb";
 import { DismissibleDetails } from "@/components/dismissible-details";
 import { Notice } from "@/components/notice";
 import { ReportPreview } from "@/components/report/report-preview";
-import { card } from "@/components/ui";
+import { card, fadeIn } from "@/components/ui";
 import { loadSettings } from "@/db/settings";
 import { deleteAllSessions, requireUserId } from "@/lib/auth/session";
 import { availablePeriods } from "@/lib/reports/archive";
@@ -209,7 +209,9 @@ function ReportLoading() {
 export default function ReportPage({ params }: PageProps<"/reports/[period]">) {
   return (
     <Suspense fallback={<ReportLoading />}>
-      <ReportContent params={params} />
+      <div className={fadeIn}>
+        <ReportContent params={params} />
+      </div>
     </Suspense>
   );
 }

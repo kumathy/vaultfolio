@@ -21,3 +21,5 @@ export const large = (button: string) =>
   button.replace("px-5 py-2.5 text-sm", "h-12 px-6 text-base");
 
 export const card = "rounded-2xl border border-border bg-card";
+
+export const fadeIn = "animate-fade-in motion-reduce:animate-none";
