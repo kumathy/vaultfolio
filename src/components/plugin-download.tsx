@@ -24,11 +24,7 @@ export function PluginInstallSteps() {
         <code className="font-mono text-xs text-foreground">
           .obsidian/plugins/
         </code>{" "}
-        folder, as{" "}
-        <code className="font-mono text-xs text-foreground">
-          plugins/vaultfolio/
-        </code>
-        .
+        folder.
       </li>
       <li>Enable Vaultfolio in Settings → Community plugins.</li>
       <li>Choose Connect in Vaultfolio&rsquo;s settings.</li>

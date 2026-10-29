@@ -127,7 +127,7 @@ export function AllocationForm({
       {accounts.length > 1 && (
         <fieldset>
           <legend className={labelClass}>
-            Accounts the contribution target and allocation apply to
+            Accounts for monthly target and allocation
           </legend>
           <p className="mt-1 text-sm text-muted">
             None selected means all accounts.
