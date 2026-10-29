@@ -33,13 +33,36 @@ export function DismissibleDetails({
       if ((event.target as Element).closest("a")) close();
     };
 
+    const summary = details.querySelector(":scope > summary");
+    const panel = summary?.nextElementSibling;
+    const onSummaryClick = (event: Event) => {
+      if (
+        details.open ||
+        !(panel instanceof HTMLElement) ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        return;
+      }
+      event.preventDefault();
+      details.open = true;
+      panel.animate(
+        {
+          opacity: [0, 1],
+          transform: ["translateY(-4px)", "translateY(0)"],
+        },
+        { duration: 150, easing: "ease-out" },
+      );
+    };
+
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     details.addEventListener("click", onClick);
+    summary?.addEventListener("click", onSummaryClick);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
       details.removeEventListener("click", onClick);
+      summary?.removeEventListener("click", onSummaryClick);
     };
   }, []);
 
