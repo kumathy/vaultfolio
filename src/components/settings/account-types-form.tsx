@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { saveAccountTypes } from "@/app/(app)/settings/actions";
 import type { RegisteredType } from "@/lib/reports/types";
-import { idle, inputClass, SaveRow } from "./form-kit";
+import { idle, SaveRow, Select } from "./form-kit";
 
 export interface AccountTypeRow {
   id: string;
@@ -38,19 +38,18 @@ export function AccountTypesForm({ accounts }: { accounts: AccountTypeRow[] }) {
             </div>
             <label className="sm:w-56">
               <span className="sr-only">Type for {account.label}</span>
-              <select
+              <Select
                 name={`type.${account.id}`}
                 defaultValue={
                   account.tag === null ? "none" : (account.tag ?? "")
                 }
-                className={inputClass}
               >
                 <option value="">As reported ({account.brokerageType})</option>
                 <option value="TFSA">TFSA</option>
                 <option value="RRSP">RRSP</option>
                 <option value="FHSA">FHSA</option>
                 <option value="none">Non-registered</option>
-              </select>
+              </Select>
             </label>
           </li>
         ))}

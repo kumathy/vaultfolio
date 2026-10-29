@@ -1,6 +1,6 @@
 "use client";
 
-import { TbCheck } from "react-icons/tb";
+import { TbCheck, TbChevronDown } from "react-icons/tb";
 import { buttonPrimary, card } from "@/components/ui";
 
 export interface FormState {
@@ -35,6 +35,25 @@ export const invalid = (state: FormState, name: string) =>
   state.errors?.[name]
     ? { "aria-invalid": true, "aria-describedby": `${name}-error` }
     : {};
+
+export function Select({
+  wrapperClassName = "",
+  className = "",
+  ...props
+}: React.ComponentProps<"select"> & { wrapperClassName?: string }) {
+  return (
+    <div className={`relative ${wrapperClassName}`}>
+      <select
+        className={`${inputClass} appearance-none pr-9 ${className}`}
+        {...props}
+      />
+      <TbChevronDown
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted"
+      />
+    </div>
+  );
+}
 
 // A money field with its currency shown inside the box. The unit is also
 // linked to the input, so screen readers announce it with the label.

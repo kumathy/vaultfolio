@@ -11,6 +11,7 @@ import {
   invalid,
   labelClass,
   SaveRow,
+  Select,
 } from "./form-kit";
 
 export function OptionsForm({
@@ -65,11 +66,11 @@ export function OptionsForm({
             <label htmlFor="timeZone" className={labelClass}>
               Time zone
             </label>
-            <select
+            <Select
               id="timeZone"
               name="timeZone"
               defaultValue={timeZone}
-              className={`${inputClass} mt-1.5`}
+              wrapperClassName="mt-1.5"
               {...invalid(state, "timeZone")}
             >
               {TIME_ZONES.map(([zone, label]) => (
@@ -77,7 +78,7 @@ export function OptionsForm({
                   {label} ({zone})
                 </option>
               ))}
-            </select>
+            </Select>
             <FieldError state={state} name="timeZone" />
           </div>
         </div>
