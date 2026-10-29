@@ -4,7 +4,6 @@ import { useState } from "react";
 import { TbX } from "react-icons/tb";
 import type { ReportDocument } from "@/lib/reports/types";
 import { MarkdownSource, ReportBody } from "@/components/report/report-view";
-import { fadeIn } from "@/components/ui";
 import type { ReportView } from "@/components/view-toggle";
 
 export interface ExampleNoteData {
@@ -44,7 +43,7 @@ export function ExampleNote({
             const end = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
             setEndReached(end ? key : null);
           }}
-          className={`h-full overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] ${fadeIn}`}
+          className="h-full overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]"
         >
           {view === "rendered" ? (
             <ReportBody document={note.document} title={note.title} />

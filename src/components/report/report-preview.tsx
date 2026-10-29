@@ -81,7 +81,7 @@ export function ReportPreview({
           <CopyButton markdown={markdown} />
         </div>
 
-        <div key={view} id="report-content" className={fadeIn}>
+        <div id="report-content">
           {view === "rendered" ? (
             <ReportBody document={document} title={title} />
           ) : (
