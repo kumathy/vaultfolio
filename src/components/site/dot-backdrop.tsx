@@ -43,7 +43,7 @@ export function DotBackdrop({ fade = "down" }: { fade?: "down" | "both" }) {
       ref={ref}
       aria-hidden
       data-fade={fade}
-      className="dot-backdrop pointer-events-none absolute inset-0 -z-10"
+      className="dot-backdrop pointer-events-none absolute inset-0 -z-10 animate-fade-in-slow motion-reduce:animate-none"
     >
       <div className="dot-grid" />
       <div className="dot-grid dot-grid-spot" />

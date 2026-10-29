@@ -41,6 +41,7 @@
      .button-snaptrade inside it would lose their frosted backdrop. */
   --animate-page-in: page-in 300ms ease-out backwards;
   --animate-fade-in: fade-in 250ms ease-out backwards;
+  --animate-fade-in-slow: fade-in 1s ease-out backwards;
   --animate-toast-in: toast-in 250ms ease-out backwards;
   /* `forwards` keeps the toast hidden until it is removed. */
   --animate-toast-out: toast-out 200ms ease-in forwards;
