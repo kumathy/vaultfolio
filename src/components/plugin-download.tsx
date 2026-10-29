@@ -26,10 +26,8 @@ export function PluginInstallSteps() {
         </code>{" "}
         folder.
       </li>
-      <li>
-        In Obsidian, enable Vaultfolio under Settings → Community plugins.
-      </li>
-      <li>Open the plugin&rsquo;s settings and choose Connect.</li>
+      <li>Enable Vaultfolio in Settings → Community plugins.</li>
+      <li>Choose Connect in Vaultfolio&rsquo;s settings.</li>
     </ol>
   );
 }
