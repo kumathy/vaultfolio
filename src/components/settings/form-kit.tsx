@@ -12,7 +12,7 @@ export interface FormState {
 export const idle: FormState = { status: "idle" };
 
 export const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted/70 transition-colors hover:border-muted aria-invalid:border-attention";
+  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted/70 transition-colors hover:border-muted/40 focus-visible:border-2 focus-visible:border-accent focus-visible:pl-[11px] focus-visible:outline-none aria-invalid:border-attention aria-invalid:hover:border-attention aria-invalid:focus-visible:border-attention";
 
 export const labelClass = "text-sm font-medium";
 
