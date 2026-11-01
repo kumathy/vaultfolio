@@ -3,6 +3,7 @@ import {
   EXAMPLE_ACCOUNT_DATA,
   EXAMPLE_SETTINGS,
 } from "../../fixtures/reports/xeqt-tfsa";
+import { isPublicLimitLine } from "@/lib/amounts";
 import type { ReportSettings } from "@/lib/reports/types";
 import { act, rawAccount } from "../../fixtures/reports/builders";
 import { report, rowWith, tableRow } from "./helpers";
@@ -625,9 +626,11 @@ describe("registered account room", () => {
     ]);
     expect(tableRow(r.room(), "RRSP")?.[1]).toBe("$1,000.00");
     expect(tableRow(r.room(), "FHSA")?.[1]).toBe("$2,000.00");
-    expect(r.markdown).toContain(
-      "2026 annual limits: RRSP $33,810.00 maximum; FHSA $8,000.00 ($40,000.00 lifetime).",
-    );
+    const limitLine =
+      "2026 annual limits: RRSP $33,810.00 maximum; FHSA $8,000.00 ($40,000.00 lifetime).";
+    expect(r.markdown).toContain(limitLine);
+    // "Hide amounts" leaves these published figures visible.
+    expect(isPublicLimitLine(limitLine)).toBe(true);
     expect(r.markdown).toContain(
       "RRSP contributions made up to 2027-03-01 can be deducted for 2026.",
     );

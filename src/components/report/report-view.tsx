@@ -10,7 +10,7 @@ import {
   TbInfoCircle,
 } from "react-icons/tb";
 import { Amount, MaskableText } from "@/components/amount";
-import { isBareNumber, isUnitsColumn } from "@/lib/amounts";
+import { isBareNumber, isPublicLimitLine, isUnitsColumn } from "@/lib/amounts";
 import type { Block, Inline, ReportDocument } from "@/lib/reports/types";
 
 // Reports render as Obsidian shows them, including its dark-theme callout
@@ -50,10 +50,20 @@ function propertyIcon(value: string | number | null): IconType {
   return TbAlignLeft;
 }
 
-function InlineText({ parts }: { parts: Inline[] }) {
+function InlineText({
+  parts,
+  masked = true,
+}: {
+  parts: Inline[];
+  masked?: boolean;
+}) {
   return parts.map((part, i) =>
     typeof part === "string" ? (
-      <MaskableText key={i} text={part} />
+      masked ? (
+        <MaskableText key={i} text={part} />
+      ) : (
+        part
+      )
     ) : (
       <strong key={i}>
         <MaskableText text={part.bold} />
@@ -116,7 +126,15 @@ function NoteBlock({ block }: { block: Block }) {
     case "paragraph":
       return (
         <p className="leading-relaxed">
-          <InlineText parts={block.text} />
+          <InlineText
+            parts={block.text}
+            masked={
+              !(
+                typeof block.text[0] === "string" &&
+                isPublicLimitLine(block.text[0])
+              )
+            }
+          />
         </p>
       );
     case "callout": {
@@ -233,6 +251,7 @@ function highlight(
   unitsColumns: number[],
 ): React.ReactNode {
   if (line === "---") return <span className={faint}>{line}</span>;
+  if (isPublicLimitLine(line)) return line;
   if (inFrontmatter) {
     const [key, ...rest] = line.split(": ");
     const value = rest.join(": ");
