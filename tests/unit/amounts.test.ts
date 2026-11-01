@@ -102,6 +102,10 @@ describe("example report with amounts hidden", () => {
           .map((p) => visible(typeof p === "string" ? p : p.bold))
           .join(""),
       );
+    } else if (block.kind === "list") {
+      for (const item of [block.intro, ...block.items]) {
+        shown.push(visible(item));
+      }
     } else if (block.kind === "callout") {
       for (const line of block.lines) {
         shown.push(

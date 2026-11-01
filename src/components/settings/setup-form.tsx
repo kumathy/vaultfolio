@@ -37,10 +37,13 @@ export function SetupForm({
 }) {
   const [result, save, saving] = useActionState(saveSetup, idle);
   const { state, onChange } = useFieldErrors(result);
+  // Four fields fill a 2×2 grid; three columns would leave one on its own row.
+  const columns =
+    types.length + 1 === 4 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3";
 
   return (
     <form action={save} onChange={onChange}>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-4 ${columns}`}>
         {types.map((type) => (
           <div key={type}>
             <label htmlFor={`room-${type}`} className={labelClass}>

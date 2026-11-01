@@ -39,6 +39,10 @@ function renderBlock(block: Block): string {
       return inlineText(block.text);
     case "table":
       return markdownTable(block.columns, block.rows);
+    case "list":
+      return [block.intro, ...block.items.map((item) => `- ${item}`)].join(
+        "\n",
+      );
     case "callout": {
       const marker = block.lines.length > 1 ? "> - " : "> ";
       return [

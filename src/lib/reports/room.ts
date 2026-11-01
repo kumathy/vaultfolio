@@ -218,10 +218,17 @@ export function renderRoom(result: RoomResult, ctx: Context): Block[] {
               : `FHSA ${cad(limits.fhsaAnnualCents)} (${cad(limits.fhsaLifetimeCents)} lifetime)`,
         )
     : [];
-  if (reference.length > 0) {
-    notes.push(
-      `${result.year} annual ${reference.length === 1 ? "limit" : "limits"}: ${reference.join("; ")}.`,
-    );
+  if (reference.length === 1) {
+    blocks.push({
+      kind: "paragraph",
+      text: [`${result.year} annual limit: ${reference[0]}.`],
+    });
+  } else if (reference.length > 1) {
+    blocks.push({
+      kind: "list",
+      intro: `${result.year} annual limits:`,
+      items: reference,
+    });
   }
   if (limits && result.rows.some((r) => r.type === "RRSP")) {
     notes.push(
@@ -236,7 +243,7 @@ export function renderRoom(result: RoomResult, ctx: Context): Block[] {
   const transferred = sumBy(result.rows, (r) => r.transferredInCents);
   if (transferred > 0) {
     notes.push(
-      `Transfers in (${cad(transferred)}) are not counted as contributions. A transfer from a non-registered account is a contribution and can be reclassified in Vaultfolio settings.`,
+      `Transfers in (${cad(transferred)}) are not counted as contributions. Transfers from a non-registered account can be reclassified as contributions in Vaultfolio settings.`,
     );
   }
   if (anyProjection && result.scheduledMonthlyCents !== null) {

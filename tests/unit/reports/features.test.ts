@@ -623,9 +623,10 @@ describe("registered account room", () => {
     ]);
     expect(tableRow(r.room(), "RRSP")?.[1]).toBe("$1,000.00");
     expect(tableRow(r.room(), "FHSA")?.[1]).toBe("$2,000.00");
-    const limitLine =
-      "2026 annual limits: RRSP $33,810.00 maximum; FHSA $8,000.00 ($40,000.00 lifetime).";
-    expect(r.markdown).toContain(limitLine);
+    const limitLine = "2026 annual limits:";
+    expect(r.markdown).toContain(
+      `${limitLine}\n- RRSP $33,810.00 maximum\n- FHSA $8,000.00 ($40,000.00 lifetime)\n`,
+    );
     // "Hide amounts" leaves these published figures visible.
     expect(isPublicLimitLine(limitLine)).toBe(true);
     expect(r.markdown).toContain(

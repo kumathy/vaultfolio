@@ -137,6 +137,23 @@ function NoteBlock({ block }: { block: Block }) {
           />
         </p>
       );
+    case "list": {
+      const masked = !isPublicLimitLine(block.intro);
+      return (
+        <div className="leading-relaxed">
+          <p>
+            <InlineText parts={[block.intro]} masked={masked} />
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            {block.items.map((item, i) => (
+              <li key={i}>
+                <InlineText parts={[item]} masked={masked} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
     case "callout": {
       const { tint, title, Icon } = callouts[block.callout];
       return (
@@ -249,9 +266,10 @@ function highlight(
   line: string,
   inFrontmatter: boolean,
   unitsColumns: number[],
+  isPublic: boolean,
 ): React.ReactNode {
   if (line === "---") return <span className={faint}>{line}</span>;
-  if (isPublicLimitLine(line)) return line;
+  if (isPublic) return line;
   if (inFrontmatter) {
     const [key, ...rest] = line.split(": ");
     const value = rest.join(": ");
@@ -344,10 +362,22 @@ function unitsColumnsByLine(lines: string[]): number[][] {
   });
 }
 
+// A limit line and the bullets directly under it.
+function publicLines(lines: string[]): boolean[] {
+  const result: boolean[] = [];
+  lines.forEach((line, i) => {
+    result.push(
+      isPublicLimitLine(line) || (line.startsWith("- ") && !!result[i - 1]),
+    );
+  });
+  return result;
+}
+
 export function MarkdownSource({ markdown }: { markdown: string }) {
   const lines = markdown.trimEnd().split("\n");
   const frontmatterEnd = lines.indexOf("---", 1);
   const unitsColumns = unitsColumnsByLine(lines);
+  const isPublic = publicLines(lines);
   return (
     <pre className="overflow-x-auto p-5 font-mono text-[12px] leading-6 sm:p-7">
       <code>
@@ -360,7 +390,12 @@ export function MarkdownSource({ markdown }: { markdown: string }) {
                 : "whitespace-pre-wrap [overflow-wrap:anywhere]"
             }`}
           >
-            {highlight(line, i > 0 && i < frontmatterEnd, unitsColumns[i])}
+            {highlight(
+              line,
+              i > 0 && i < frontmatterEnd,
+              unitsColumns[i],
+              isPublic[i],
+            )}
           </span>
         ))}
       </code>

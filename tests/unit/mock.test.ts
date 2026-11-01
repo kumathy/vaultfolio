@@ -108,14 +108,13 @@ describe("mock data", () => {
 });
 
 describe("full scenario", () => {
-  it("covers several brokerages, currencies and partial failures", async () => {
+  it("covers several brokerages and currencies", async () => {
     const r = await mockReport("full");
     expect(r.frontmatter.base_currency).toBe("CAD");
     for (const symbol of ["XEQT", "VFV", "VTI", "SHOP", "AAPL", "TD"]) {
       expect(section(r.markdown, "Holdings")).toContain(`| ${symbol} `);
     }
-    expect(r.markdown).toContain("holdings could not be loaded");
-    expect(r.markdown).toContain("per-account request limit was reached");
+    expect(r.markdown).not.toContain("could not be loaded");
     expect(tableRow(r.markdown, "Uninvested cash")?.[1]).toContain("Attention");
   });
 

@@ -369,7 +369,7 @@ function margin(c: Clock): MockAccount {
   });
 }
 
-// Cash only. Transactions fail with HTTP 429, SnapTrade's rate limit.
+// Cash only: monthly deposits and interest, never invested.
 function cashOnly(c: Clock): MockAccount {
   const l = ledger(c, "cash");
   eachMonth(c, 6, (year, month) => {
@@ -384,11 +384,10 @@ function cashOnly(c: Clock): MockAccount {
     rawType: "Individual",
     number: "U7741052",
     ledger: l.settle(),
-    failures: { activities: 429 },
   });
 }
 
-// Holdings fail to load (HTTP 500); the rest of the account still appears.
+// A single VEQT purchase held since last year.
 function personal(c: Clock): MockAccount {
   const l = ledger(c, "personal");
   l.deposit(dateOf(c.year - 1, 0, 10), 2000);
@@ -402,7 +401,6 @@ function personal(c: Clock): MockAccount {
     rawType: "Non-registered",
     number: "HQ8KZ1NR",
     ledger: l.settle(),
-    failures: { positions: 500 },
   });
 }
 

@@ -205,9 +205,7 @@ export function renderHoldings(result: HoldingsResult, ctx: Context): Block[] {
       ? [
           {
             kind: "paragraph" as const,
-            text: [
-              "Weights are calculated within each currency, since amounts are not converted.",
-            ],
+            text: ["Weights are calculated within each currency."],
           },
         ]
       : []),

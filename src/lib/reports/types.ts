@@ -178,6 +178,7 @@ export type Block =
     }
   | { kind: "table"; columns: Column[]; rows: string[][] }
   | { kind: "paragraph"; text: Inline[] }
+  | { kind: "list"; intro: string; items: string[] }
   | { kind: "footer"; text: string };
 
 export interface ReportDocument {

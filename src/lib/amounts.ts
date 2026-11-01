@@ -19,7 +19,7 @@ export const isBareNumber = (text: string) => BARE_NUMBER.test(text.trim());
 // The yearly registered-account limits are published CRA figures, not the
 // user's own, so the privacy screen leaves that line visible.
 export const isPublicLimitLine = (text: string) =>
-  /^\d{4} annual limits?: /.test(text);
+  /^\d{4} annual limits?:/.test(text);
 
 // Unit counts reveal a position's size as clearly as its value does.
 export const isUnitsColumn = (label: string) => /^units\b/i.test(label.trim());
