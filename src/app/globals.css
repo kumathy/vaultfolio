@@ -131,9 +131,7 @@ body {
     inset -12px 8px 18px -14px
       color-mix(in srgb, var(--snaptrade-cyan) 45%, transparent);
   backdrop-filter: blur(12px) saturate(140%);
-  transition:
-    box-shadow 250ms ease-out,
-    transform 250ms ease-out;
+  transition: box-shadow 250ms ease-out;
 }
 
 .button-snaptrade::after {
@@ -180,13 +178,6 @@ body {
       color-mix(in srgb, var(--snaptrade-cyan) 70%, transparent),
     -12px 12px 32px -16px var(--snaptrade-bronze),
     12px -6px 32px -16px var(--snaptrade-cyan);
-  transform: translateY(-1px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button-snaptrade:hover {
-    transform: none;
-  }
 }
 
 /* Colourless counterpart of .button-snaptrade for secondary actions. */
@@ -198,8 +189,7 @@ body {
   transition:
     background-color 250ms ease-out,
     border-color 250ms ease-out,
-    box-shadow 250ms ease-out,
-    transform 250ms ease-out;
+    box-shadow 250ms ease-out;
 }
 
 .button-glass:hover {
@@ -208,13 +198,6 @@ body {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.16),
     0 8px 24px -14px rgb(255 255 255 / 0.25);
-  transform: translateY(-1px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button-glass:hover {
-    transform: none;
-  }
 }
 
 /* Phone menu (app-shell.tsx): a popover drawer that slides in from the left
