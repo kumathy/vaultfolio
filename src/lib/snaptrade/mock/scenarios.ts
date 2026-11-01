@@ -119,15 +119,31 @@ interface Clock {
   month: number;
 }
 
-function clock(now: Date): Clock {
+function clock(now: Date, syncDelayDays: number): Clock {
   const today = isoDay(now);
+  // The date at UTC−12, the earliest on Earth, so no activity is dated after
+  // the viewer's local today.
+  const earliest = isoDay(new Date(now.getTime() - 12 * 3_600_000));
   return {
     now,
     today,
-    until: addDays(today, -1),
+    until: addDays(earliest, -syncDelayDays),
     year: now.getUTCFullYear(),
     month: now.getUTCMonth(),
   };
+}
+
+// A date `n` months before the current one; days past the month's end roll
+// into the next month.
+const monthsAgo = (c: Clock, n: number, day: number) =>
+  dateOf(c.year, c.month - n, day);
+
+// `daysAgo` days before today, or the 1st if that falls in the previous month,
+// so the current month has activity on any day.
+function thisMonth(c: Clock, daysAgo: number): string {
+  const date = addDays(c.today, -daysAgo);
+  const first = dateOf(c.year, c.month, 1);
+  return date < first ? first : date;
 }
 
 // Calls `run` for each month from `monthsBack` months ago to the current one.
@@ -184,6 +200,9 @@ function mockAccount(
 ): MockAccount {
   const l = options.ledger;
   const synced = new Date(c.now.getTime() - 2 * 3_600_000).toISOString();
+  const transactionsSynced = new Date(
+    Math.min(Date.parse(`${c.until}T06:00:00.000Z`), c.now.getTime()),
+  ).toISOString();
   return {
     account: {
       id: options.id,
@@ -208,7 +227,7 @@ function mockAccount(
         },
         transactions: {
           initial_sync_completed: true,
-          last_successful_sync: `${c.until}T06:00:00.000Z`,
+          last_successful_sync: transactionsSynced,
           first_transaction_date:
             options.withActivities === false ? null : l.firstDate(),
         },
@@ -228,13 +247,17 @@ function mockAccount(
 }
 
 // Monthly XEQT purchases for two years, quarterly distributions, and a
-// withdrawal last year re-contributed this year. This month's deposit is left
-// uninvested, which raises the uninvested-cash check after five days.
+// withdrawal last year re-contributed this year. This month's deposit, six
+// days ago, is left uninvested, which raises the uninvested-cash check.
 function tfsa(c: Clock): MockAccount {
   const l = ledger(c, "tfsa");
   eachMonth(c, 24, (year, month, current) => {
+    if (current) {
+      l.deposit(thisMonth(c, 6), 500);
+      return;
+    }
     l.deposit(dateOf(year, month, 2), 500);
-    if (!current) l.buy(dateOf(year, month, 4), "XEQT");
+    l.buy(dateOf(year, month, 4), "XEQT");
   });
   quarterly(c, c.year - 2, 27, (date, q) =>
     l.distribute(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
@@ -255,20 +278,20 @@ function tfsa(c: Clock): MockAccount {
 }
 
 // VFV each month, a CAD transfer from another RRSP this year (not a new
-// contribution) and a USD transfer last year that bought VTI.
+// contribution) and a USD transfer in an earlier year that bought VTI.
 function rrsp(c: Clock): MockAccount {
   const l = ledger(c, "rrsp");
-  eachMonth(c, 12, (year, month) => {
-    l.deposit(dateOf(year, month, 15), 400);
-    l.buy(dateOf(year, month, 16), "VFV");
+  eachMonth(c, 18, (year, month, current) => {
+    l.deposit(current ? thisMonth(c, 3) : dateOf(year, month, 15), 400);
+    l.buy(current ? thisMonth(c, 2) : dateOf(year, month, 16), "VFV");
   });
   l.transferIn(
-    dateOf(c.year - 1, 5, 10),
+    monthsAgo(c, 17, 10),
     1500,
     "Transfer in from RRSP at another institution (USD)",
     "USD",
   );
-  l.buy(dateOf(c.year - 1, 5, 12), "VTI");
+  l.buy(monthsAgo(c, 17, 12), "VTI");
   l.transferIn(
     dateOf(c.year, 2, 5),
     5000,
@@ -295,9 +318,9 @@ function fhsa(c: Clock): MockAccount {
   l.buy(dateOf(c.year - 1, 3, 5), "XEQT");
   l.deposit(dateOf(c.year - 1, 10, 3), 4000);
   l.buy(dateOf(c.year - 1, 10, 5), "XEQT");
-  eachMonth(c, c.month, (year, month) => {
-    l.deposit(dateOf(year, month, 8), 250);
-    l.buy(dateOf(year, month, 10), "XEQT");
+  eachMonth(c, c.month, (year, month, current) => {
+    l.deposit(current ? thisMonth(c, 4) : dateOf(year, month, 8), 250);
+    l.buy(current ? thisMonth(c, 3) : dateOf(year, month, 10), "XEQT");
   });
   quarterly(c, c.year - 1, 27, (date, q) =>
     l.distribute(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
@@ -326,8 +349,8 @@ function margin(c: Clock): MockAccount {
   l.buy(dateOf(y, m + 3, 9), "AAPL", 1800);
   l.sellFor(dateOf(c.year - 1, 9, 14), "SHOP", 800);
   l.fee(dateOf(c.year - 1, 9, 14), 9.99, "Commission");
-  l.deposit(dateOf(c.year, 0, 20), 1000);
-  l.buy(dateOf(c.year, 0, 21), "TD", 900);
+  l.deposit(monthsAgo(c, 16, 20), 1000);
+  l.buy(monthsAgo(c, 16, 21), "TD", 900);
   for (let year = c.year - 2; year <= c.year; year++) {
     for (const month of [1, 4, 7, 10]) {
       l.distribute(dateOf(year, month, 15), "AAPL", 0.26);
@@ -417,7 +440,7 @@ function us(c: Clock): MockData {
   );
 
   const roth = ledger(c, "us-roth", "USD");
-  eachMonth(c, 12, (year, month) => {
+  eachMonth(c, 14, (year, month) => {
     roth.deposit(dateOf(year, month, 5), 500);
     roth.buy(dateOf(year, month, 6), "VTI");
   });
@@ -494,14 +517,27 @@ const scenarios: Record<MockScenario, (c: Clock) => MockData> = {
   empty: () => ({ authorizations: [], accounts: [] }),
 };
 
-// Generated once per scenario and day; dates move with the calendar.
+// SnapTrade syncs transactions a day late. The full scenario skips the delay
+// so the current month shows activity on any day, including the 1st; the US
+// scenario keeps it and fixed deposit days, so a month with nothing recorded
+// yet can still be checked.
+const SYNC_DELAY_DAYS: Record<MockScenario, number> = {
+  full: 0,
+  us: 1,
+  sandbox: 1,
+  empty: 1,
+};
+
+// Generated once per scenario, date and activity cutoff; dates move with the
+// calendar.
 const generated = new Map<string, MockData>();
 
 export function mockData(scenario: MockScenario, now = new Date()): MockData {
-  const key = `${scenario}:${isoDay(now)}`;
+  const c = clock(now, SYNC_DELAY_DAYS[scenario]);
+  const key = `${scenario}:${c.today}:${c.until}`;
   let data = generated.get(key);
   if (!data) {
-    data = scenarios[scenario](clock(now));
+    data = scenarios[scenario](c);
     generated.clear();
     generated.set(key, data);
   }

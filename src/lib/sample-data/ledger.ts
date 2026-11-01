@@ -79,7 +79,7 @@ export class Ledger {
     private readonly key: string,
     private readonly currency: string,
     private readonly instruments: Record<string, Instrument>,
-    // Activities sync with a one-day delay, so nothing after this date exists.
+    // Last date with activity: SnapTrade syncs transactions a day late.
     private readonly until: string,
     private readonly today: string,
   ) {

@@ -17,9 +17,11 @@ let user = 0;
 
 async function mockReport(
   scenario: MockScenario,
-  options: { period?: string; settings?: ReportSettings } = {},
+  options: { period?: string; settings?: ReportSettings; now?: Date } = {},
 ) {
   vi.stubEnv("VAULTFOLIO_MOCK_DATA", scenario);
+  const now = options.now ?? NOW;
+  vi.setSystemTime(now);
   const settings = options.settings ?? {};
   // A new user each time, so the account cache never crosses scenarios.
   const accounts = await loadReportAccounts(deps, `user-${++user}`, settings);
@@ -27,7 +29,7 @@ async function mockReport(
     { accounts },
     {
       period: parsePeriod(options.period ?? "2026-10")!,
-      now: NOW,
+      now,
       settings,
     },
   );
@@ -86,10 +88,20 @@ describe("mock data", () => {
     }
   });
 
-  it("generates nothing after yesterday, as SnapTrade syncs with a delay", () => {
-    for (const { activities } of mockData("full").accounts) {
+  it("keeps SnapTrade's one-day delay in the US scenario", () => {
+    for (const { activities } of mockData("us").accounts) {
       for (const a of activities) {
-        expect(a.trade_date! < "2026-10-27").toBe(true);
+        expect(a.trade_date!.slice(0, 10) < "2026-10-27").toBe(true);
+      }
+    }
+  });
+
+  it("dates nothing after the viewer's local today", () => {
+    // 2026-11-01 03:30 UTC is still 2026-10-31 across North America.
+    const now = new Date("2026-11-01T03:30:00Z");
+    for (const { activities } of mockData("full", now).accounts) {
+      for (const a of activities) {
+        expect(a.trade_date!.slice(0, 10) <= "2026-10-31").toBe(true);
       }
     }
   });
@@ -116,6 +128,18 @@ describe("full scenario", () => {
     const room = section(r.markdown, "Registered account room");
     expect(room).toContain("On track");
     expect(room).toContain("Attention");
+  });
+
+  it("shows activity and a distribution estimate on the 1st of a month", async () => {
+    const r = await mockReport("full", {
+      period: "2026-11",
+      now: new Date("2026-11-01T15:00:00Z"),
+    });
+    expect(tableRow(r.markdown, "Contributions")?.[1]).toContain("3 deposits");
+    expect(tableRow(r.markdown, "Purchases")?.[1]).toContain("units XEQT");
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")?.[1]).toMatch(
+      /^~\$/,
+    );
   });
 
   it("shows a past month inside the value-history gap as not available", async () => {
