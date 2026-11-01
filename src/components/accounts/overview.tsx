@@ -165,7 +165,7 @@ export function AccountGroups({
 }) {
   return (
     <div className="space-y-4 sm:space-y-6">
-      {groupByInstitution(accounts).map((group) => (
+      {groupByInstitution(accounts, mainCurrency).map((group) => (
         <section
           key={group.institution}
           aria-label={group.institution}

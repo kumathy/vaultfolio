@@ -163,8 +163,24 @@ export interface InstitutionGroup {
   accounts: AccountView[];
 }
 
+// Largest value first, comparing amounts only within one currency, since
+// nothing is converted: main-currency accounts first, then other currencies
+// grouped by code, then accounts without a value. Names break ties.
+function compareAccounts(mainCurrency: string | undefined) {
+  const rank = (account: AccountView) =>
+    !account.total ? 2 : account.total.currency === mainCurrency ? 0 : 1;
+  return (a: AccountView, b: AccountView) =>
+    rank(a) - rank(b) ||
+    (a.total?.currency ?? "").localeCompare(b.total?.currency ?? "") ||
+    (b.total?.amount ?? 0) - (a.total?.amount ?? 0) ||
+    a.name.localeCompare(b.name);
+}
+
+// Brokerages are ranked by their main-currency value, largest first. Those
+// with nothing in the main currency follow in name order.
 export function groupByInstitution(
   accounts: AccountView[],
+  mainCurrency: string | undefined,
 ): InstitutionGroup[] {
   const groups = new Map<string, AccountView[]>();
   for (const account of accounts) {
@@ -173,9 +189,28 @@ export function groupByInstitution(
       account,
     ]);
   }
+  const mainValue = (members: AccountView[]) => {
+    const inMain = members.filter((a) => a.total?.currency === mainCurrency);
+    return inMain.length === 0
+      ? null
+      : inMain.reduce((sum, a) => sum + (a.total?.amount ?? 0), 0);
+  };
   return [...groups]
-    .map(([institution, members]) => ({ institution, accounts: members }))
-    .sort((a, b) => a.institution.localeCompare(b.institution));
+    .map(([institution, members]) => ({
+      institution,
+      accounts: members.sort(compareAccounts(mainCurrency)),
+      value: mainValue(members),
+    }))
+    .sort(
+      (a, b) =>
+        Number(a.value === null) - Number(b.value === null) ||
+        (b.value ?? 0) - (a.value ?? 0) ||
+        a.institution.localeCompare(b.institution),
+    )
+    .map(({ institution, accounts: members }) => ({
+      institution,
+      accounts: members,
+    }));
 }
 
 // No currency conversion: amounts are only ever summed within one currency.

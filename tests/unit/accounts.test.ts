@@ -13,6 +13,7 @@ import {
   normalizeConnections,
   totalsByCurrency,
   UNCLASSIFIED,
+  type AccountView,
 } from "@/lib/view-models/accounts";
 import accountsFixture from "../fixtures/accounts.json";
 import authorizationsFixture from "../fixtures/authorizations.json";
@@ -157,22 +158,97 @@ describe("normalizeConnections", () => {
 });
 
 describe("groupByInstitution", () => {
-  it("groups accounts by institution in alphabetical order", () => {
-    const groups = groupByInstitution(normalizeAccounts(accountsFixture));
-    expect(
-      groups.map((group) => [
-        group.institution,
-        group.accounts.map((account) => account.name),
-      ]),
-    ).toEqual([
-      ["Questrade", ["Individual Margin"]],
-      ["SnapTrade Sandbox", ["SnapTrade Sandbox"]],
+  const account = (
+    institution: string,
+    name: string,
+    total: { amount: number; currency: string } | null,
+  ): AccountView => ({
+    id: `${institution}-${name}`,
+    connectionId: institution,
+    institution,
+    name,
+    numberSuffix: null,
+    type: "TFSA",
+    total,
+    holdingsSyncedOn: null,
+    isPaper: false,
+  });
+  const order = (groups: ReturnType<typeof groupByInstitution>) =>
+    groups.map((group) => [
+      group.institution,
+      group.accounts.map((a) => a.name),
+    ]);
+
+  it("ranks brokerages by main-currency value, largest first", () => {
+    const groups = groupByInstitution(
+      [
+        account("Questrade", "Margin", { amount: 2000, currency: "CAD" }),
+        account("Wealthsimple", "TFSA", { amount: 3000, currency: "CAD" }),
+        account("Wealthsimple", "RRSP", { amount: 500, currency: "CAD" }),
+        account("Alpaca", "Cash", { amount: 4000, currency: "CAD" }),
+      ],
+      "CAD",
+    );
+    expect(order(groups)).toEqual([
+      ["Alpaca", ["Cash"]],
       ["Wealthsimple", ["TFSA", "RRSP"]],
+      ["Questrade", ["Margin"]],
     ]);
   });
 
+  it("never ranks one currency against another", () => {
+    // 9,000 USD is not compared with 1,000 CAD: the brokerage without a
+    // main-currency value follows.
+    const groups = groupByInstitution(
+      [
+        account("Fidelity", "Individual", { amount: 9000, currency: "USD" }),
+        account("Questrade", "Margin", { amount: 1000, currency: "CAD" }),
+        account("Charles Schwab", "IRA", { amount: 100, currency: "USD" }),
+      ],
+      "CAD",
+    );
+    expect(order(groups)).toEqual([
+      ["Questrade", ["Margin"]],
+      ["Charles Schwab", ["IRA"]],
+      ["Fidelity", ["Individual"]],
+    ]);
+  });
+
+  it("orders accounts by currency, then value, then name", () => {
+    const groups = groupByInstitution(
+      [
+        account("IBKR", "No value", null),
+        account("IBKR", "USD large", { amount: 9000, currency: "USD" }),
+        account("IBKR", "CAD small", { amount: 100, currency: "CAD" }),
+        account("IBKR", "EUR", { amount: 50, currency: "EUR" }),
+        account("IBKR", "CAD tie B", { amount: 500, currency: "CAD" }),
+        account("IBKR", "CAD tie A", { amount: 500, currency: "CAD" }),
+      ],
+      "CAD",
+    );
+    expect(order(groups)).toEqual([
+      [
+        "IBKR",
+        ["CAD tie A", "CAD tie B", "CAD small", "EUR", "USD large", "No value"],
+      ],
+    ]);
+  });
+
+  it("keeps accounts from the fixture under their brokerage", () => {
+    const groups = groupByInstitution(
+      normalizeAccounts(accountsFixture),
+      "CAD",
+    );
+    expect(groups.flatMap((g) => g.accounts)).toHaveLength(4);
+    for (const group of groups) {
+      for (const a of group.accounts) {
+        expect(a.institution).toBe(group.institution);
+      }
+    }
+  });
+
   it("returns no groups for no accounts", () => {
-    expect(groupByInstitution([])).toEqual([]);
+    expect(groupByInstitution([], undefined)).toEqual([]);
   });
 });
 
