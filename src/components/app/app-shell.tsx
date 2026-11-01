@@ -2,9 +2,12 @@ import { TbArrowUpRight, TbBuildingBank, TbMenu2, TbX } from "react-icons/tb";
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { loadSettings } from "@/db/settings";
+import { currentUserId } from "@/lib/auth/session";
 import { AMOUNTS_ROOT_ID, HideAmountsScript } from "./hide-amounts";
 import { MockDataBar } from "./mock-data-bar";
 import { ObsidianSidebarStatus } from "./obsidian-status";
+import { TimeZoneSync } from "./time-zone-sync";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
 import { Suspense } from "react";
 import {
@@ -142,6 +145,13 @@ function Topbar() {
   );
 }
 
+async function TimeZone() {
+  const userId = await currentUserId();
+  if (!userId) return null;
+  const { timeZone } = await loadSettings(userId);
+  return <TimeZoneSync saved={timeZone} />;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     // The script sets data-amounts before React hydrates.
@@ -151,6 +161,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       suppressHydrationWarning
     >
       <HideAmountsScript />
+      <Suspense fallback={null}>
+        <TimeZone />
+      </Suspense>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />

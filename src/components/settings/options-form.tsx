@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import { saveOptions } from "@/app/(app)/settings/actions";
-import { TIME_ZONES } from "@/lib/settings/parse";
 import {
   AmountInput,
   FieldError,
@@ -12,18 +11,15 @@ import {
   invalid,
   labelClass,
   SaveRow,
-  Select,
 } from "./form-kit";
 
 export function OptionsForm({
   days,
   thresholdCents,
-  timeZone,
   thresholdUnit,
 }: {
   days: number;
   thresholdCents: number;
-  timeZone: string;
   // The currency of the cash held, or "per currency" when there are several.
   thresholdUnit: string;
 }) {
@@ -31,13 +27,13 @@ export function OptionsForm({
   const { state, onChange } = useFieldErrors(result);
   return (
     <form action={save} onChange={onChange}>
-      {/* Three columns only when the form itself is wide enough for every
-          label on one line; otherwise stacked, as on phones. */}
+      {/* Two columns only when the form itself is wide enough for both
+          labels on one line; otherwise stacked, as on phones. */}
       <div className="@container">
-        <div className="grid gap-4 @3xl:grid-cols-3">
+        <div className="grid gap-4 @xl:grid-cols-2">
           <div>
             <label htmlFor="days" className={labelClass}>
-              Uninvested cash: days
+              Days idle
             </label>
             <input
               id="days"
@@ -53,7 +49,7 @@ export function OptionsForm({
           </div>
           <div>
             <label htmlFor="threshold" className={labelClass}>
-              Uninvested cash: minimum amount
+              Minimum amount
             </label>
             <AmountInput
               id="threshold"
@@ -64,28 +60,9 @@ export function OptionsForm({
             />
             <FieldError state={state} name="threshold" />
           </div>
-          <div>
-            <label htmlFor="timeZone" className={labelClass}>
-              Time zone
-            </label>
-            <Select
-              id="timeZone"
-              name="timeZone"
-              defaultValue={timeZone}
-              wrapperClassName="mt-1.5"
-              {...invalid(state, "timeZone")}
-            >
-              {TIME_ZONES.map(([zone, label]) => (
-                <option key={zone} value={zone}>
-                  {label} ({zone})
-                </option>
-              ))}
-            </Select>
-            <FieldError state={state} name="timeZone" />
-          </div>
         </div>
       </div>
-      <SaveRow state={state} pending={saving} label="Save options" />
+      <SaveRow state={state} pending={saving} label="Save" />
     </form>
   );
 }

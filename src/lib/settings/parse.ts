@@ -12,16 +12,20 @@ export interface StoredSettings extends ReportSettings {
   roomPromptDismissed?: boolean;
 }
 
-export const TIME_ZONES = [
-  ["America/St_Johns", "Newfoundland"],
-  ["America/Halifax", "Atlantic"],
-  ["America/Toronto", "Eastern"],
-  ["America/Winnipeg", "Central"],
-  ["America/Regina", "Saskatchewan"],
-  ["America/Edmonton", "Mountain"],
-  ["America/Vancouver", "Pacific"],
-  ["UTC", "UTC"],
-] as const;
+// A time zone name the runtime recognises, such as "America/Vancouver". The
+// value comes from the browser, so the pattern limits it to plain zone names
+// before Intl checks that the zone exists.
+export function isTimeZone(value: unknown): value is string {
+  if (typeof value !== "string" || !/^[A-Za-z0-9_+\-/]{1,64}$/.test(value)) {
+    return false;
+  }
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const REGISTERED: RegisteredType[] = ["TFSA", "RRSP", "FHSA"];
 const MAX_TARGETS = 10;
@@ -208,10 +212,7 @@ export function parseTransfersForm(
 export function parseOptionsForm(
   form: FormLike,
 ): Parsed<
-  Pick<
-    ReportSettings,
-    "uninvestedCashDays" | "uninvestedCashThresholdCents" | "timeZone"
-  >
+  Pick<ReportSettings, "uninvestedCashDays" | "uninvestedCashThresholdCents">
 > {
   const errors: FieldErrors = {};
   const days = Number(field(form, "days"));
@@ -220,10 +221,6 @@ export function parseOptionsForm(
   }
   const threshold = parseDollars(field(form, "threshold"));
   if (threshold === null) errors.threshold = "Enter an amount such as 25.00.";
-  const timeZone = field(form, "timeZone");
-  if (!TIME_ZONES.some(([zone]) => zone === timeZone)) {
-    errors.timeZone = "Choose a time zone from the list.";
-  }
   return Object.keys(errors).length > 0
     ? { ok: false, errors }
     : {
@@ -231,7 +228,6 @@ export function parseOptionsForm(
         value: {
           uninvestedCashDays: days,
           uninvestedCashThresholdCents: threshold!,
-          timeZone,
         },
       };
 }
@@ -250,9 +246,7 @@ export function parseStoredSettings(raw: unknown): StoredSettings {
   if (!isRecord(raw)) return {};
   const settings: StoredSettings = {};
 
-  if (TIME_ZONES.some(([zone]) => zone === raw.timeZone)) {
-    settings.timeZone = raw.timeZone as string;
-  }
+  if (isTimeZone(raw.timeZone)) settings.timeZone = raw.timeZone;
   if (
     typeof raw.uninvestedCashDays === "number" &&
     Number.isInteger(raw.uninvestedCashDays) &&

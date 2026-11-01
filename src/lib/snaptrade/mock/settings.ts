@@ -41,7 +41,6 @@ export function mockSettings(
           : undefined,
         uninvestedCashDays: 5,
         uninvestedCashThresholdCents: 25_00,
-        timeZone: "America/Halifax",
       };
     }
     case "us":
@@ -52,7 +51,6 @@ export function mockSettings(
           { symbol: "VTI", weightPercent: 40 },
         ],
         uninvestedCashThresholdCents: 50_00,
-        timeZone: "America/Toronto",
       };
     case "sandbox":
     case "empty":

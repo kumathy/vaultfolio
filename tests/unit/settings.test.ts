@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isTimeZone,
   parseAccountTypesForm,
   parseDollars,
   parseOptionsForm,
@@ -277,36 +278,38 @@ describe("parseOptionsForm", () => {
         form([
           ["days", "7"],
           ["threshold", "50"],
-          ["timeZone", "America/Halifax"],
         ]),
       ),
     ).toEqual({
       ok: true,
-      value: {
-        uninvestedCashDays: 7,
-        uninvestedCashThresholdCents: 5000,
-        timeZone: "America/Halifax",
-      },
+      value: { uninvestedCashDays: 7, uninvestedCashThresholdCents: 5000 },
     });
   });
 
-  it("rejects out-of-range values and unknown time zones", () => {
+  it("rejects out-of-range values", () => {
     const result = parseOptionsForm(
       form([
         ["days", "0"],
         ["threshold", "-1"],
-        ["timeZone", "Mars/Olympus"],
       ]),
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(Object.keys(result.errors).sort()).toEqual([
-        "days",
-        "threshold",
-        "timeZone",
-      ]);
+      expect(Object.keys(result.errors).sort()).toEqual(["days", "threshold"]);
     }
   });
+});
+
+describe("isTimeZone", () => {
+  it.each(["America/Vancouver", "America/St_Johns", "Asia/Tokyo", "UTC"])(
+    "accepts %s",
+    (zone) => expect(isTimeZone(zone)).toBe(true),
+  );
+
+  it.each(["Mars/Olympus", "", "America/Toronto; DROP", "x".repeat(65), 5])(
+    "rejects %s",
+    (zone) => expect(isTimeZone(zone)).toBe(false),
+  );
 });
 
 describe("parseStoredSettings", () => {

@@ -190,15 +190,14 @@ async function AdvancedSettings() {
         )}
 
         <SettingsSection
-          id="options"
-          title="Report options"
-          description="When uninvested cash is flagged, and the time zone each month follows."
+          id="uninvested-cash"
+          title="Uninvested cash"
+          description="Flags idle cash in reports."
           nested
         >
           <OptionsForm
             days={resolved.uninvestedCashDays}
             thresholdCents={resolved.uninvestedCashThresholdCents}
-            timeZone={resolved.timeZone}
             thresholdUnit={thresholdUnit}
           />
         </SettingsSection>

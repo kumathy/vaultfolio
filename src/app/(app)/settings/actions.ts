@@ -3,11 +3,12 @@
 import { refresh } from "next/cache";
 import type { FormState } from "@/components/settings/form-kit";
 import { revokePluginToken } from "@/db/plugin";
-import { loadSettings, updateSettings } from "@/db/settings";
-import { requireUserId } from "@/lib/auth/session";
+import { loadSettings, saveSettings, updateSettings } from "@/db/settings";
+import { currentUserId, requireUserId } from "@/lib/auth/session";
 import { localDate } from "@/lib/reports/period";
 import { resolveSettings, type RegisteredType } from "@/lib/reports/types";
 import {
+  isTimeZone,
   parseAccountTypesForm,
   parseOptionsForm,
   parseAllocationForm,
@@ -135,7 +136,19 @@ export async function saveOptions(
   const parsed = parseOptionsForm(form);
   if (!parsed.ok) return { status: "error", errors: parsed.errors };
   await updateSettings(userId, (s) => ({ ...s, ...parsed.value }));
-  return saved("Options saved");
+  return saved("Uninvested cash settings saved");
+}
+
+// The browser's own time zone, sent by TimeZoneSync. It decides when each
+// month starts and ends. Written only when it changes, so page views that
+// match the stored zone cost nothing.
+export async function saveTimeZone(timeZone: unknown): Promise<void> {
+  const userId = await currentUserId();
+  if (!userId || !isTimeZone(timeZone)) return;
+  const settings = await loadSettings(userId);
+  if (settings.timeZone === timeZone) return;
+  await saveSettings(userId, { ...settings, timeZone });
+  refresh();
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
