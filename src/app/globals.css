@@ -339,3 +339,14 @@ body {
     scroll-behavior: smooth;
   }
 }
+
+/* "Hide amounts" privacy screen (components/amount.tsx). The first content
+   line is the fallback for browsers without alternative text for content. */
+[data-amounts="hidden"] [data-amount] > span {
+  display: none;
+}
+
+[data-amounts="hidden"] [data-amount]::after {
+  content: "••••";
+  content: "••••" / "Hidden amount";
+}

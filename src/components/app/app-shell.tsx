@@ -2,6 +2,8 @@ import { TbArrowUpRight, TbBuildingBank, TbMenu2, TbX } from "react-icons/tb";
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { AMOUNTS_ROOT_ID, HideAmountsScript } from "./hide-amounts";
+import { HideAmountsToggle } from "./hide-amounts-toggle";
 import { MockDataBar } from "./mock-data-bar";
 import { ObsidianSidebarStatus } from "./obsidian-status";
 import { SNAPTRADE_DASHBOARD_URL, SnapTradeName } from "@/components/snaptrade";
@@ -128,14 +130,17 @@ function Topbar() {
             </Suspense>
           </span>
         </div>
-        <button
-          type="button"
-          popoverTarget={MENU_ID}
-          aria-label="Open menu"
-          className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground lg:hidden"
-        >
-          <TbMenu2 aria-hidden className="text-xl" />
-        </button>
+        <div className="-mr-2 flex items-center gap-1">
+          <HideAmountsToggle />
+          <button
+            type="button"
+            popoverTarget={MENU_ID}
+            aria-label="Open menu"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground lg:hidden"
+          >
+            <TbMenu2 aria-hidden className="text-xl" />
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -143,7 +148,13 @@ function Topbar() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    // The script sets data-amounts before React hydrates.
+    <div
+      id={AMOUNTS_ROOT_ID}
+      className="flex min-h-screen"
+      suppressHydrationWarning
+    >
+      <HideAmountsScript />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />

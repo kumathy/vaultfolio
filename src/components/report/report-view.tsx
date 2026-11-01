@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { IconType } from "react-icons";
 import {
   TbAlertTriangle,
@@ -8,6 +9,8 @@ import {
   TbClipboardList,
   TbInfoCircle,
 } from "react-icons/tb";
+import { Amount, MaskableText } from "@/components/amount";
+import { isBareNumber, isUnitsColumn } from "@/lib/amounts";
 import type { Block, Inline, ReportDocument } from "@/lib/reports/types";
 
 // Reports render as Obsidian shows them, including its dark-theme callout
@@ -49,7 +52,13 @@ function propertyIcon(value: string | number | null): IconType {
 
 function InlineText({ parts }: { parts: Inline[] }) {
   return parts.map((part, i) =>
-    typeof part === "string" ? part : <strong key={i}>{part.bold}</strong>,
+    typeof part === "string" ? (
+      <MaskableText key={i} text={part} />
+    ) : (
+      <strong key={i}>
+        <MaskableText text={part.bold} />
+      </strong>
+    ),
   );
 }
 
@@ -82,6 +91,8 @@ function Properties({
               <dd className="truncate tabular-nums">
                 {value === null ? (
                   <span className="text-muted">Empty</span>
+                ) : isBareNumber(String(value)) ? (
+                  <Amount>{value}</Amount>
                 ) : (
                   value
                 )}
@@ -159,7 +170,12 @@ function NoteBlock({ block }: { block: Block }) {
                       key={i}
                       className={`border border-border px-2.5 py-1 whitespace-nowrap ${align(i)}`}
                     >
-                      {cell}
+                      {isUnitsColumn(block.columns[i].label) &&
+                      isBareNumber(cell) ? (
+                        <Amount>{cell}</Amount>
+                      ) : (
+                        <MaskableText text={cell} />
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -199,15 +215,32 @@ export function ReportBody({
 
 const faint = "text-muted/60";
 
-function highlight(line: string, inFrontmatter: boolean): React.ReactNode {
+// Keeps a cell's padding outside the mask so masked rows stay aligned.
+function maskCell(cell: string): React.ReactNode {
+  const [, lead, value, trail] = cell.match(/^(\s*)(.*?)(\s*)$/)!;
+  return (
+    <>
+      {lead}
+      <Amount>{value}</Amount>
+      {trail}
+    </>
+  );
+}
+
+function highlight(
+  line: string,
+  inFrontmatter: boolean,
+  unitsColumns: number[],
+): React.ReactNode {
   if (line === "---") return <span className={faint}>{line}</span>;
   if (inFrontmatter) {
     const [key, ...rest] = line.split(": ");
+    const value = rest.join(": ");
     return (
       <>
         <span className="text-muted">{key}</span>
         <span className={faint}>: </span>
-        {rest.join(": ")}
+        {isBareNumber(value) ? <Amount>{value}</Amount> : value}
       </>
     );
   }
@@ -232,15 +265,26 @@ function highlight(line: string, inFrontmatter: boolean): React.ReactNode {
     );
   }
   if (line.startsWith("|")) {
-    return line.split(/(\|)/).map((part, i) =>
-      part === "|" ? (
-        <span key={i} className={faint}>
-          |
-        </span>
-      ) : (
-        part
-      ),
-    );
+    let column = -1;
+    return line.split(/(\|)/).map((part, i) => {
+      if (part === "|") {
+        column += 1;
+        return (
+          <span key={i} className={faint}>
+            |
+          </span>
+        );
+      }
+      return (
+        <Fragment key={i}>
+          {unitsColumns.includes(column) && isBareNumber(part) ? (
+            maskCell(part)
+          ) : (
+            <MaskableText text={part} />
+          )}
+        </Fragment>
+      );
+    });
   }
   return line.split(/(\*\*[^*]+\*\*|^> (?:- )?|^\*|\*$)/).map((part, i) => {
     if (part === "> " || part === "> - " || part === "*") {
@@ -254,18 +298,37 @@ function highlight(line: string, inFrontmatter: boolean): React.ReactNode {
       return (
         <span key={i}>
           <span className={faint}>**</span>
-          <span className="font-bold">{part.slice(2, -2)}</span>
+          <span className="font-bold">
+            <MaskableText text={part.slice(2, -2)} />
+          </span>
           <span className={faint}>**</span>
         </span>
       );
     }
-    return part;
+    return <MaskableText key={i} text={part} />;
+  });
+}
+
+// Indexes of the "Units" columns in each line's table, taken from the header
+// row that starts it.
+function unitsColumnsByLine(lines: string[]): number[][] {
+  let current: number[] = [];
+  return lines.map((line, i) => {
+    if (!line.startsWith("|")) return [];
+    if (!lines[i - 1]?.startsWith("|")) {
+      current = line
+        .split("|")
+        .slice(1)
+        .flatMap((label, column) => (isUnitsColumn(label) ? [column] : []));
+    }
+    return current;
   });
 }
 
 export function MarkdownSource({ markdown }: { markdown: string }) {
   const lines = markdown.trimEnd().split("\n");
   const frontmatterEnd = lines.indexOf("---", 1);
+  const unitsColumns = unitsColumnsByLine(lines);
   return (
     <pre className="overflow-x-auto p-5 font-mono text-[12px] leading-6 sm:p-7">
       <code>
@@ -278,7 +341,7 @@ export function MarkdownSource({ markdown }: { markdown: string }) {
                 : "whitespace-pre-wrap [overflow-wrap:anywhere]"
             }`}
           >
-            {highlight(line, i > 0 && i < frontmatterEnd)}
+            {highlight(line, i > 0 && i < frontmatterEnd, unitsColumns[i])}
           </span>
         ))}
       </code>

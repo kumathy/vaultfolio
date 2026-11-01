@@ -1,4 +1,5 @@
 import { TbFolder } from "react-icons/tb";
+import { Amount } from "@/components/amount";
 import { card } from "@/components/ui";
 import { formatAmount, formatMoney } from "@/lib/format";
 import {
@@ -60,7 +61,9 @@ export function OverviewPanel({
             <>
               <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
                 <span className="text-3xl font-semibold tracking-tight">
-                  {formatAmount(primary.amount, primary.currency)}
+                  <Amount>
+                    {formatAmount(primary.amount, primary.currency)}
+                  </Amount>
                 </span>
                 <span className="text-sm font-medium text-muted">
                   {primary.currency}
@@ -68,7 +71,7 @@ export function OverviewPanel({
               </p>
               {others.map((total) => (
                 <p key={total.currency} className="mt-1 tabular-nums">
-                  {formatMoney(total.amount, total.currency)}
+                  <Amount>{formatMoney(total.amount, total.currency)}</Amount>
                 </p>
               ))}
             </>
@@ -217,7 +220,12 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                   </td>
                   <td className={`${bodyCell} text-right whitespace-nowrap`}>
                     {account.total ? (
-                      formatMoney(account.total.amount, account.total.currency)
+                      <Amount>
+                        {formatMoney(
+                          account.total.amount,
+                          account.total.currency,
+                        )}
+                      </Amount>
                     ) : (
                       <span className="text-muted">Not reported</span>
                     )}
