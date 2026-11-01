@@ -287,7 +287,10 @@ describe("monthly activity", () => {
       "XEQT",
       "106",
     ]);
-    expect(r.markdown).toContain("multiplied by units held at month end.");
+    // The first purchase falls one day inside this month's 12-month window.
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")?.[1]).toBe(
+      "Available from 2026-10-02",
+    );
   });
 
   const valued = (history?: [string, number][]) =>
@@ -670,6 +673,26 @@ describe("distributions", () => {
     expect(r.frontmatter.income_ttm).toBe("0.00");
   });
 
+  it("estimates a past month from the units held at its end", () => {
+    const r = report(
+      [
+        rawAccount({
+          id: "tfsa",
+          positions: [["XEQT", 12, 35]],
+          activities: [
+            act.dividend("2026-09-29", "XEQT", 1, 0.1),
+            act.buy("2026-10-05", "XEQT", 2, 70),
+          ],
+        }),
+      ],
+      { period: "2026-09" },
+    );
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")?.[1]).toBe(
+      "~$1.00",
+    );
+    expect(r.markdown).toContain("multiplied by units held at month end.");
+  });
+
   it("counts a fund paid into two accounts on one day as one per-unit amount", () => {
     const r = report([
       rawAccount({
@@ -715,6 +738,69 @@ describe("distributions", () => {
       "Per-unit amounts could not be determined for OLD",
     );
     expect(r.markdown).not.toContain("multiplied by units held today");
+  });
+
+  it("dates the estimate for a fund held less than 12 months", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        positions: [["XEQT", 50, 35]],
+        activities: [
+          act.deposit("2026-05-01", 1750),
+          act.buy("2026-05-04", "XEQT", 50, 1750),
+          act.dividend("2026-06-30", "XEQT", 16.11, 0.3221),
+          act.dividend("2026-09-29", "XEQT", 5.1, 0.102),
+        ],
+      }),
+    ]);
+    expect(tableRow(r.markdown, "Trailing 12 months")?.[1]).toBe("$21.21");
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")).toEqual([
+      "Next 12 months (Estimate)",
+      "Available from 2027-05-04",
+    ]);
+    expect(r.markdown).not.toContain("multiplied by units held");
+  });
+
+  it("counts from the rebuy when a fund was sold out and bought again", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        positions: [["XEQT", 10, 35]],
+        activities: [
+          act.sell("2026-02-02", "XEQT", 20, 700),
+          act.buy("2026-03-16", "XEQT", 10, 350),
+          act.dividend("2026-06-30", "XEQT", 3, 0.3),
+        ],
+      }),
+    ]);
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")?.[1]).toBe(
+      "Available from 2027-03-16",
+    );
+  });
+
+  it("uses the latest date when several funds were held less than 12 months", () => {
+    const r = report([
+      rawAccount({
+        id: "tfsa",
+        positions: [
+          ["XEQT", 10, 35],
+          ["VFV", 5, 150],
+          ["VEQT", 10, 45],
+        ],
+        activities: [
+          act.dividend("2026-09-29", "XEQT", 1, 0.1),
+          act.buy("2026-04-01", "VFV", 5, 750),
+          act.dividend("2026-09-30", "VFV", 1.5, 0.3),
+          act.buy("2026-08-03", "VEQT", 10, 450),
+          act.dividend("2026-09-30", "VEQT", 2, 0.2),
+        ],
+      }),
+    ]);
+    expect(tableRow(r.markdown, "Trailing 12 months")?.[1]).toBe("$4.50");
+    expect(tableRow(r.markdown, "Next 12 months (Estimate)")?.[1]).toBe(
+      "Available from 2027-08-03",
+    );
+    expect(tableRow(r.markdown, "Symbol")).toBeUndefined();
   });
 
   it("only includes the trailing 12 months", () => {

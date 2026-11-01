@@ -42,7 +42,7 @@ A beginner investor making automatic monthly contributions to an all-in-one ETF 
    - RRSP: user-entered deduction limit, with a deadline about 60 days into the following year.
    - Yearly dollar limits live in one config file, `src/lib/limits.ts`, not in logic. 2026 values: TFSA $7,000; RRSP maximum $33,810 (deadline March 1, 2027); FHSA $8,000 per year, $40,000 lifetime.
    - Transfers in from another registered account are not new contributions. Classification must be careful, and users can correct it.
-4. **Distribution history and projection.** History per payment and per symbol. Projection = (sum of per-unit distributions over the trailing 12 months) × units currently held, per symbol. This works for any payment frequency (XEQT quarterly, VEQT annually, some funds monthly). Always labelled as an estimate.
+4. **Distribution history and projection.** History per payment and per symbol. Projection = (sum of per-unit distributions over the trailing 12 months) × units currently held, per symbol. This works for any payment frequency (XEQT quarterly, VEQT annually, some funds monthly). Always labelled as an estimate. Only payments the account received are visible, so a fund held for less than the full window would understate the total: until every paying fund has been held for 12 months, the row shows `Available from <date>` (one year after the latest fund was first held, counting from a rebuy after a sell-out) instead of a figure.
 
 ### Zero-setup behaviour
 A user who signs in and configures nothing still receives a useful report. Settings add detail. They never block the report, and the app never shows a setup wall or a blank page.

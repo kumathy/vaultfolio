@@ -4,6 +4,7 @@ import {
   symbolsMatch,
   type Context,
 } from "./context";
+import { changesUnits } from "./classify";
 import { money, perUnit, sumBy, units } from "./money";
 import { addDays } from "./period";
 import { unitsHeldOn } from "./units";
@@ -32,6 +33,8 @@ export interface DistributionsResult {
   payments: Payment[];
   ttm: { currency: string; cents: number }[];
   estimates: SymbolEstimate[];
+  // Set when a paying fund has been held less than 12 months.
+  estimateAvailableFrom: string | null;
   unknownPerUnit: string[];
   // Paid into an account whose holdings failed to load, so units are unknown.
   unknownUnits: string[];
@@ -108,6 +111,7 @@ export function analyzeDistributions(
   const holdingsFailed = new Set(
     accounts.filter((a) => a.holdings === null).map((a) => a.id),
   );
+  let availableFrom: string | null = null;
   for (const symbolPayments of bySymbol.values()) {
     const { symbol, currency } = symbolPayments[0];
     if (symbolPayments.some((p) => p.perUnit === null)) {
@@ -123,9 +127,6 @@ export function analyzeDistributions(
       unknownUnits.push(symbol);
       continue;
     }
-    // The same fund paying into two accounts on one day is one per-unit amount.
-    const perDate = new Map(symbolPayments.map((p) => [p.date, p.perUnit!]));
-    const perUnitTtm = [...perDate.values()].reduce((a, b) => a + b, 0);
     // Past months project from the units held at the month's end.
     const unitsHeld = ctx.isCurrentPeriod
       ? sumBy(
@@ -138,6 +139,20 @@ export function analyzeDistributions(
           accounts,
           (a) => unitsHeldOn(a, symbol, ctx.evalDate, ctx.asOf) ?? 0,
         );
+    // A fund bought within the window missed its earlier payments, so its
+    // per-unit total covers less than a year.
+    const since =
+      unitsHeld > 0 ? heldSince(accounts, symbol, windowStart, ctx) : null;
+    if (since !== null) {
+      const ready = addDays(since, 365);
+      if (availableFrom === null || ready > availableFrom) {
+        availableFrom = ready;
+      }
+      continue;
+    }
+    // The same fund paying into two accounts on one day is one per-unit amount.
+    const perDate = new Map(symbolPayments.map((p) => [p.date, p.perUnit!]));
+    const perUnitTtm = [...perDate.values()].reduce((a, b) => a + b, 0);
     estimates.push({
       symbol,
       currency,
@@ -153,12 +168,43 @@ export function analyzeDistributions(
     ttm: orderCurrencies(ttmByCurrency.keys(), ctx.settings.baseCurrency).map(
       (currency) => ({ currency, cents: ttmByCurrency.get(currency)! }),
     ),
-    estimates,
+    // An estimate missing a fund would understate the total, so none is shown.
+    estimates: availableFrom === null ? estimates : [],
+    estimateAvailableFrom: availableFrom,
     unknownPerUnit,
     unknownUnits,
     missingAccounts,
     multipleAccounts: paying.size > 1,
   };
+}
+
+// The latest day on or after `windowStart` when the fund went from no units
+// to some, or null when it was held throughout the window.
+function heldSince(
+  accounts: ReportAccount[],
+  symbol: string,
+  windowStart: string,
+  ctx: Context,
+): string | null {
+  const held = (date: string) =>
+    sumBy(accounts, (a) => unitsHeldOn(a, symbol, date, ctx.asOf) ?? 0);
+  const tradeDays = new Set(
+    accounts.flatMap((a) =>
+      (a.activities ?? [])
+        .filter(
+          (x) =>
+            changesUnits(x.kind) &&
+            symbolsMatch(x.symbol, symbol) &&
+            x.date >= windowStart &&
+            x.date <= ctx.evalDate,
+        )
+        .map((x) => x.date),
+    ),
+  );
+  for (const day of [...tradeDays].sort().reverse()) {
+    if (held(addDays(day, -1)) === 0 && held(day) > 0) return day;
+  }
+  return null;
 }
 
 export function renderDistributions(
@@ -223,14 +269,23 @@ export function renderDistributions(
           "Trailing 12 months",
           ...currencies.map((c) => money(ttm(c), c, base)),
         ],
-        ...(result.estimates.length > 0
+        ...(result.estimateAvailableFrom !== null
           ? [
               [
                 "Next 12 months (Estimate)",
-                ...currencies.map((c) => `~${money(estimate(c), c, base)}`),
+                ...currencies.map(
+                  () => `Available from ${result.estimateAvailableFrom}`,
+                ),
               ],
             ]
-          : []),
+          : result.estimates.length > 0
+            ? [
+                [
+                  "Next 12 months (Estimate)",
+                  ...currencies.map((c) => `~${money(estimate(c), c, base)}`),
+                ],
+              ]
+            : []),
       ],
     });
 
