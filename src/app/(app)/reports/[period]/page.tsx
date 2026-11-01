@@ -175,7 +175,7 @@ async function ReportContent({
             {period.label}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Monthly investing report, generated from live SnapTrade data.
+            Monthly investing report, generated from live account data.
           </p>
         </div>
         <MonthPicker periods={periods} current={period} />
