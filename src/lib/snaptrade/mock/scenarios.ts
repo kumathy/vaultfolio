@@ -39,7 +39,6 @@ export const MOCK_IDS = {
   wealthsimple: "c0000000-0000-4000-8000-000000000001",
   questrade: "c0000000-0000-4000-8000-000000000002",
   ibkr: "c0000000-0000-4000-8000-000000000003",
-  td: "c0000000-0000-4000-8000-000000000004",
   fidelity: "c0000000-0000-4000-8000-000000000005",
   sandbox: "c0000000-0000-4000-8000-000000000006",
   tfsa: "a0000000-0000-4000-8000-000000000001",
@@ -390,11 +389,6 @@ function full(c: Clock): MockData {
       connection(MOCK_IDS.wealthsimple, "Wealthsimple"),
       connection(MOCK_IDS.questrade, "Questrade"),
       connection(MOCK_IDS.ibkr, "Interactive Brokers"),
-      {
-        ...connection(MOCK_IDS.td, "TD Direct Investing"),
-        disabled: true,
-        disabled_date: new Date(c.now.getTime() - 3 * 86_400_000).toISOString(),
-      },
     ],
     accounts: [tfsa(c), rrsp(c), fhsa(c), margin(c), cashOnly(c), personal(c)],
   };
