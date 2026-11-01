@@ -1,5 +1,7 @@
 import { TbFolder } from "react-icons/tb";
 import { Amount } from "@/components/amount";
+import { INLINE_TOGGLE_BOX } from "@/components/app/hide-amounts";
+import { HideAmountsToggle } from "@/components/app/hide-amounts-toggle";
 import { card } from "@/components/ui";
 import { formatAmount, formatMoney } from "@/lib/format";
 import {
@@ -8,11 +10,13 @@ import {
   type ConnectionView,
   type MoneyView,
 } from "@/lib/view-models/accounts";
+import { OverviewSection } from "./overview-section";
 
 // Layout follows the panel's own width (container query), not the screen:
-// four columns only when each value fits in full, otherwise stacked rows.
+// four columns only when each value fits in full, otherwise stacked rows
+// (overview-wide in globals.css).
 const valueText =
-  "font-semibold tabular-nums @4xl:mt-2 @4xl:text-3xl @4xl:tracking-tight";
+  "font-semibold tabular-nums overview-wide:mt-2 overview-wide:text-3xl overview-wide:tracking-tight";
 
 function Metric({
   label,
@@ -24,10 +28,12 @@ function Metric({
   detail: string;
 }) {
   return (
-    <div className="flex min-w-0 items-baseline justify-between gap-4 bg-card px-5 py-3 @4xl:block @4xl:p-6">
+    <div className="flex min-w-0 items-baseline justify-between gap-4 bg-card px-5 py-3 overview-wide:block overview-wide:p-6">
       <p className="text-sm text-muted">{label}</p>
       <p className={valueText}>{value}</p>
-      <p className="mt-1 hidden text-sm text-muted @4xl:block">{detail}</p>
+      <p className="mt-1 hidden text-sm text-muted overview-wide:block">
+        {detail}
+      </p>
     </div>
   );
 }
@@ -53,22 +59,35 @@ export function OverviewPanel({
   // A 1px gap over a border-coloured background draws the dividers, so they
   // stay correct for 4 columns, a 2 × 2 grid, or stacked rows.
   return (
-    <section aria-label="Overview" className="@container">
-      <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border @4xl:grid-cols-4">
-        <div className="min-w-0 bg-card p-5 @4xl:p-6">
-          <p className="text-sm text-muted">Total value</p>
+    <OverviewSection>
+      <div className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border overview-wide:grid-cols-4">
+        <div className="relative min-w-0 bg-card p-5 overview-wide:p-6">
+          {/* Codes appear only when the page has several currencies: then the
+            main one is named here, and other amounts carry their own. */}
+          <p className="text-sm text-muted">
+            Total value{others.length > 0 && ` · ${primary.currency}`}
+          </p>
           {primary ? (
             <>
-              <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
+              <p className="mt-2 flex flex-wrap items-center gap-x-4 tabular-nums">
                 <span className="text-3xl font-semibold tracking-tight">
                   <Amount>
                     {formatAmount(primary.amount, primary.currency)}
                   </Amount>
                 </span>
-                <span className="text-sm font-medium text-muted">
-                  {primary.currency}
-                </span>
+                <HideAmountsToggle variant="inline" />
               </p>
+              {/* Same line with the real figures, measured by OverviewSection. */}
+              <span
+                aria-hidden
+                data-overview-measure
+                className="pointer-events-none invisible absolute top-0 left-0 flex w-max items-center gap-x-4 whitespace-nowrap tabular-nums select-none"
+              >
+                <span className="text-3xl font-semibold tracking-tight">
+                  {formatAmount(primary.amount, primary.currency)}
+                </span>
+                <span className={INLINE_TOGGLE_BOX} />
+              </span>
               {others.map((total) => (
                 <p key={total.currency} className="mt-1 tabular-nums">
                   <Amount>{formatMoney(total.amount, total.currency)}</Amount>
@@ -112,7 +131,7 @@ export function OverviewPanel({
           }
         />
       </div>
-    </section>
+    </OverviewSection>
   );
 }
 
@@ -135,7 +154,15 @@ function TypePill({ account }: { account: AccountView }) {
   );
 }
 
-export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
+// Rows in the currency of the main total omit its code, as reports do for
+// their base currency; any other currency keeps its code.
+export function AccountGroups({
+  accounts,
+  mainCurrency,
+}: {
+  accounts: AccountView[];
+  mainCurrency: string | undefined;
+}) {
   return (
     <div className="space-y-4 sm:space-y-6">
       {groupByInstitution(accounts).map((group) => (
@@ -221,10 +248,15 @@ export function AccountGroups({ accounts }: { accounts: AccountView[] }) {
                   <td className={`${bodyCell} text-right whitespace-nowrap`}>
                     {account.total ? (
                       <Amount>
-                        {formatMoney(
-                          account.total.amount,
-                          account.total.currency,
-                        )}
+                        {account.total.currency === mainCurrency
+                          ? formatAmount(
+                              account.total.amount,
+                              account.total.currency,
+                            )
+                          : formatMoney(
+                              account.total.amount,
+                              account.total.currency,
+                            )}
                       </Amount>
                     ) : (
                       <span className="text-muted">Not reported</span>

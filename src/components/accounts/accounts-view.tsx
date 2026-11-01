@@ -28,6 +28,7 @@ export function AccountsView({
 }) {
   const { accounts, connections, retrievedAt } = overview;
   const disabled = connections?.filter((c) => c.disabled) ?? [];
+  const totals = totalsByCurrency(accounts ?? []);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -60,9 +61,12 @@ export function AccountsView({
           <OverviewPanel
             accounts={accounts}
             connections={connections}
-            totals={totalsByCurrency(accounts)}
+            totals={totals}
           />
-          <AccountGroups accounts={accounts} />
+          <AccountGroups
+            accounts={accounts}
+            mainCurrency={totals[0]?.currency}
+          />
           <p className="text-xs text-muted">
             Retrieved{" "}
             <time dateTime={retrievedAt.toISOString()}>

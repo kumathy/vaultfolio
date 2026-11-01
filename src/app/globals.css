@@ -350,3 +350,13 @@ body {
   content: "••••";
   content: "••••" / "Hidden amount";
 }
+
+/* The accounts overview's four-column layout: the panel is at least 56rem wide
+   and its total fits on one line (overview-section.tsx), otherwise rows. */
+@custom-variant overview-wide {
+  @container overview (width >= 56rem) {
+    &:not([data-overview-stacked] *) {
+      @slot;
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// Only for layouts that show the currency code next to the amount.
+// Only where the currency code is shown alongside or stated once for the view.
 export function formatAmount(amount: number, currency: string): string {
   return new Intl.NumberFormat("en-CA", {
     style: "currency",

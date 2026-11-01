@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TbCheck, TbCopy, TbFileZip } from "react-icons/tb";
+import { HideAmountsToggle } from "@/components/app/hide-amounts-toggle";
 import { card, fadeIn } from "@/components/ui";
 import { ViewToggle, type ReportView } from "@/components/view-toggle";
 import type { ReportDocument } from "@/lib/reports/types";
@@ -78,7 +79,10 @@ export function ReportPreview({
             view={view}
             onChange={setView}
           />
-          <CopyButton markdown={markdown} />
+          <div className="flex items-center gap-1">
+            <HideAmountsToggle variant="toolbar" />
+            <CopyButton markdown={markdown} />
+          </div>
         </div>
 
         <div id="report-content">
