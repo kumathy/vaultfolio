@@ -107,7 +107,7 @@ async function ReportSetup() {
       description={
         <>
           Starting room is listed in{" "}
-          <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html">
+          <ExternalLink href="https://www.canada.ca/en/revenue-agency/services/e-services/cra-login-services.html">
             CRA My Account
           </ExternalLink>{" "}
           and cannot be retrieved automatically. The target is a monthly total
