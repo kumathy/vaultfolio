@@ -12,6 +12,7 @@ import {
   invalid,
   labelClass,
   SaveRow,
+  useFieldErrors,
 } from "./form-kit";
 
 const MAX_FUNDS = 10;
@@ -23,7 +24,8 @@ export function AllocationForm({
   targets: Allocation;
   accounts: { id: string; label: string }[];
 }) {
-  const [state, save, saving] = useActionState(saveAllocation, idle);
+  const [result, save, saving] = useActionState(saveAllocation, idle);
+  const { state, dismiss } = useFieldErrors(result);
   const [cleared, clear, clearing] = useActionState(clearAllocation, idle);
   const [funds, setFunds] = useState(
     targets.allocation?.map((t) => ({
@@ -31,8 +33,21 @@ export function AllocationForm({
       weight: String(t.weightPercent),
     })) ?? [{ symbol: "", weight: "" }],
   );
+  const update = (i: number, field: "symbol" | "weight", value: string) => {
+    setFunds(funds.map((f, j) => (j === i ? { ...f, [field]: value } : f)));
+    dismiss(`${field}.${i}`, field === "symbol" ? "allocation" : "total");
+  };
   const total = funds.reduce((sum, f) => sum + (Number(f.weight) || 0), 0);
-  const anyWeight = funds.some((f) => f.weight.trim() !== "");
+  // Flagged only after a save is rejected, and only while still off 100%.
+  const totalOff =
+    state.errors?.total !== undefined && Math.abs(total - 100) > 0.001;
+  // A single fund's total is its own weight, so the total line appears with
+  // two or more funds. A single fund off 100% is flagged under its field,
+  // unless the field already shows its own error.
+  const single = funds.length === 1;
+  const showTotal =
+    !single && (totalOff || funds.some((f) => f.weight.trim() !== ""));
+  const singleOff = single && totalOff && !state.errors?.["weight.0"];
   const configured = targets.allocation !== undefined;
   const latest =
     (cleared.savedAt ?? 0) > (state.savedAt ?? 0) ? cleared : state;
@@ -43,64 +58,70 @@ export function AllocationForm({
         <legend className="sr-only">Funds and target weights</legend>
         <div className="max-w-lg space-y-2">
           {funds.map((fund, i) => (
-            <div key={i}>
-              <div className="flex items-center gap-2">
+            // Each error sits under its own field, or full width on phones.
+            <div
+              key={i}
+              className="grid grid-cols-[minmax(0,1fr)_8rem_auto] items-center gap-x-2"
+            >
+              <input
+                name="symbol"
+                aria-label={`Fund ${i + 1} symbol`}
+                placeholder="XEQT"
+                value={fund.symbol}
+                onChange={(e) => update(i, "symbol", e.target.value)}
+                className={`${inputClass} uppercase`}
+                {...invalid(state, `symbol.${i}`)}
+              />
+              <div className="relative">
                 <input
-                  name="symbol"
-                  aria-label={`Fund ${i + 1} symbol`}
-                  placeholder="XEQT"
-                  value={fund.symbol}
-                  onChange={(e) =>
-                    setFunds(
-                      funds.map((f, j) =>
-                        j === i ? { ...f, symbol: e.target.value } : f,
-                      ),
-                    )
-                  }
-                  className={`${inputClass} uppercase`}
-                  {...invalid(state, `symbol.${i}`)}
+                  name="weight"
+                  aria-label={`Fund ${i + 1} weight in percent`}
+                  inputMode="decimal"
+                  placeholder="100"
+                  value={fund.weight}
+                  onChange={(e) => update(i, "weight", e.target.value)}
+                  className={`${inputClass} pr-8 text-right tabular-nums`}
+                  {...(singleOff
+                    ? {
+                        "aria-invalid": true,
+                        "aria-describedby": "total-error",
+                      }
+                    : invalid(state, `weight.${i}`))}
                 />
-                <div className="relative w-32 shrink-0">
-                  <input
-                    name="weight"
-                    aria-label={`Fund ${i + 1} weight in percent`}
-                    inputMode="decimal"
-                    placeholder="100"
-                    value={fund.weight}
-                    onChange={(e) =>
-                      setFunds(
-                        funds.map((f, j) =>
-                          j === i ? { ...f, weight: e.target.value } : f,
-                        ),
-                      )
-                    }
-                    className={`${inputClass} pr-8 text-right tabular-nums`}
-                    {...invalid(state, `weight.${i}`)}
-                  />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted"
-                  >
-                    %
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFunds(
-                      funds.length === 1
-                        ? [{ symbol: "", weight: "" }]
-                        : funds.filter((_, j) => j !== i),
-                    )
-                  }
-                  aria-label={`Remove fund ${i + 1}`}
-                  className="-mr-3 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-40"
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted"
                 >
-                  <TbTrash aria-hidden />
-                </button>
+                  %
+                </span>
               </div>
-              <FieldError state={state} name={`symbol.${i}`} />
-              <FieldError state={state} name={`weight.${i}`} />
+              <button
+                type="button"
+                onClick={() => {
+                  setFunds(
+                    funds.length === 1
+                      ? [{ symbol: "", weight: "" }]
+                      : funds.filter((_, j) => j !== i),
+                  );
+                  // Later rows move up, so row errors no longer match.
+                  dismiss(...Object.keys(state.errors ?? {}));
+                }}
+                aria-label={`Remove fund ${i + 1}`}
+                className="-mr-3 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground disabled:opacity-40"
+              >
+                <TbTrash aria-hidden />
+              </button>
+              <div className="col-span-3 self-start sm:col-span-1">
+                <FieldError state={state} name={`symbol.${i}`} />
+              </div>
+              <div className="col-span-3 self-start sm:col-span-2">
+                <FieldError state={state} name={`weight.${i}`} />
+                {singleOff && (
+                  <p id="total-error" className="mt-1.5 text-sm text-attention">
+                    Use 100% for a single fund.
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -114,11 +135,12 @@ export function AllocationForm({
             <TbPlus aria-hidden />
             Add fund
           </button>
-          {anyWeight && (
+          {showTotal && (
             <p
-              className={`text-sm tabular-nums ${Math.abs(total - 100) < 0.001 ? "text-muted" : "text-attention"}`}
+              className={`text-sm tabular-nums ${totalOff ? "text-attention" : "text-muted"}`}
             >
               Total {Math.round(total * 100) / 100}%
+              {totalOff && " (must be 100%)"}
             </p>
           )}
         </div>

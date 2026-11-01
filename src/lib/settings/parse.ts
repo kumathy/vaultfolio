@@ -106,10 +106,18 @@ export function parseAllocationForm(
     const weightText = weights[i] ?? "";
     if (!symbol && !weightText) return;
     const weight = Number(weightText);
-    if (!SYMBOL.test(symbol)) {
+    if (!symbol) {
+      errors[`symbol.${i}`] = "Enter a symbol.";
+    } else if (!SYMBOL.test(symbol)) {
       errors[`symbol.${i}`] = "Use letters, digits, dots or dashes.";
     }
-    if (!/^\d+(\.\d{1,2})?$/.test(weightText) || weight <= 0 || weight > 100) {
+    if (!weightText) {
+      errors[`weight.${i}`] = "Enter a weight.";
+    } else if (
+      !/^\d+(\.\d{1,2})?$/.test(weightText) ||
+      weight <= 0 ||
+      weight > 100
+    ) {
       errors[`weight.${i}`] = "Use a weight above 0 and up to 100.";
     }
     allocation.push({ symbol, weightPercent: weight });
@@ -125,8 +133,9 @@ export function parseAllocationForm(
       (sum, t) => sum + (t.weightPercent || 0),
       0,
     );
+    // Its own key: the form shows the live total in place of this message.
     if (Math.abs(total - 100) > 0.001) {
-      errors.allocation = `Weights add up to ${Math.round(total * 100) / 100}%; they need to total 100%.`;
+      errors.total = `Weights add up to ${Math.round(total * 100) / 100}%; they need to total 100%.`;
     }
   }
   if (allocation.length > 0) value.allocation = allocation;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { TbChevronDown } from "react-icons/tb";
 import { Toast } from "@/components/toast";
 import { buttonPrimary, card } from "@/components/ui";
@@ -13,6 +14,33 @@ export interface FormState {
 }
 
 export const idle: FormState = { status: "idle" };
+
+// Hides a field's error once that field is edited, until the next save.
+export function useFieldErrors(result: FormState) {
+  const [dismissed, setDismissed] = useState({ result, names: [] as string[] });
+  const names = dismissed.result === result ? dismissed.names : [];
+  const dismiss = (...more: string[]) =>
+    setDismissed((d) => ({
+      result,
+      names: [...(d.result === result ? d.names : []), ...more],
+    }));
+
+  const errors = Object.fromEntries(
+    Object.entries(result.errors ?? {}).filter(
+      ([name]) => !names.includes(name),
+    ),
+  );
+  const state: FormState =
+    result.errors && Object.keys(errors).length === 0
+      ? idle
+      : { ...result, errors };
+
+  // For forms whose error keys are their input names.
+  const onChange = (e: React.FormEvent<HTMLFormElement>) =>
+    dismiss((e.target as HTMLInputElement).name);
+
+  return { state, dismiss, onChange };
+}
 
 export const inputClass =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted/70 transition-colors hover:border-muted/40 focus-visible:border-2 focus-visible:border-accent focus-visible:pl-[11px] focus-visible:outline-none aria-invalid:border-attention aria-invalid:hover:border-attention aria-invalid:focus-visible:border-attention";

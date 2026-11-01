@@ -3,7 +3,14 @@
 import { useActionState } from "react";
 import { saveSetup } from "@/app/(app)/settings/actions";
 import type { RegisteredType } from "@/lib/reports/types";
-import { AmountInput, FieldError, idle, labelClass, SaveRow } from "./form-kit";
+import {
+  AmountInput,
+  FieldError,
+  idle,
+  labelClass,
+  SaveRow,
+  useFieldErrors,
+} from "./form-kit";
 
 const ROOM_LABELS: Record<RegisteredType, (year: number) => string> = {
   TFSA: (y) => `TFSA room on January 1, ${y}`,
@@ -28,10 +35,11 @@ export function SetupForm({
   contributionTargetCents: number | undefined;
   currency: string;
 }) {
-  const [state, save, saving] = useActionState(saveSetup, idle);
+  const [result, save, saving] = useActionState(saveSetup, idle);
+  const { state, onChange } = useFieldErrors(result);
 
   return (
-    <form action={save}>
+    <form action={save} onChange={onChange}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {types.map((type) => (
           <div key={type}>

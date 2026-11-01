@@ -7,6 +7,7 @@ import {
   AmountInput,
   FieldError,
   idle,
+  useFieldErrors,
   inputClass,
   invalid,
   labelClass,
@@ -26,9 +27,10 @@ export function OptionsForm({
   // The currency of the cash held, or "per currency" when there are several.
   thresholdUnit: string;
 }) {
-  const [state, save, saving] = useActionState(saveOptions, idle);
+  const [result, save, saving] = useActionState(saveOptions, idle);
+  const { state, onChange } = useFieldErrors(result);
   return (
-    <form action={save}>
+    <form action={save} onChange={onChange}>
       {/* Three columns only when the form itself is wide enough for every
           label on one line; otherwise stacked, as on phones. */}
       <div className="@container">

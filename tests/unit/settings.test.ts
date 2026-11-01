@@ -154,11 +154,28 @@ describe("parseAllocationForm", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(Object.keys(result.errors).sort()).toEqual([
-        "allocation",
         "symbol.0",
+        "total",
         "weight.0",
       ]);
     }
+  });
+
+  it("asks for a missing symbol or weight", () => {
+    expect(
+      parseAllocationForm(
+        form([
+          ["symbol", ""],
+          ["weight", "60"],
+          ["symbol", "VFV"],
+          ["weight", ""],
+        ]),
+        accounts,
+      ),
+    ).toMatchObject({
+      ok: false,
+      errors: { "symbol.0": "Enter a symbol.", "weight.1": "Enter a weight." },
+    });
   });
 
   it("requires weights to total 100% and funds to be unique", () => {
@@ -174,7 +191,7 @@ describe("parseAllocationForm", () => {
       ),
     ).toMatchObject({
       ok: false,
-      errors: { allocation: "Weights add up to 90%; they need to total 100%." },
+      errors: { total: "Weights add up to 90%; they need to total 100%." },
     });
     expect(
       parseAllocationForm(
