@@ -42,7 +42,7 @@ const unavailable: FormState = {
 
 const saved = (message = "Saved"): FormState => {
   refresh();
-  return { status: "saved", message };
+  return { status: "saved", message, savedAt: Date.now() };
 };
 
 const REGISTERED: RegisteredType[] = ["TFSA", "RRSP", "FHSA"];

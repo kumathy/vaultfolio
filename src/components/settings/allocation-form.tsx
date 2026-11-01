@@ -34,7 +34,8 @@ export function AllocationForm({
   const total = funds.reduce((sum, f) => sum + (Number(f.weight) || 0), 0);
   const anyWeight = funds.some((f) => f.weight.trim() !== "");
   const configured = targets.allocation !== undefined;
-  const shown = cleared.status === "saved" ? cleared : state;
+  const latest =
+    (cleared.savedAt ?? 0) > (state.savedAt ?? 0) ? cleared : state;
 
   return (
     <form action={save} className="space-y-5">
@@ -154,7 +155,12 @@ export function AllocationForm({
         </fieldset>
       )}
 
-      <SaveRow state={shown} pending={saving} label="Save allocation">
+      <SaveRow
+        state={state}
+        confirmation={latest}
+        pending={saving}
+        label="Save allocation"
+      >
         {configured && (
           <button
             type="submit"

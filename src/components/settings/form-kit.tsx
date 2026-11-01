@@ -1,12 +1,15 @@
 "use client";
 
-import { TbCheck, TbChevronDown } from "react-icons/tb";
+import { TbChevronDown } from "react-icons/tb";
+import { Toast } from "@/components/toast";
 import { buttonPrimary, card } from "@/components/ui";
 
 export interface FormState {
   status: "idle" | "saved" | "error";
   message?: string;
   errors?: Record<string, string>;
+  // Distinguishes repeated saves, so each one shows its own toast.
+  savedAt?: number;
 }
 
 export const idle: FormState = { status: "idle" };
@@ -126,13 +129,18 @@ export function SettingsSection({
   );
 }
 
+// Confirmations appear as a toast; errors stay next to the button, where the
+// fields that need attention are.
 export function SaveRow({
   state,
+  confirmation = state,
   pending,
   label = "Save",
   children,
 }: {
   state: FormState;
+  // The state whose confirmation is shown, when a form has several actions.
+  confirmation?: FormState;
   pending: boolean;
   label?: string;
   children?: React.ReactNode;
@@ -147,13 +155,13 @@ export function SaveRow({
         {pending ? "Saving…" : label}
       </button>
       {children}
+      {confirmation.status === "saved" && (
+        <Toast
+          key={confirmation.savedAt}
+          message={confirmation.message ?? "Saved"}
+        />
+      )}
       <p role="status" className="text-sm">
-        {state.status === "saved" && (
-          <span className="inline-flex items-center gap-1.5 text-accent">
-            <TbCheck aria-hidden />
-            {state.message ?? "Saved"}
-          </span>
-        )}
         {state.status === "error" && (
           <span className="text-attention">
             {state.message ?? "Some fields need attention."}
