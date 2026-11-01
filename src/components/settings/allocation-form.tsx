@@ -26,28 +26,41 @@ export function AllocationForm({
 }) {
   const [result, save, saving] = useActionState(saveAllocation, idle);
   const { state, dismiss } = useFieldErrors(result);
-  const [cleared, clear, clearing] = useActionState(clearAllocation, idle);
   const [funds, setFunds] = useState(
     targets.allocation?.map((t) => ({
       symbol: t.symbol,
       weight: String(t.weightPercent),
     })) ?? [{ symbol: "", weight: "" }],
   );
+  // The fund rows are local state, so a successful clear empties them here.
+  const [cleared, clear, clearing] = useActionState(async () => {
+    const outcome = await clearAllocation();
+    if (outcome.status === "saved") {
+      setFunds([{ symbol: "", weight: "" }]);
+      dismiss(...Object.keys(state.errors ?? {}));
+    }
+    return outcome;
+  }, idle);
   const update = (i: number, field: "symbol" | "weight", value: string) => {
     setFunds(funds.map((f, j) => (j === i ? { ...f, [field]: value } : f)));
     dismiss(`${field}.${i}`, field === "symbol" ? "allocation" : "total");
   };
-  const total = funds.reduce((sum, f) => sum + (Number(f.weight) || 0), 0);
-  // Flagged only after a save is rejected, and only while still off 100%.
-  const totalOff =
-    state.errors?.total !== undefined && Math.abs(total - 100) > 0.001;
+  const weights = funds.map((f) => Number(f.weight) || 0);
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  const totalOff = Math.abs(total - 100) > 0.001;
+  const negative = weights.some((w) => w < 0);
+  const saveRejected = state.errors?.total !== undefined;
+  // While typing, a total below 100% may still be in progress, so only values
+  // that cannot be right turn the total red. After a rejected save, any total
+  // off 100% does. Messages appear only after a save.
+  const flagged = negative || total > 100.001 || (saveRejected && totalOff);
   // A single fund's total is its own weight, so the total line appears with
-  // two or more funds. A single fund off 100% is flagged under its field,
+  // two or more funds. A single fund's total error sits under its field,
   // unless the field already shows its own error.
   const single = funds.length === 1;
   const showTotal =
-    !single && (totalOff || funds.some((f) => f.weight.trim() !== ""));
-  const singleOff = single && totalOff && !state.errors?.["weight.0"];
+    !single && (saveRejected || funds.some((f) => f.weight.trim() !== ""));
+  const singleOff = single && saveRejected && !state.errors?.["weight.0"];
   const configured = targets.allocation !== undefined;
   const latest =
     (cleared.savedAt ?? 0) > (state.savedAt ?? 0) ? cleared : state;
@@ -116,11 +129,7 @@ export function AllocationForm({
               </div>
               <div className="col-span-3 self-start sm:col-span-2">
                 <FieldError state={state} name={`weight.${i}`} />
-                {singleOff && (
-                  <p id="total-error" className="mt-1.5 text-sm text-attention">
-                    Use 100% for a single fund.
-                  </p>
-                )}
+                {singleOff && <FieldError state={state} name="total" />}
               </div>
             </div>
           ))}
@@ -137,10 +146,10 @@ export function AllocationForm({
           </button>
           {showTotal && (
             <p
-              className={`text-sm tabular-nums ${totalOff ? "text-attention" : "text-muted"}`}
+              className={`text-sm tabular-nums ${flagged ? "text-attention" : "text-muted"}`}
             >
               Total {Math.round(total * 100) / 100}%
-              {totalOff && " (must be 100%)"}
+              {saveRejected && <span id="total-error"> (must be 100%)</span>}
             </p>
           )}
         </div>
@@ -149,9 +158,7 @@ export function AllocationForm({
 
       {accounts.length > 1 && (
         <fieldset>
-          <legend className={labelClass}>
-            Accounts for monthly target and allocation
-          </legend>
+          <legend className={labelClass}>Applies to</legend>
           <p className="mt-1 text-sm text-muted">
             None selected means all accounts.
           </p>

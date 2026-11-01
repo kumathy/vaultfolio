@@ -157,8 +157,8 @@ export function SettingsSection({
   );
 }
 
-// Confirmations appear as a toast; errors stay next to the button, where the
-// fields that need attention are.
+// Confirmations appear as a toast; errors without a field stay next to the
+// button.
 export function SaveRow({
   state,
   confirmation = state,
@@ -189,12 +189,15 @@ export function SaveRow({
           message={confirmation.message ?? "Saved"}
         />
       )}
+      {/* Field errors show under their fields, so the general line is for
+          screen readers only; errors without a field are shown here. */}
       <p role="status" className="text-sm">
-        {state.status === "error" && (
-          <span className="text-attention">
-            {state.message ?? "Some fields need attention."}
-          </span>
-        )}
+        {state.status === "error" &&
+          (state.message ? (
+            <span className="text-attention">{state.message}</span>
+          ) : (
+            <span className="sr-only">Some fields need attention.</span>
+          ))}
       </p>
     </div>
   );

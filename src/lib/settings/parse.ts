@@ -80,8 +80,7 @@ export function parseSetupForm(
   if (amountText) {
     const cents = parseDollars(amountText);
     if (!cents) {
-      errors.amount =
-        "Enter a monthly amount greater than $0, or leave it empty.";
+      errors.amount = "Enter an amount above 0.";
     } else value.contributionTargetCents = cents;
   }
   return Object.keys(errors).length > 0
@@ -137,9 +136,13 @@ export function parseAllocationForm(
       (sum, t) => sum + (t.weightPercent || 0),
       0,
     );
-    // Its own key: the form shows the live total in place of this message.
+    // Its own key: the form shows it beside the live total, or under the
+    // weight when there is a single fund.
     if (Math.abs(total - 100) > 0.001) {
-      errors.total = `Weights add up to ${Math.round(total * 100) / 100}%; they need to total 100%.`;
+      errors.total =
+        allocation.length === 1
+          ? "Use 100% for a single fund."
+          : "Total must be 100%.";
     }
   }
   if (allocation.length > 0) value.allocation = allocation;
@@ -166,7 +169,7 @@ export function parseRoomForm(
     if (!text) continue;
     const cents = parseDollars(text);
     if (cents === null) {
-      errors[type] = "Enter an amount such as 7,000.00, or leave it empty.";
+      errors[type] = "Enter an amount of 0 or more.";
       continue;
     }
     room[type] = { year, availableCents: cents };
@@ -216,11 +219,11 @@ export function parseOptionsForm(
 > {
   const errors: FieldErrors = {};
   const days = Number(field(form, "days"));
-  if (!Number.isInteger(days) || days < 1 || days > 60) {
-    errors.days = "Choose a number of days from 1 to 60.";
+  if (!Number.isInteger(days) || days < 1 || days > 365) {
+    errors.days = "Use 1 to 365 days.";
   }
   const threshold = parseDollars(field(form, "threshold"));
-  if (threshold === null) errors.threshold = "Enter an amount such as 25.00.";
+  if (threshold === null) errors.threshold = "Enter an amount of 0 or more.";
   return Object.keys(errors).length > 0
     ? { ok: false, errors }
     : {
@@ -251,7 +254,7 @@ export function parseStoredSettings(raw: unknown): StoredSettings {
     typeof raw.uninvestedCashDays === "number" &&
     Number.isInteger(raw.uninvestedCashDays) &&
     raw.uninvestedCashDays >= 1 &&
-    raw.uninvestedCashDays <= 60
+    raw.uninvestedCashDays <= 365
   ) {
     settings.uninvestedCashDays = raw.uninvestedCashDays;
   }

@@ -179,6 +179,21 @@ describe("parseAllocationForm", () => {
     });
   });
 
+  it("asks for 100% when there is a single fund", () => {
+    expect(
+      parseAllocationForm(
+        form([
+          ["symbol", "XEQT"],
+          ["weight", "60"],
+        ]),
+        accounts,
+      ),
+    ).toMatchObject({
+      ok: false,
+      errors: { total: "Use 100% for a single fund." },
+    });
+  });
+
   it("requires weights to total 100% and funds to be unique", () => {
     expect(
       parseAllocationForm(
@@ -192,7 +207,7 @@ describe("parseAllocationForm", () => {
       ),
     ).toMatchObject({
       ok: false,
-      errors: { total: "Weights add up to 90%; they need to total 100%." },
+      errors: { total: "Total must be 100%." },
     });
     expect(
       parseAllocationForm(
@@ -284,6 +299,18 @@ describe("parseOptionsForm", () => {
       ok: true,
       value: { uninvestedCashDays: 7, uninvestedCashThresholdCents: 5000 },
     });
+  });
+
+  it("accepts up to 365 days", () => {
+    const at = (days: string) =>
+      parseOptionsForm(
+        form([
+          ["days", days],
+          ["threshold", "25"],
+        ]),
+      ).ok;
+    expect(at("365")).toBe(true);
+    expect(at("366")).toBe(false);
   });
 
   it("rejects out-of-range values", () => {

@@ -40,7 +40,7 @@ export function OptionsForm({
               name="days"
               type="number"
               min={1}
-              max={60}
+              max={365}
               defaultValue={days}
               className={`${inputClass} mt-1.5`}
               {...invalid(state, "days")}
