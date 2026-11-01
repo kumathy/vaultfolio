@@ -167,12 +167,6 @@ export function renderHoldings(result: HoldingsResult, ctx: Context): Block[] {
           units(row.units ?? 0),
         ]),
       },
-      {
-        kind: "paragraph",
-        text: [
-          "Units held at month end, from current holdings and transaction history.",
-        ],
-      },
     ];
   }
 

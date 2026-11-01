@@ -330,9 +330,6 @@ describe("monthly activity", () => {
     expect(r.markdown).toContain(
       "Estimated portfolio value: **$1,052.50** against **$1,000.00** contributed (net growth **+$52.50**).",
     );
-    expect(r.markdown).toContain(
-      "Estimate: account value at month end, from SnapTrade's account value history.",
-    );
   });
 
   it("shows no value when the history is missing or too far from the month's end", () => {

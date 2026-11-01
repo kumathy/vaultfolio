@@ -17,7 +17,8 @@ describe("landing page example", () => {
     for (const [index, note] of notes.entries()) {
       expectReportStyle(note.markdown);
       expect(tableRow(note.markdown, "Net growth")?.[1]).toMatch(/^\+\$/);
-      if (index < 2) expect(note.markdown).toContain("Estimate: account value");
+      if (index < 2)
+        expect(note.markdown).toContain("Estimated portfolio value:");
     }
   });
 

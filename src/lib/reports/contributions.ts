@@ -198,11 +198,7 @@ function estimateNotes(result: ContributionsResult): Block[] {
   const known = result.rows.some((r) => r.valueCents !== null);
   const mixed = result.mixedCurrencyAccounts;
   const notes: string[] = [];
-  if (known) {
-    notes.push(
-      "Estimate: account value at month end, from SnapTrade's account value history.",
-    );
-  } else if (mixed.length === 0) {
+  if (!known && mixed.length === 0) {
     notes.push(
       "Value and net growth are not available: SnapTrade's account value history has no value near month end.",
     );
