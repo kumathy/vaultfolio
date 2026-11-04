@@ -23,7 +23,7 @@ function VaultTree({
   onSelect: (title: string) => void;
 }) {
   return (
-    <div className="hidden overflow-hidden border-r border-border bg-surface p-3 text-[13px] sm:block">
+    <div className="hidden overflow-hidden border-r border-border bg-surface p-3 text-[13px] @[40rem]:block">
       <p className="px-2 pb-2 text-xs font-medium text-muted">Vault</p>
       <ul className="space-y-0.5 text-muted">
         <li className="flex items-center gap-1.5 px-2 py-1">
@@ -73,9 +73,9 @@ export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
     <div className="min-w-0 @container">
       <figure
         aria-label="Example monthly report open in an Obsidian vault"
-        className="grid grid-cols-1 gap-3 [grid-template-areas:'toggle'_'window'_'caption'] @[30rem]:grid-cols-[1fr_auto] @[30rem]:[grid-template-areas:'caption_toggle'_'window_window']"
+        className="grid grid-cols-1 gap-3 [grid-template-areas:'toggle'_'window'_'caption'] @[27rem]:grid-cols-[1fr_auto] @[27rem]:[grid-template-areas:'caption_toggle'_'window_window']"
       >
-        <div className="justify-self-center [grid-area:toggle] @[30rem]:justify-self-end">
+        <div className="justify-self-center [grid-area:toggle] @[27rem]:justify-self-end">
           <ViewToggle
             label="Example report view"
             controls="example-note"
@@ -92,7 +92,7 @@ export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
               {FOLDER} / {note.title}.md
             </span>
           </div>
-          <div className="grid h-[32rem] sm:h-[36rem] sm:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="grid h-[32rem] sm:h-[36rem] @[40rem]:grid-cols-[180px_minmax(0,1fr)]">
             <VaultTree
               notes={notes.map((n) => n.title)}
               current={note.title}
@@ -101,7 +101,7 @@ export function ObsidianWindow({ notes }: { notes: ExampleNoteData[] }) {
             <ExampleNote view={view} note={note} />
           </div>
         </div>
-        <figcaption className="self-center text-center text-xs text-muted [grid-area:caption] @[30rem]:text-left">
+        <figcaption className="self-center text-center text-xs text-muted [grid-area:caption] @[27rem]:text-left">
           Example report · illustrative figures
         </figcaption>
       </figure>
