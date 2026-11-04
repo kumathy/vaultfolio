@@ -246,7 +246,7 @@ function mockAccount(
   };
 }
 
-// Monthly XEQT purchases for two years, quarterly distributions, and a
+// Monthly XEQT purchases for two years, quarterly dividends, and a
 // withdrawal last year re-contributed this year. This month's deposit, six
 // days ago, is left uninvested, which raises the uninvested-cash check.
 function tfsa(c: Clock): MockAccount {
@@ -260,7 +260,7 @@ function tfsa(c: Clock): MockAccount {
     l.buy(dateOf(year, month, 4), "XEQT");
   });
   quarterly(c, c.year - 2, 27, (date, q) =>
-    l.distribute(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
+    l.payDividend(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
   );
   l.sellFor(dateOf(c.year - 1, 7, 13), "XEQT", 2000);
   l.withdraw(dateOf(c.year - 1, 7, 15), 2000);
@@ -298,8 +298,8 @@ function rrsp(c: Clock): MockAccount {
     "Transfer in from RRSP at another institution",
   );
   l.buy(dateOf(c.year, 2, 7), "VFV");
-  quarterly(c, c.year - 1, 23, (date) => l.distribute(date, "VFV", 0.19));
-  quarterly(c, c.year - 1, 25, (date) => l.distribute(date, "VTI", 0.92));
+  quarterly(c, c.year - 1, 23, (date) => l.payDividend(date, "VFV", 0.19));
+  quarterly(c, c.year - 1, 25, (date) => l.payDividend(date, "VTI", 0.92));
   return mockAccount(c, {
     id: MOCK_IDS.rrsp,
     connection: MOCK_IDS.questrade,
@@ -323,7 +323,7 @@ function fhsa(c: Clock): MockAccount {
     l.buy(current ? thisMonth(c, 3) : dateOf(year, month, 10), "XEQT");
   });
   quarterly(c, c.year - 1, 27, (date, q) =>
-    l.distribute(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
+    l.payDividend(date, "XEQT", [0.11, 0.13, 0.12, 0.24][q]),
   );
   return mockAccount(c, {
     id: MOCK_IDS.fhsa,
@@ -353,10 +353,10 @@ function margin(c: Clock): MockAccount {
   l.buy(monthsAgo(c, 16, 21), "TD", 900);
   for (let year = c.year - 2; year <= c.year; year++) {
     for (const month of [1, 4, 7, 10]) {
-      l.distribute(dateOf(year, month, 15), "AAPL", 0.26);
+      l.payDividend(dateOf(year, month, 15), "AAPL", 0.26);
     }
-    l.distribute(dateOf(year, 3, 30), "TD", 1.05);
-    l.distribute(dateOf(year, 9, 31), "TD", 1.05);
+    l.payDividend(dateOf(year, 3, 30), "TD", 1.05);
+    l.payDividend(dateOf(year, 9, 31), "TD", 1.05);
   }
   return mockAccount(c, {
     id: MOCK_IDS.margin,
@@ -392,7 +392,7 @@ function personal(c: Clock): MockAccount {
   const l = ledger(c, "personal");
   l.deposit(dateOf(c.year - 1, 0, 10), 2000);
   l.buy(dateOf(c.year - 1, 0, 12), "VEQT");
-  l.distribute(dateOf(c.year - 1, 11, 29), "VEQT", 0.55);
+  l.payDividend(dateOf(c.year - 1, 11, 29), "VEQT", 0.55);
   return mockAccount(c, {
     id: MOCK_IDS.personal,
     connection: MOCK_IDS.wealthsimple,
@@ -434,7 +434,7 @@ function us(c: Clock): MockData {
     1000,
   );
   quarterly(c, c.year - 2, 26, (date) =>
-    individual.distribute(date, "VOO", 1.7),
+    individual.payDividend(date, "VOO", 1.7),
   );
 
   const roth = ledger(c, "us-roth", "USD");
@@ -442,7 +442,7 @@ function us(c: Clock): MockData {
     roth.deposit(dateOf(year, month, 5), 500);
     roth.buy(dateOf(year, month, 6), "VTI");
   });
-  quarterly(c, c.year - 1, 25, (date) => roth.distribute(date, "VTI", 0.92));
+  quarterly(c, c.year - 1, 25, (date) => roth.payDividend(date, "VTI", 0.92));
 
   return {
     authorizations: [connection(MOCK_IDS.fidelity, "Fidelity")],

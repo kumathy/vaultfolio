@@ -28,7 +28,7 @@ export function activityKind(
       return "reinvestment";
     case "DIVIDEND":
     case "SUBSTITUTE_DIVIDEND":
-      return "distribution";
+      return "dividend";
     case "INTEREST":
       return "interest";
     case "FEE":
@@ -41,7 +41,7 @@ export function activityKind(
 
 // Activities that change the number of units held in a position.
 export const changesUnits = (kind: ActivityKind) =>
-  kind !== "distribution" &&
+  kind !== "dividend" &&
   kind !== "interest" &&
   kind !== "fee" &&
   kind !== "contribution" &&

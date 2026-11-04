@@ -27,13 +27,12 @@ const purchases: [month: string, units: number, amount: number][] = [
   ["2026-10", 9, 336.29],
 ];
 
-const distributions: [date: string, amount: number, perUnit: number | null][] =
-  [
-    ["2025-12-29", 2.97, 0.11],
-    ["2026-03-27", 4.24, null],
-    ["2026-06-27", 7.2, 0.09],
-    ["2026-09-29", 10.6, 0.1],
-  ];
+const dividends: [date: string, amount: number, perUnit: number | null][] = [
+  ["2025-12-29", 2.97, 0.11],
+  ["2026-03-27", 4.24, null],
+  ["2026-06-27", 7.2, 0.09],
+  ["2026-09-29", 10.6, 0.1],
+];
 
 const at = (date: string) => `${date}T00:00:00.000Z`;
 
@@ -62,7 +61,7 @@ const activities: Activity[] = [
       description: "Bought XEQT",
     },
   ]),
-  ...distributions.map(([date, amount, perUnit]): Activity => ({
+  ...dividends.map(([date, amount, perUnit]): Activity => ({
     id: `div-${date}`,
     type: "DIVIDEND",
     trade_date: at(date),
@@ -71,7 +70,7 @@ const activities: Activity[] = [
     price: perUnit ?? 0,
     currency: cad,
     symbol: xeqt,
-    description: "Distribution",
+    description: "Dividend",
   })),
 ].reverse();
 

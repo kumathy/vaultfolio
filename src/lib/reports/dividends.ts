@@ -28,7 +28,7 @@ export interface SymbolEstimate {
   estimateCents: number;
 }
 
-export interface DistributionsResult {
+export interface DividendsResult {
   windowStart: string;
   payments: Payment[];
   ttm: { currency: string; cents: number }[];
@@ -42,10 +42,10 @@ export interface DistributionsResult {
   multipleAccounts: boolean;
 }
 
-export function analyzeDistributions(
+export function analyzeDividends(
   accounts: ReportAccount[],
   ctx: Context,
-): DistributionsResult {
+): DividendsResult {
   const windowStart = addDays(ctx.evalDate, -364);
   const payments: Payment[] = [];
   const missingAccounts: string[] = [];
@@ -58,7 +58,7 @@ export function analyzeDistributions(
     }
     for (const activity of account.activities) {
       if (
-        activity.kind !== "distribution" ||
+        activity.kind !== "dividend" ||
         activity.amountCents <= 0 ||
         activity.currency === null ||
         activity.date < windowStart ||
@@ -207,20 +207,18 @@ function heldSince(
   return null;
 }
 
-export function renderDistributions(
-  result: DistributionsResult,
+export function renderDividends(
+  result: DividendsResult,
   ctx: Context,
 ): Block[] {
   const base = ctx.settings.baseCurrency;
   const blocks: Block[] = [
-    { kind: "heading", level: 2, text: "Distributions", id: "distributions" },
+    { kind: "heading", level: 2, text: "Dividends", id: "dividends" },
   ];
   const note = (text: string): Block => ({ kind: "paragraph", text: [text] });
 
   if (result.payments.length === 0) {
-    blocks.push(
-      note("No distributions were recorded in the trailing 12 months."),
-    );
+    blocks.push(note("No dividends were recorded in the trailing 12 months."));
   } else {
     const right = "right" as const;
     blocks.push({
@@ -309,7 +307,7 @@ export function renderDistributions(
     if (result.estimates.length > 0) {
       blocks.push(
         note(
-          `Estimate: distributions per unit over the past 12 months, multiplied by units held ${ctx.isCurrentPeriod ? "today" : "at month end"}.`,
+          `Estimate: dividends per unit over the past 12 months, multiplied by units held ${ctx.isCurrentPeriod ? "today" : "at month end"}.`,
         ),
       );
     }
@@ -331,7 +329,7 @@ export function renderDistributions(
   if (result.missingAccounts.length > 0) {
     blocks.push(
       note(
-        `Transactions could not be loaded for ${result.missingAccounts.join(", ")}; distributions exclude ${result.missingAccounts.length === 1 ? "this account" : "these accounts"}.`,
+        `Transactions could not be loaded for ${result.missingAccounts.join(", ")}; dividend totals exclude ${result.missingAccounts.length === 1 ? "this account" : "these accounts"}.`,
       ),
     );
   }

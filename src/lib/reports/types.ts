@@ -8,7 +8,7 @@ export type ActivityKind =
   | "buy"
   | "sell"
   | "reinvestment"
-  | "distribution"
+  | "dividend"
   | "interest"
   | "fee"
   | "other";

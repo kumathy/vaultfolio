@@ -156,7 +156,7 @@ export class Ledger {
 
   // With `reinvest`, the payment buys fractional units the same day (a DRIP),
   // reported as a DIVIDEND followed by a REI.
-  distribute(
+  payDividend(
     date: string,
     symbol: string,
     perUnit: number,
@@ -170,7 +170,7 @@ export class Ledger {
       this.record(date, "DIVIDEND", amount, instrument.currency, {
         symbol,
         price: perUnit,
-        description: `${symbol} distribution`,
+        description: `${symbol} dividend`,
       });
       if (reinvest) this.purchase(date, "REI", symbol, amount);
     });
@@ -288,9 +288,7 @@ export class Ledger {
       units: count,
       price,
       description:
-        type === "REI"
-          ? `Reinvested ${symbol} distribution`
-          : `Bought ${symbol}`,
+        type === "REI" ? `Reinvested ${symbol} dividend` : `Bought ${symbol}`,
     });
   }
 

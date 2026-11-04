@@ -12,7 +12,7 @@ net_growth: 412.55
 month_deposits: 300.00
 target_status: on-track
 tfsa_room: 4000.00
-income_ttm: 25.01
+dividends_ttm: 25.01
 ---
 
 # Investing Report — October 2026
@@ -28,7 +28,7 @@ income_ttm: 25.01
 | --------------- | ------------------------------------------------ |
 | Contributions   | $300.00 of $300.00 target (1 deposit) — On track |
 | Purchases       | 9 units XEQT ($336.29)                           |
-| Distributions   | None recorded                                    |
+| Dividends       | None recorded                                    |
 | Uninvested cash | $4.12 (below $25.00 threshold) — On track        |
 
 ## Contributions and growth
@@ -54,7 +54,7 @@ income_ttm: 25.01
 
 Projection assumes the $300.00 monthly contribution target is met through December.
 
-## Distributions
+## Dividends
 
 | Paid on    | Symbol | Per unit | Amount |
 | ---------- | ------ | -------: | -----: |
@@ -68,7 +68,7 @@ Projection assumes the $300.00 monthly contribution target is met through Decemb
 | Trailing 12 months        |  $25.01 |
 | Next 12 months (Estimate) | ~$43.70 |
 
-Estimate: distributions per unit over the past 12 months, multiplied by units held today.
+Estimate: dividends per unit over the past 12 months, multiplied by units held today.
 
 ---
 *Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*
@@ -85,7 +85,7 @@ portfolio_value: 4312.55
 contributed: 3900.00
 net_growth: 412.55
 month_deposits: 300.00
-income_ttm: 25.01
+dividends_ttm: 25.01
 ---
 
 # Investing Report — October 2026
@@ -99,7 +99,7 @@ income_ttm: 25.01
 | --------------- | ----------------------------------------- |
 | Contributions   | $300.00 (1 deposit)                       |
 | Purchases       | 9 units XEQT ($336.29)                    |
-| Distributions   | None recorded                             |
+| Dividends       | None recorded                             |
 | Uninvested cash | $4.12 (below $25.00 threshold) — On track |
 
 > [!info] Contribution progress is not calculated: no monthly contribution target is set in Vaultfolio settings.
@@ -129,7 +129,7 @@ income_ttm: 25.01
 
 > [!info] Remaining room is not calculated: no starting room is set in Vaultfolio settings.
 
-## Distributions
+## Dividends
 
 | Paid on    | Symbol | Per unit | Amount |
 | ---------- | ------ | -------: | -----: |
@@ -143,7 +143,7 @@ income_ttm: 25.01
 | Trailing 12 months        |  $25.01 |
 | Next 12 months (Estimate) | ~$43.70 |
 
-Estimate: distributions per unit over the past 12 months, multiplied by units held today.
+Estimate: dividends per unit over the past 12 months, multiplied by units held today.
 
 ---
 *Data retrieved 2026-10-27 09:14 EDT via SnapTrade. For information only. Not financial advice.*

@@ -34,7 +34,7 @@ A beginner investor making automatic monthly contributions to an all-in-one ETF 
 - **Generic by design.** No ticker symbol is hard-coded in logic.
 
 ### MVP features
-1. **Monthly activity.** Deposits, purchases by symbol, and distributions for the month. Investing styles differ (daily, weekly, biweekly, monthly, or manual), so no schedule or deposit day is assumed. An optional monthly contribution target is compared with the month's total deposits: **In progress** while the month is open, **Attention** only once it has ended below target. Flags cash left uninvested for more than N days (configurable, default 5).
+1. **Monthly activity.** Deposits, purchases by symbol, and dividends for the month. Investing styles differ (daily, weekly, biweekly, monthly, or manual), so no schedule or deposit day is assumed. An optional monthly contribution target is compared with the month's total deposits: **In progress** while the month is open, **Attention** only once it has ended below target. Flags cash left uninvested for more than N days (configurable, default 5).
 2. **Contributions and growth.** Total contributed versus current value, where growth = current value − total contributions. Percentage returns are avoided because recurring deposits make them misleading. Past-month reports are month-end records: contributions are totalled to the month's end and holdings list the units held then. Their value and growth are estimates from SnapTrade's account value history (see Data notes), marked once by "Estimated portfolio value" in the summary (table labels match the current month, with no method note under the table), and show **Not available** when that history has no value within 7 days of the month's end, or when the account used more than one currency (the history is one converted total, which cannot be compared with per-currency contributions).
 3. **Registered-account room tracking (TFSA, RRSP, FHSA).** Starting room is entered by the user (from CRA My Account, which cannot be fetched) and is optional. The app tracks contributions from that point, shows remaining room, and projects whether contributions at the monthly target will exceed it before December 31. Rules:
    - TFSA withdrawals are added back to room on **January 1 of the following year**, not immediately.
@@ -42,7 +42,7 @@ A beginner investor making automatic monthly contributions to an all-in-one ETF 
    - RRSP: user-entered deduction limit, with a deadline about 60 days into the following year.
    - Yearly dollar limits live in one config file, `src/lib/limits.ts`, not in logic. 2026 values: TFSA $7,000; RRSP maximum $33,810 (deadline March 1, 2027); FHSA $8,000 per year, $40,000 lifetime.
    - Transfers in from another registered account are not new contributions. Classification must be careful, and users can correct it.
-4. **Distribution history and projection.** History per payment and per symbol. Projection = (sum of per-unit distributions over the trailing 12 months) × units currently held, per symbol. This works for any payment frequency (XEQT quarterly, VEQT annually, some funds monthly). Always labelled as an estimate. Only payments the account received are visible, so a fund held for less than the full window would understate the total: until every paying fund has been held for 12 months, the row shows `Available from <date>` (one year after the latest fund was first held, counting from a rebuy after a sell-out) instead of a figure.
+4. **Dividend history and projection.** History per payment and per symbol. Projection = (sum of per-unit dividends over the trailing 12 months) × units currently held, per symbol. This works for any payment frequency (XEQT quarterly, VEQT annually, some funds monthly). Always labelled as an estimate. Only payments the account received are visible, so a fund held for less than the full window would understate the total: until every dividend-paying fund has been held for 12 months, the row shows `Available from <date>` (one year after the latest fund was first held, counting from a rebuy after a sell-out) instead of a figure.
 
 ### Zero-setup behaviour
 A user who signs in and configures nothing still receives a useful report. Settings add detail. They never block the report, and the app never shows a setup wall or a blank page.
@@ -50,7 +50,7 @@ A user who signs in and configures nothing still receives a useful report. Setti
 | Setting not provided | Report behaviour |
 | --- | --- |
 | Starting contribution room | Shows contributions and withdrawals year-to-date per registered account, plus that year's annual limit for reference. Remaining room, projection, and over-contribution status show **Not configured**. No warnings are raised, since over-contribution cannot be determined without starting room. |
-| Contribution target | Lists deposits, purchases, and distributions observed this month. Contribution status shows **Not configured**. Room projection is omitted. |
+| Contribution target | Lists deposits, purchases, and dividends observed this month. Contribution status shows **Not configured**. Room projection is omitted. |
 | Target allocation | Target and weight-versus-target columns are omitted from Holdings. |
 | Account type tags | Uses the account type reported by the brokerage when available. Otherwise the account is labelled "Unclassified" and excluded from the room section. |
 | Uninvested-cash threshold | Defaults to 5 days. |
@@ -121,7 +121,7 @@ net_growth: 412.55
 month_deposits: 300.00
 target_status: on-track
 tfsa_room: 2100.00
-income_ttm: 38.20
+dividends_ttm: 38.20
 ---
 
 # Investing Report — October 2026
@@ -137,7 +137,7 @@ income_ttm: 38.20
 | --------------- | ------------------------------------------------ |
 | Contributions   | $300.00 of $300.00 target (1 deposit) — On track |
 | Purchases       | 9 units XEQT ($336.29)                           |
-| Distributions   | None recorded                                    |
+| Dividends       | None recorded                                    |
 | Uninvested cash | $4.12 (below $25.00 threshold) — On track        |
 
 ## Contributions and growth
@@ -163,7 +163,7 @@ income_ttm: 38.20
 
 Projection assumes the $300.00 monthly contribution target is met through December.
 
-## Distributions
+## Dividends
 
 | Paid on    | Symbol | Per unit |  Amount |
 | ---------- | ------ | -------: | ------: |
@@ -175,7 +175,7 @@ Projection assumes the $300.00 monthly contribution target is met through Decemb
 | Trailing 12 months               |  $38.20 |
 | Next 12 months (Estimate)        | ~$46.00 |
 
-Estimate: distributions per unit over the past 12 months, multiplied by units held today.
+Estimate: dividends per unit over the past 12 months, multiplied by units held today.
 
 ---
 *Data retrieved 2026-10-27 09:14 ADT via SnapTrade. For information only. Not financial advice.*
@@ -292,7 +292,7 @@ Requirements:
 ### Data notes
 - **Activities:** synced once daily with a one-day delay, and often date-only.
 - **Sign convention:** a positive `amount` is cash in and a negative one is cash out. A BUY has positive units and a negative amount.
-- **Activity types:** rely on `amount`, `units`, `price`, and `symbol`, plus the common types (BUY, SELL, CONTRIBUTION, WITHDRAWAL, DIVIDEND/distribution, FEE). Verify type names against the OpenAPI spec and real responses.
+- **Activity types:** rely on `amount`, `units`, `price`, and `symbol`, plus the common types (BUY, SELL, CONTRIBUTION, WITHDRAWAL, DIVIDEND, FEE). Verify type names against the OpenAPI spec and real responses.
 - **Account type:** verify whether accounts expose a type (TFSA, RRSP, FHSA). If not reliably, let users tag accounts in settings.
 - **Prices:** SnapTrade does not provide historical price series. MVP features must not depend on them.
 - **Account value history:** `GET /accounts/{accountId}/balanceHistory` (beta, "Account Value History" add-on, enabled in the Customer Dashboard) returns estimated daily total account value, up to one year back, possibly with gaps. Used only for past-month value and growth; when it is disabled (403) or missing, reports fall back to **Not available**.
@@ -309,7 +309,7 @@ Requirements:
 ## Testing
 
 - **Report engine:** report generation in `src/lib/reports/` is pure functions, unit tested with fixtures. Edge cases:
-  - Data shape: no accounts, cash-only account, multiple funds, mixed currencies, individual stocks, zero distributions.
+  - Data shape: no accounts, cash-only account, multiple funds, mixed currencies, individual stocks, no dividends.
   - Contribution target: open month in progress, shortfall after month end, several deposits per month, uninvested cash.
   - Room tracking: TFSA withdrawal followed by re-contribution the next year, transfer-in versus contribution, over-contribution projection.
   - Settings: none configured, starting room missing with a target set, target missing with starting room set.

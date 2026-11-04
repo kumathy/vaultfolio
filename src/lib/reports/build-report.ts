@@ -1,6 +1,6 @@
 import { analyzeContributions, renderContributions } from "./contributions";
 import { accountLabel, createContext, type Context } from "./context";
-import { analyzeDistributions, renderDistributions } from "./distributions";
+import { analyzeDividends, renderDividends } from "./dividends";
 import { analyzeHoldings, renderHoldings } from "./holdings";
 import { renderMarkdown } from "./markdown";
 import { money, plainAmount, signedMoney } from "./money";
@@ -95,7 +95,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
   const contributions = analyzeContributions(accounts, ctx);
   const activity = analyzeActivity(accounts, ctx);
   const room = analyzeRoom(accounts, ctx);
-  const distributions = analyzeDistributions(accounts, ctx);
+  const dividends = analyzeDividends(accounts, ctx);
 
   const value =
     holdings.totals.find((t) => t.currency === base) ?? holdings.totals[0];
@@ -184,8 +184,8 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     const row = room.rows.find((r) => r.type === type);
     return row?.remainingCents == null ? null : plainAmount(row.remainingCents);
   };
-  const ttm = distributions.ttm.find((t) => t.currency === base);
-  const distributionsKnown = accounts.some((a) => a.activities !== null);
+  const ttm = dividends.ttm.find((t) => t.currency === base);
+  const dividendsKnown = accounts.some((a) => a.activities !== null);
 
   const notes = dataNotes(input, ctx, options.now, extraNotes);
   // Unknown values are left out rather than written as null: Obsidian shows
@@ -230,7 +230,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
     ["tfsa_room", roomValue("TFSA")],
     ["rrsp_room", roomValue("RRSP")],
     ["fhsa_room", roomValue("FHSA")],
-    ["income_ttm", distributionsKnown ? plainAmount(ttm?.cents ?? 0) : null],
+    ["dividends_ttm", dividendsKnown ? plainAmount(ttm?.cents ?? 0) : null],
   ];
   const document: ReportDocument = {
     frontmatter: frontmatter.filter(
@@ -263,7 +263,7 @@ export function buildReport(input: ReportInput, options: BuildOptions): Report {
       ...renderContributions(contributions, ctx),
       ...renderHoldings(holdings, ctx),
       ...renderRoom(room, ctx),
-      ...renderDistributions(distributions, ctx),
+      ...renderDividends(dividends, ctx),
       ...(notes.length > 0
         ? [
             {

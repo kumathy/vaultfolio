@@ -22,7 +22,7 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
       month_deposits: "300.00",
       target_status: "on-track",
       tfsa_room: "4000.00",
-      income_ttm: "25.01",
+      dividends_ttm: "25.01",
     });
   });
 
@@ -36,7 +36,7 @@ describe("example report (XEQT TFSA, targets and room configured)", () => {
       "Contributions and growth",
       "Holdings",
       "Registered account room — 2026",
-      "Distributions",
+      "Dividends",
     ]);
   });
 

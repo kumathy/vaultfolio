@@ -13,10 +13,10 @@
 
 ## What each report covers
 
-- **This month:** deposits, purchases and distributions, plus progress toward a monthly contribution target.
+- **This month:** deposits, purchases and dividends, plus progress toward a monthly contribution target.
 - **Growth:** total contributed against current value, in dollars.
 - **TFSA, RRSP and FHSA room:** contributions this year, room remaining, and a warning before going over.
-- **Distributions:** every payment over the past year, and an estimate for the next.
+- **Dividends:** every payment over the past year, and an estimate for the next.
 
 Reports state facts and never recommend trades. Every setting is optional: a report is complete from the first sign-in, and settings only add detail.
 

@@ -129,7 +129,7 @@ describe("full scenario", () => {
     expect(room).toContain("Attention");
   });
 
-  it("shows activity and a distribution estimate on the 1st of a month", async () => {
+  it("shows activity and a dividend estimate on the 1st of a month", async () => {
     const r = await mockReport("full", {
       period: "2026-11",
       now: new Date("2026-11-01T15:00:00Z"),

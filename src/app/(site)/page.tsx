@@ -110,7 +110,7 @@ const reportSections: {
 }[] = [
   {
     title: "Monthly activity",
-    text: "Deposits, purchases and distributions, against an optional monthly target. Uninvested cash is flagged.",
+    text: "Deposits, purchases and dividends, against an optional monthly target. Uninvested cash is flagged.",
     Icon: TbCalendarCheck,
     sample: ["Contributions", "On track"],
   },
@@ -127,7 +127,7 @@ const reportSections: {
     sample: ["TFSA room remaining", "$1,750.00"],
   },
   {
-    title: "Distributions",
+    title: "Dividends",
     text: "Every payment by symbol, plus a 12-month estimate.",
     Icon: TbReceipt2,
     sample: ["Next 12 months (Estimate)", "~$199.45"],
@@ -255,7 +255,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
               Brokerage data from{" "}
               <ExternalLink href={SNAPTRADE_SITE_URL}>SnapTrade</ExternalLink>,
               turned into a Markdown report on contributions, registered room
-              and distributions. Read it in the browser or in{" "}
+              and dividends. Read it in the browser or in{" "}
               <ExternalLink href={OBSIDIAN_SITE_URL}>Obsidian</ExternalLink>.
             </p>
 

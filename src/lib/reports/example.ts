@@ -8,7 +8,7 @@ import type { ReportSettings } from "./types";
 // The landing page's illustrative report: a Wealthsimple TFSA buying exactly
 // $500 of XEQT each month since January 2025 (about 95% of the account), plus
 // small one-off purchases of NVIDIA and Amazon. Purchases are fractional and
-// distributions are reinvested, so no cash sits idle. The stocks are CAD-listed
+// dividends are reinvested, so no cash sits idle. The stocks are CAD-listed
 // CDRs, as commonly held in a TFSA, so the account stays in one currency and
 // past months can show an estimated value from the account value history.
 
@@ -54,10 +54,10 @@ function exampleAccount(): RawAccountData {
   l.buyAmount(dateOf(2025, 6, 17), "NVDA", 200);
   l.deposit(dateOf(2026, 1, 16), 250);
   l.buyAmount(dateOf(2026, 1, 17), "AMZN", 250);
-  // Quarterly distributions, reinvested through a DRIP.
+  // Quarterly dividends, reinvested through a DRIP.
   for (const year of [2025, 2026]) {
     [0.11, 0.13, 0.12, 0.24].forEach((perUnit, quarter) =>
-      l.distribute(dateOf(year, quarter * 3 + 2, 27), "XEQT", perUnit, {
+      l.payDividend(dateOf(year, quarter * 3 + 2, 27), "XEQT", perUnit, {
         reinvest: true,
       }),
     );

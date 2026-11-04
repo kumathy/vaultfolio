@@ -655,8 +655,8 @@ describe("registered account room", () => {
   });
 });
 
-describe("distributions", () => {
-  it("reports zero distributions as a known zero", () => {
+describe("dividends", () => {
+  it("reports no dividends as a known zero", () => {
     const r = report([
       rawAccount({
         id: "stocks",
@@ -668,10 +668,10 @@ describe("distributions", () => {
         ],
       }),
     ]);
-    expect(r.section("Distributions")).toContain(
-      "No distributions were recorded in the trailing 12 months.",
+    expect(r.section("Dividends")).toContain(
+      "No dividends were recorded in the trailing 12 months.",
     );
-    expect(r.frontmatter.income_ttm).toBe("0.00");
+    expect(r.frontmatter.dividends_ttm).toBe("0.00");
   });
 
   it("estimates a past month from the units held at its end", () => {
@@ -815,7 +815,7 @@ describe("distributions", () => {
         ],
       }),
     ]);
-    expect(r.frontmatter.income_ttm).toBe("2.00");
+    expect(r.frontmatter.dividends_ttm).toBe("2.00");
   });
 });
 
@@ -829,7 +829,7 @@ describe("report-level states", () => {
       "No brokerage accounts were available for this report.",
     );
     expect(r.frontmatter).not.toHaveProperty("portfolio_value");
-    expect(r.frontmatter).not.toHaveProperty("income_ttm");
+    expect(r.frontmatter).not.toHaveProperty("dividends_ttm");
   });
 
   it("notes paper accounts and failed parts", () => {
@@ -926,8 +926,8 @@ describe("partial and mixed data", () => {
       ],
     });
     const r = report([{ ...raw, positions: null }]);
-    expect(r.section("Distributions")).not.toContain("Estimate");
-    expect(r.section("Distributions")).toContain(
+    expect(r.section("Dividends")).not.toContain("Estimate");
+    expect(r.section("Dividends")).toContain(
       "Units held could not be loaded for VEQT; the estimate excludes it.",
     );
   });

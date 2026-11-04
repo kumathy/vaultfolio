@@ -28,7 +28,7 @@ const CASH_INFLOWS = new Set([
   "contribution",
   "transfer_in",
   "sell",
-  "distribution",
+  "dividend",
   "interest",
 ]);
 
@@ -164,8 +164,8 @@ export function analyzeActivity(
     (a) => a.kind === "contribution" && a.currency === base,
   );
   const purchases = inPeriod.filter((a) => a.kind === "buy");
-  const distributions = inPeriod.filter(
-    (a) => a.kind === "distribution" && a.amountCents > 0,
+  const dividends = inPeriod.filter(
+    (a) => a.kind === "dividend" && a.amountCents > 0,
   );
   const contributedCents = sumBy(deposits, (d) => d.amountCents);
   const target = settings.contributionTargetCents ?? null;
@@ -224,11 +224,11 @@ export function analyzeActivity(
         : "None recorded",
     },
     {
-      label: "Distributions",
+      label: "Dividends",
       status: null,
-      detail: distributions.length
+      detail: dividends.length
         ? bySymbol(
-            distributions,
+            dividends,
             base,
             (symbol, items, b) =>
               `${money(

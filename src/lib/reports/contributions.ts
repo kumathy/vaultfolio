@@ -35,7 +35,7 @@ export interface ContributionsResult {
 }
 
 // An account opened within the available history starts with money coming in.
-// Any other first transaction (a purchase, distribution or withdrawal) means it
+// Any other first transaction (a purchase, dividend or withdrawal) means it
 // held money before the history SnapTrade provides.
 function startsWithFunding(
   activities: Activity[],

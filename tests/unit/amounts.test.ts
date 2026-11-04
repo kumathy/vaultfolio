@@ -54,7 +54,7 @@ describe("splitAmounts", () => {
       "2026-09-29",
       "100.0%",
       "$300.00 of target (1 deposit) — On track",
-      "Distributions per unit over the past 12 months",
+      "Dividends per unit over the past 12 months",
       "Paid in 2 of 4 quarters, 12.50 each",
     ]) {
       expect(visible(text)).not.toMatch(/\$/);
